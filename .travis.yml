@@ -14,6 +14,7 @@ before_script:
   - mysql -u root -e "GRANT ALL ON *.* TO 'ensembl'@'localhost';"
 install:
   - pip install -r requirements.txt
+  - pip install -r requirements-dev.txt
   - pip install coverage==4.5.1
 script:
   - coverage run --source='.' manage.py test --settings=production_services.settings_tests

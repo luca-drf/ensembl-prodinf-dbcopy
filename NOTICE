@@ -1,16 +1,6 @@
-- For following files Django copyright applies:
-
-~/production_services/settings.py
-~/production_services/urls.py
-~/production_services/wsgi.py
-~/manage.py
-
-- For files under any other path/directory following copyright applies:
-
-EnsEMBL - Ensembl Production Services Django application
+EnsEMBL - Ontology MySQL Loader
 
 Copyright [2018-2021] EMBL-European Bioinformatics Institute
 
 This product includes software developed at
 EMBL-European Bioinformatics Institute (https://www.ebi.ac.uk).
-
