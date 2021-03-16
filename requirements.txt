@@ -1,5 +1,7 @@
 Django~=3.1.7
 djangorestframework~=3.12.2
 django-crispy-forms~=1.11.1
+drf-nested-routers~=0.93.3
 drf-yasg~=1.20.0
+sqlalchemy~=1.4.0
 -e git+git://github.com/Ensembl/ensembl-prodinf-djcore.git#egg=ensembl_prodinf_djcore
