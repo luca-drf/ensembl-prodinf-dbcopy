@@ -1,0 +1,5 @@
+include LICENSE
+include VERSION
+include NOTICE
+include requirements.txt
+include requirements-prod.txt

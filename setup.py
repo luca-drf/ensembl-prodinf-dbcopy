@@ -31,7 +31,7 @@ setup(
     namespace_packages=['ensembl'],
     packages=find_namespace_packages(where='src', include=['ensembl.production.*']),
     package_dir={'': 'src'},
-    url='https://github.com/Ensembl/ensembl-prodinf-core',
+    url='https://github.com/Ensembl/ensembl-prodinf-dbcopy',
     license='APACHE 2.0',
     author='mchakiachvili',
     author_email='mchakiachvili@ebi.ac.uk',

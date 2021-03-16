@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ensembl.production.dbcopy.apps.EnsemblDbCopyConfig',
+    'ensembl.production.dbcopy',
     'rest_framework',
     'corsheaders',
 ]

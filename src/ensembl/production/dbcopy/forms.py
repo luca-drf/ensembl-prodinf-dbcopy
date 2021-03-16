@@ -1,56 +1,59 @@
-# .. See the NOTICE file distributed with this work for additional information
-#    regarding copyright ownership.
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
+#   See the NOTICE file distributed with this work for additional information
+#   regarding copyright ownership.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#       http://www.apache.org/licenses/LICENSE-2.0
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
 import logging
 import re
-from collections import OrderedDict
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
-from django.contrib.auth.models import User
-from django.core.validators import RegexValidator, EmailValidator
+from django.core.validators import RegexValidator
 
+from ensembl.production.djcore.forms import TrimmedCharField, ListFieldRegexValidator, EmailListFieldValidator
 from ensembl.production.dbcopy.api.views import get_database_set  # , get_engine
 from ensembl.production.dbcopy.models import RequestJob, Group, Host, TargetHostGroup
+from django.contrib.auth.models import User
+from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
-COMMA_RE = re.compile(',+')
 
 
 def _target_host_group(username):
-    # get groups, current user belongs to
-    user_groups = [
-        each_group.name
+
+    # get groups, current user belongs to 
+    user_groups = [   each_group .name 
         for user_obj in User.objects.filter(username__contains=username).prefetch_related('groups').all()
-        for each_group in user_obj.groups.all()]
+        for each_group in user_obj.groups.all()
+    ]
 
-    # get all host user can copy  based on assigned group
-    user_hosts_ids = [host.auto_id for host in Host.objects.filter(groups__group_name__in=user_groups)]
-
-    # get all host names that target group contains
-    target_host_dict = {}
+    #get all host user can copy  based on assigned group 
+    user_hosts_ids = [ host.auto_id for host in Host.objects.filter(groups__group_name__in=user_groups) ]  
+    
+    #get all host names that target group contains
+    target_host_dict = {} 
     for each_group in TargetHostGroup.objects.all():
         target_host_dict[each_group.target_group_name] = ''
         for each_host in each_group.target_host.all():
-            target_host_dict[each_group.target_group_name] += each_host.name + ':' + str(each_host.port) + ','
-
-    # get all the target group that has access to host from authgroup
-    target_groups = list(set([(
-        target_host_dict[groups.target_group_name],
-        groups.target_group_name
-    )
-        for groups in TargetHostGroup.objects.filter(target_host__auto_id__in=user_hosts_ids)
-    ]))
+            target_host_dict[each_group.target_group_name] += each_host.name +':'+str(each_host.port)+','
+            
+     
+    #get all the target group that has access to host from authgroup
+    target_groups =  list(set([ (
+                            target_host_dict[groups.target_group_name], 
+                            groups.target_group_name
+                            )  
+                        for groups in TargetHostGroup.objects.filter(target_host__auto_id__in=user_hosts_ids) 
+                    ]))
     target_groups.insert(0, ('', '--select target group--'))
     return target_groups
 
@@ -65,28 +68,6 @@ def _apply_db_names_filter(db_names, all_db_names):
         filter_re = re.compile(db_name.replace('%', '.*').replace('_', '.'))
         return set(filter(filter_re.search, all_db_names))
     return db_names
-
-
-class TrimmedCharField(forms.CharField):
-    def to_python(self, value):
-        value = super().to_python(value)
-        if not value:
-            return ''
-        return COMMA_RE.sub(',', value.replace(' ', '').rstrip(','))
-
-
-class ListFieldRegexValidator(RegexValidator):
-    def __call__(self, value):
-        elements = value.split(',')
-        for element in elements:
-            super().__call__(element)
-
-
-class EmailListFieldValidator(EmailValidator):
-    def __call__(self, value):
-        elements = value.split(',')
-        for element in elements:
-            super().__call__(element)
 
 
 class SubmitForm(forms.ModelForm):
@@ -258,13 +239,17 @@ class SubmitForm(forms.ModelForm):
 
         target_host_group_list = _target_host_group(self.user.username)
         if len(target_host_group_list):
+
             tgt_group_host = forms.CharField()
             tgt_group_host.widget = forms.Select(choices=target_host_group_list,
-                                                 attrs={'onchange': "targetHosts()"}
-                                                 )
+                                                    attrs={'onchange': "targetHosts()"}
+                                                )
             tgt_group_host.label = 'Host Target Group'
-            tgt_group_host.help_text = "Select Group to autofill the target host"
+            tgt_group_host.help_text="Select Group to autofill the target host"
 
             field_order = list(self.fields.items())
-            field_order.insert(5, ("tgt_group_host", tgt_group_host))
+            field_order.insert(5, ("tgt_group_host", tgt_group_host ))
             self.fields = OrderedDict(field_order)
+
+
+     

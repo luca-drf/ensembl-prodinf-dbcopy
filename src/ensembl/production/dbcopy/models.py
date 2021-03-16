@@ -1,27 +1,27 @@
-# .. See the NOTICE file distributed with this work for additional information
-#    regarding copyright ownership.
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
+#   See the NOTICE file distributed with this work for additional information
+#   regarding copyright ownership.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#       http://www.apache.org/licenses/LICENSE-2.0
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 import uuid
 
 from django.db import models
-from ensembl_production.models import NullTextField
+
+from ensembl.production.djcore.models import NullTextField
 
 
 class Dbs2Exclude(models.Model):
-    table_schema = models.CharField(primary_key=True, db_column='TABLE_SCHEMA',
-                                    max_length=64)  # Field name made lowercase.
+    table_schema = models.CharField(primary_key=True, db_column='TABLE_SCHEMA', max_length=64)  # Field name made lowercase.
 
     class Meta:
         db_table = 'dbs_2_exclude'
-        app_label = 'ensembl.production.dbcopy'
+        #app_label = 'ensembl_dbcopy'
 
 
 class DebugLog(models.Model):
@@ -32,13 +32,13 @@ class DebugLog(models.Model):
 
     class Meta:
         db_table = 'debug_log'
-        app_label = 'ensembl.production.dbcopy'
+        # app_label = 'ensembl_dbcopy'
 
 
 class RequestJob(models.Model):
     class Meta:
         db_table = 'request_job'
-        app_label = 'ensembl.production.dbcopy'
+        #app_label = 'ensembl_dbcopy'
         verbose_name = "Copy job"
         verbose_name_plural = "Copy jobs"
 
@@ -61,6 +61,7 @@ class RequestJob(models.Model):
     user = models.CharField(max_length=64, blank=True, null=True)
     status = models.CharField(max_length=20, blank=True, null=True, editable=False)
     request_date = models.DateTimeField(editable=False, auto_now_add=True)
+
 
     def __str__(self):
         return str(self.job_id)
@@ -115,7 +116,7 @@ class TransferLog(models.Model):
     class Meta:
         db_table = 'transfer_log'
         unique_together = (('job_id', 'tgt_host', 'table_schema', 'table_name'),)
-        app_label = 'ensembl.production.dbcopy'
+        #app_label = 'ensembl_dbcopy'
         verbose_name = 'TransferLog'
 
     auto_id = models.BigAutoField(primary_key=True)
@@ -148,7 +149,7 @@ class Host(models.Model):
     class Meta:
         db_table = 'host'
         unique_together = (('name', 'port'),)
-        app_label = 'ensembl.production.dbcopy'
+        #app_label = 'ensembl_dbcopy'
         verbose_name = 'Host'
 
     auto_id = models.BigAutoField(primary_key=True)
@@ -158,34 +159,33 @@ class Host(models.Model):
     virtual_machine = models.CharField(max_length=255, blank=True, null=True)
     mysqld_file_owner = models.CharField(max_length=128, null=True, blank=True)
     active = models.BooleanField(default=True, blank=False)
-
+    
     def __str__(self):
         return '{}:{}'.format(self.name, self.port)
-
 
 class TargetHostGroup(models.Model):
     class Meta:
         db_table = 'target_host_group'
-        app_label = 'ensembl.production.dbcopy'
+        #app_label = 'ensembl_dbcopy'
         verbose_name = 'Hosts Target Group'
+
 
     target_group_id = models.BigAutoField(primary_key=True)
     target_group_name = models.CharField('Hosts Group', max_length=80, unique=True)
-    target_host = models.ManyToManyField('Host')
+    target_host=models.ManyToManyField('Host')
 
     def __str__(self):
         return '{}'.format(self.target_group_name)
 
-
 class Group(models.Model):
     class Meta:
         db_table = 'group'
-        app_label = 'ensembl.production.dbcopy'
+        #app_label = 'ensembl_dbcopy'
         verbose_name = 'Host Group'
 
     group_id = models.BigAutoField(primary_key=True)
     host_id = models.ForeignKey(Host, db_column='auto_id', on_delete=models.CASCADE, related_name='groups')
     group_name = models.CharField('User Group', max_length=80)
-
+    
     def __str__(self):
         return '{}'.format(self.group_name)

@@ -4,8 +4,9 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+
     dependencies = [
-        ('ensembl.production.dbcopy', '0004_auto_20210129_1245'),
+        ('dbcopy', '0004_auto_20210129_1245'),
     ]
 
     operations = [
@@ -14,7 +15,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('target_group_id', models.BigAutoField(primary_key=True, serialize=False)),
                 ('target_group_name', models.CharField(max_length=80, unique=True, verbose_name='Hosts Group')),
-                ('target_host', models.ManyToManyField(to='ensembl.production.dbcopy.Host')),
+                ('target_host', models.ManyToManyField(to='dbcopy.Host')),
             ],
             options={
                 'verbose_name': 'Hosts Target Group',

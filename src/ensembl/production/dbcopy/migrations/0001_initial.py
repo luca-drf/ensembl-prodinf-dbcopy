@@ -3,14 +3,16 @@
 import uuid
 
 import django.db.models.deletion
-import ensembl_production.models
 from django.db import migrations, models
+
+import ensembl.production.djcore.models
 
 
 class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('auth', '0009_alter_user_last_name_max_length'),
     ]
 
     operations = [
@@ -73,13 +75,16 @@ class Migration(migrations.Migration):
                 ('job_id', models.CharField(default=uuid.uuid1, editable=False, max_length=128, primary_key=True,
                                             serialize=False)),
                 ('src_host', models.TextField(max_length=2048)),
-                ('src_incl_db', ensembl_production.models.NullTextField(blank=True, max_length=2048, null=True)),
-                ('src_skip_db', ensembl_production.models.NullTextField(blank=True, max_length=2048, null=True)),
-                ('src_incl_tables', ensembl_production.models.NullTextField(blank=True, max_length=2048, null=True)),
-                ('src_skip_tables', ensembl_production.models.NullTextField(blank=True, max_length=2048, null=True)),
+                ('src_incl_db', ensembl.production.djcore.models.NullTextField(blank=True, max_length=2048, null=True)),
+                ('src_skip_db', ensembl.production.djcore.models.NullTextField(blank=True, max_length=2048, null=True)),
+                ('src_incl_tables',
+                 ensembl.production.djcore.models.NullTextField(blank=True, max_length=2048, null=True)),
+                ('src_skip_tables',
+                 ensembl.production.djcore.models.NullTextField(blank=True, max_length=2048, null=True)),
                 ('tgt_host', models.TextField(max_length=2048)),
-                ('tgt_db_name', ensembl_production.models.NullTextField(blank=True, max_length=2048, null=True)),
-                ('tgt_directory', ensembl_production.models.NullTextField(blank=True, max_length=2048, null=True)),
+                ('tgt_db_name', ensembl.production.djcore.models.NullTextField(blank=True, max_length=2048, null=True)),
+                ('tgt_directory',
+                 ensembl.production.djcore.models.NullTextField(blank=True, max_length=2048, null=True)),
                 ('skip_optimize', models.BooleanField(default=False)),
                 ('wipe_target', models.BooleanField(default=False)),
                 ('convert_innodb', models.BooleanField(default=False)),
@@ -108,7 +113,7 @@ class Migration(migrations.Migration):
                 ('retries', models.IntegerField(blank=True, editable=False, null=True)),
                 ('message', models.CharField(blank=True, editable=False, max_length=255, null=True)),
                 ('job_id', models.ForeignKey(db_column='job_id', on_delete=django.db.models.deletion.CASCADE,
-                                             related_name='transfer_logs', to='ensembl.production.dbcopy.RequestJob')),
+                                             related_name='transfer_logs', to='dbcopy.RequestJob')),
             ],
             options={
                 'verbose_name': 'TransferLog',
@@ -123,7 +128,7 @@ class Migration(migrations.Migration):
             model_name='group',
             name='host_id',
             field=models.ForeignKey(db_column='auto_id', on_delete=django.db.models.deletion.CASCADE,
-                                    to='ensembl.production.dbcopy.Host'),
+                                    to='dbcopy.Host'),
         ),
         migrations.AlterUniqueTogether(
             name='transferlog',

@@ -1,14 +1,14 @@
-# .. See the NOTICE file distributed with this work for additional information
-#    regarding copyright ownership.
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
+#   See the NOTICE file distributed with this work for additional information
+#   regarding copyright ownership.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#       http://www.apache.org/licenses/LICENSE-2.0
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
@@ -17,10 +17,11 @@ from django.contrib.auth.models import Group as UsersGroup
 from django.core.paginator import Paginator
 from django.db.models import Count, F, Q
 from django.utils.html import format_html
-from ensembl_production.admin import SuperUserAdmin
 
 from ensembl.production.dbcopy.forms import SubmitForm
 from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup
+from ensembl.production.djcore.admin import SuperUserAdmin
+from ensembl.production.djcore.filters import UserFilter
 
 
 class GroupInlineForm(forms.ModelForm):
@@ -99,50 +100,6 @@ class OverallStatusFilter(SimpleListFilter):
         elif self.value() == 'Submitted':
             qs = queryset.filter(end_date__isnull=True, status__isnull=True)
             return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)
-
-
-class UserFilter(SimpleListFilter):
-    """
-    This filter will always return a subset of the instances in a Model, either filtering by the
-    user choice or by a default value.
-    """
-    # Human-readable title which will be displayed in the
-    # right admin sidebar just above the filter options.
-    title = 'user'
-    # Parameter for the filter that will be used in the URL query.
-    parameter_name = 'user'
-    default_value = None
-
-    def lookups(self, request, model_admin):
-        """
-        Returns a list of tuples. The first element in each
-        tuple is the coded value for the option that will
-        appear in the URL query. The second element is the
-        human-readable name for the option that will appear
-        in the right sidebar.
-        """
-        list_of_users = []
-        queryset = model_admin.model.objects.all()
-        for q in queryset:
-            if q.user:
-                list_of_users.append(
-                    (str(q.user), q.user)
-                )
-        return sorted(list(set(list_of_users + [("all", "all"), ])), key=lambda tp: tp[1])
-
-    def queryset(self, request, queryset):
-        """
-        Returns the filtered queryset based on the value
-        provided in the query string and retrievable via
-        `self.value()`.
-        """
-        # Compare the requested value to decide how to filter the queryset.
-        if self.value():
-            if self.value() != "all":
-                return queryset.filter(user=self.value())
-            else:
-                return queryset.all()
-        return queryset.filter(user=request.user)
 
 
 @admin.register(RequestJob)

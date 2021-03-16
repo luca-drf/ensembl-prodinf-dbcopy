@@ -29,9 +29,7 @@
       "is_staff": true,
       "is_active": true,
       "date_joined": "2019-03-26T11:23:02.067Z",
-      "groups": [
-        8
-      ],
+      "groups": [8],
       "user_permissions": []
     }
   },
@@ -49,86 +47,84 @@
       "is_staff": true,
       "is_active": true,
       "date_joined": "2019-03-26T11:23:02.067Z",
-      "groups": [
-        1
-      ],
+      "groups": [1],
       "user_permissions": []
     }
   },
   {
-    "model": "ensembl.production.dbcopy.requestjob",
+    "model": "dbcopy.requestjob",
     "pk": "2e7497e6-07af-11ea-bdcd-9801a79243a5",
     "fields": {
-      "src_host": "mysql-ens-sta-2:4520",
-      "src_incl_db": "homo_sapiens_core_37",
-      "src_skip_db": "",
-      "src_incl_tables": "",
-      "src_skip_tables": "",
-      "tgt_host": "mysql-ens-mirror-2:4603",
-      "tgt_db_name": "",
-      "tgt_directory": "",
-      "skip_optimize": false,
-      "wipe_target": false,
-      "convert_innodb": false,
-      "dry_run": false,
-      "email_list": "testuser@ebi.ac.uk",
-      "start_date": null,
-      "end_date": null,
-      "user": "testuser",
-      "status": null,
-      "request_date": "2020-06-01T10:00:06Z"
+        "src_host": "mysql-ens-sta-2:4520",
+        "src_incl_db": "homo_sapiens_core_37",
+        "src_skip_db": "",
+        "src_incl_tables": "",
+        "src_skip_tables": "",
+        "tgt_host": "mysql-ens-mirror-2:4603",
+        "tgt_db_name": "",
+        "tgt_directory": "",
+        "skip_optimize": false,
+        "wipe_target": false,
+        "convert_innodb": false,
+        "dry_run": false,
+        "email_list": "test#user@ebi.ac.uk",
+        "start_date": null,
+        "end_date": null,
+        "user": "testuser",
+        "status": null,
+        "request_date" : "2020-06-01T10:00:06Z"
     }
   },
   {
-    "model": "ensembl.production.dbcopy.requestjob",
+    "model": "dbcopy.requestjob",
     "pk": "8f084180-07ae-11ea-ace0-9801a79243a5",
     "fields": {
-      "src_host": "mysql-ens-sta-1:4519",
-      "src_incl_db": "homo_sapiens_variation_99_38",
-      "src_skip_db": "",
-      "src_incl_tables": "",
-      "src_skip_tables": "",
-      "tgt_host": "mysql-ens-general-prod-1:4525",
-      "tgt_db_name": "",
-      "tgt_directory": "",
-      "skip_optimize": false,
-      "wipe_target": false,
-      "convert_innodb": false,
-      "dry_run": false,
-      "email_list": "testuser@ebi.ac.uk",
-      "start_date": null,
-      "end_date": null,
-      "user": "testuser",
-      "status": null,
-      "request_date": "2020-06-05T10:55:06Z"
+        "src_host": "mysql-ens-sta-1:4519",
+        "src_incl_db": "homo_sapiens_variation_99_38",
+        "src_skip_db": "",
+        "src_incl_tables": "",
+        "src_skip_tables": "",
+        "tgt_host": "mysql-ens-general-prod-1:4525",
+        "tgt_db_name": "",
+        "tgt_directory": "",
+        "skip_optimize": false,
+        "wipe_target": false,
+        "convert_innodb": false,
+        "dry_run": false,
+        "email_list": "testuser@ebi.ac.uk",
+        "start_date": null,
+        "end_date": null,
+        "user": "testuser",
+        "status": null,
+        "request_date": "2020-06-05T10:55:06Z"
     }
   },
   {
-    "model": "ensembl.production.dbcopy.requestjob",
+    "model": "dbcopy.requestjob",
     "pk": "ddbdc15a-07af-11ea-bdcd-9801a79243a5",
     "fields": {
-      "src_host": "mysql-ens-meta-prod-1:4483",
-      "src_incl_db": "ensembl_metadata",
-      "src_skip_db": "",
-      "src_incl_tables": "",
-      "src_skip_tables": "",
-      "tgt_host": "mysql-ens-sta-1:4519",
-      "tgt_db_name": "ensembl_metadata_99",
-      "tgt_directory": "",
-      "skip_optimize": false,
-      "wipe_target": false,
-      "convert_innodb": true,
-      "dry_run": false,
-      "email_list": "testuser@ebi.ac.uk",
-      "start_date": null,
-      "end_date": null,
-      "user": "testuser",
-      "status": null,
-      "request_date": "2020-06-08T09:55:06Z"
+        "src_host": "mysql-ens-meta-prod-1:4483",
+        "src_incl_db": "ensembl_metadata",
+        "src_skip_db": "",
+        "src_incl_tables": "",
+        "src_skip_tables": "",
+        "tgt_host": "mysql-ens-sta-1:4519",
+        "tgt_db_name": "ensembl_metadata_99",
+        "tgt_directory": "",
+        "skip_optimize": false,
+        "wipe_target": false,
+        "convert_innodb": true,
+        "dry_run": false,
+        "email_list": "testuser@ebi.ac.uk",
+        "start_date": null,
+        "end_date": null,
+        "user": "testuser",
+        "status": null,
+        "request_date": "2020-06-08T09:55:06Z"
     }
   },
   {
-    "model": "ensembl.production.dbcopy.transferLog",
+    "model": "dbcopy.transferLog",
     "pk": "1",
     "fields": {
       "job_id": "ddbdc15a-07af-11ea-bdcd-9801a79243a5",
@@ -141,11 +137,11 @@
       "end_date": "2019-11-18T16:33:13Z",
       "size": 78503684840,
       "retries": 0,
-      "message": null
+      "message" : null
     }
   },
   {
-    "model": "ensembl.production.dbcopy.transferLog",
+    "model": "dbcopy.transferLog",
     "pk": "2",
     "fields": {
       "job_id": "ddbdc15a-07af-11ea-bdcd-9801a79243a5",
@@ -157,12 +153,12 @@
       "start_date": "2019-11-18T16:33:13Z",
       "end_date": "2019-11-18T17:00:13Z",
       "size": 10664,
-      "retries": 0,
-      "message": null
+      "retries" : 0,
+      "message" : null
     }
   },
   {
-    "model": "ensembl.production.dbcopy.host",
+    "model": "dbcopy.host",
     "pk": "1",
     "fields": {
       "auto_id": 1,
@@ -173,7 +169,7 @@
     }
   },
   {
-    "model": "ensembl.production.dbcopy.host",
+    "model": "dbcopy.host",
     "pk": "2",
     "fields": {
       "name": "mysql-ens-sta-2",
@@ -183,7 +179,7 @@
     }
   },
   {
-    "model": "ensembl.production.dbcopy.host",
+    "model": "dbcopy.host",
     "pk": "99",
     "fields": {
       "name": "localhost",
@@ -193,7 +189,7 @@
     }
   },
   {
-    "model": "ensembl.production.dbcopy.host",
+    "model": "dbcopy.host",
     "pk": "3",
     "fields": {
       "name": "mysql-ens-general-dev-1",
@@ -203,21 +199,13 @@
     }
   },
   {
-    "model": "ensembl.production.dbcopy.host",
+    "model": "dbcopy.host",
     "pk": "4",
     "fields": {
       "name": "mysql-ens-general-dev-2",
       "port": 4586,
       "mysql_user": "ensro",
       "mysqld_file_owner": "ensmysql"
-    }
-  },
-  {
-    "model": "ensembl.production.dbcopy.group",
-    "pk": "1",
-    "fields": {
-      "host_id": 1,
-      "group_name": "Production"
     }
   }
 ]

@@ -9,8 +9,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-
-"""dbcopy URL Configuration
+"""
+Ensembl dbcopy URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.1/topics/http/urls/
@@ -26,8 +26,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
     path(f'admin/', admin.site.urls),
+    path(f'dbcopy/', include('ensembl.production.dbcopy.urls')),
+    path(f'api/dbcopy/', include('ensembl.production.dbcopy.api.urls')),
 ]
