@@ -21,7 +21,7 @@ class Dbs2Exclude(models.Model):
 
     class Meta:
         db_table = 'dbs_2_exclude'
-        #app_label = 'ensembl_dbcopy'
+        app_label = 'ensembl_dbcopy'
 
 
 class DebugLog(models.Model):
@@ -32,13 +32,13 @@ class DebugLog(models.Model):
 
     class Meta:
         db_table = 'debug_log'
-        # app_label = 'ensembl_dbcopy'
+        app_label = 'ensembl_dbcopy'
 
 
 class RequestJob(models.Model):
     class Meta:
         db_table = 'request_job'
-        #app_label = 'ensembl_dbcopy'
+        app_label = 'ensembl_dbcopy'
         verbose_name = "Copy job"
         verbose_name_plural = "Copy jobs"
 
@@ -116,7 +116,7 @@ class TransferLog(models.Model):
     class Meta:
         db_table = 'transfer_log'
         unique_together = (('job_id', 'tgt_host', 'table_schema', 'table_name'),)
-        #app_label = 'ensembl_dbcopy'
+        app_label = 'ensembl_dbcopy'
         verbose_name = 'TransferLog'
 
     auto_id = models.BigAutoField(primary_key=True)
@@ -149,7 +149,7 @@ class Host(models.Model):
     class Meta:
         db_table = 'host'
         unique_together = (('name', 'port'),)
-        #app_label = 'ensembl_dbcopy'
+        app_label = 'ensembl_dbcopy'
         verbose_name = 'Host'
 
     auto_id = models.BigAutoField(primary_key=True)
@@ -166,7 +166,7 @@ class Host(models.Model):
 class TargetHostGroup(models.Model):
     class Meta:
         db_table = 'target_host_group'
-        #app_label = 'ensembl_dbcopy'
+        app_label = 'ensembl_dbcopy'
         verbose_name = 'Hosts Target Group'
 
 
@@ -179,8 +179,8 @@ class TargetHostGroup(models.Model):
 
 class Group(models.Model):
     class Meta:
-        db_table = 'group'
-        #app_label = 'ensembl_dbcopy'
+        # db_table = 'dbcopy_group'
+        app_label = 'ensembl_dbcopy'
         verbose_name = 'Host Group'
 
     group_id = models.BigAutoField(primary_key=True)

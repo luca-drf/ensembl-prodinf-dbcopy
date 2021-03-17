@@ -9,13 +9,14 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django.urls import path
+from django.urls import path, include
 
-from .views import reset_failed_jobs,group_choice
+from .views import reset_failed_jobs, group_choice
 
 app_name = 'ensembl.production.dbcopy'
 
 urlpatterns = [
     path('reset_failed_jobs/<uuid:job_id>', reset_failed_jobs, name='reset_failed_jobs'),
     path('add', group_choice, name='group_choice'),
+    path(f'api', include('ensembl.production.dbcopy.api.urls')),
 ]

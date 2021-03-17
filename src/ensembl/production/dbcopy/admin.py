@@ -105,7 +105,10 @@ class OverallStatusFilter(SimpleListFilter):
 @admin.register(RequestJob)
 class RequestJobAdmin(admin.ModelAdmin):
     class Media:
-        js = ('js/multiselect.js',)
+        js = (
+            '//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
+            'js/multiselect.js'
+        )
         css = {
             'all': ('css/db_copy.css',)
         }

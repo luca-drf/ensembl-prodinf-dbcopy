@@ -14,4 +14,5 @@ from django.apps import AppConfig
 
 class EnsemblDbCopyConfig(AppConfig):
     name = 'ensembl.production.dbcopy'
-    verbose_name = "Ensembl DB Copy"
+    label = 'ensembl_dbcopy'
+    verbose_name = "Ensembl DBA(s) Copy"

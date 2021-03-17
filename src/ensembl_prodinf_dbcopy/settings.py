@@ -47,7 +47,7 @@ ROOT_URLCONF = 'ensembl_prodinf_dbcopy.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [Path.joinpath(BASE_DIR, 'templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -68,7 +68,7 @@ WSGI_APPLICATION = 'ensembl_prodinf_dbcopy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': Path.joinpath(BASE_DIR, 'dbcopy.sqlite3'),
+        'NAME': Path.joinpath(BASE_DIR.parent, 'db.sqlite3'),
     }
 }
 

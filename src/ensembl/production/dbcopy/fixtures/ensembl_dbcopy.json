@@ -52,7 +52,7 @@
     }
   },
   {
-    "model": "dbcopy.requestjob",
+    "model": "ensembl_dbcopy.requestjob",
     "pk": "2e7497e6-07af-11ea-bdcd-9801a79243a5",
     "fields": {
         "src_host": "mysql-ens-sta-2:4520",
@@ -76,7 +76,7 @@
     }
   },
   {
-    "model": "dbcopy.requestjob",
+    "model": "ensembl_dbcopy.requestjob",
     "pk": "8f084180-07ae-11ea-ace0-9801a79243a5",
     "fields": {
         "src_host": "mysql-ens-sta-1:4519",
@@ -100,7 +100,7 @@
     }
   },
   {
-    "model": "dbcopy.requestjob",
+    "model": "ensembl_dbcopy.requestjob",
     "pk": "ddbdc15a-07af-11ea-bdcd-9801a79243a5",
     "fields": {
         "src_host": "mysql-ens-meta-prod-1:4483",
@@ -124,7 +124,7 @@
     }
   },
   {
-    "model": "dbcopy.transferLog",
+    "model": "ensembl_dbcopy.transferLog",
     "pk": "1",
     "fields": {
       "job_id": "ddbdc15a-07af-11ea-bdcd-9801a79243a5",
@@ -141,7 +141,7 @@
     }
   },
   {
-    "model": "dbcopy.transferLog",
+    "model": "ensembl_dbcopy.transferLog",
     "pk": "2",
     "fields": {
       "job_id": "ddbdc15a-07af-11ea-bdcd-9801a79243a5",
@@ -158,7 +158,7 @@
     }
   },
   {
-    "model": "dbcopy.host",
+    "model": "ensembl_dbcopy.host",
     "pk": "1",
     "fields": {
       "auto_id": 1,
@@ -169,7 +169,7 @@
     }
   },
   {
-    "model": "dbcopy.host",
+    "model": "ensembl_dbcopy.host",
     "pk": "2",
     "fields": {
       "name": "mysql-ens-sta-2",
@@ -179,7 +179,7 @@
     }
   },
   {
-    "model": "dbcopy.host",
+    "model": "ensembl_dbcopy.host",
     "pk": "99",
     "fields": {
       "name": "localhost",
@@ -189,7 +189,7 @@
     }
   },
   {
-    "model": "dbcopy.host",
+    "model": "ensembl_dbcopy.host",
     "pk": "3",
     "fields": {
       "name": "mysql-ens-general-dev-1",
@@ -199,13 +199,21 @@
     }
   },
   {
-    "model": "dbcopy.host",
+    "model": "ensembl_dbcopy.host",
     "pk": "4",
     "fields": {
       "name": "mysql-ens-general-dev-2",
       "port": 4586,
       "mysql_user": "ensro",
       "mysqld_file_owner": "ensmysql"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.group",
+    "pk": "1",
+    "fields": {
+      "host_id": 1,
+      "group_name": "Production"
     }
   }
 ]

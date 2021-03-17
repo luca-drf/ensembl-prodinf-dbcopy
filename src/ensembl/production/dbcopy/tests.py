@@ -23,8 +23,6 @@ User = get_user_model()
 
 class RequestJobTest(APITestCase):
     """ Test module for RequestJob model """
-    multi_db = True
-    using_db = 'dbcopy'
     fixtures = ['ensembl_dbcopy']
 
     # Test requestjob endpoint
@@ -125,7 +123,7 @@ class RequestJobTest(APITestCase):
         self.client.login(username='testuser2', password='testgroup1234')
         response = self.client.get(reverse('tgt_host-list'), {'name': 'mysql-ens-sta'})
         response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response_dict), 1)
         # Test getting mysql-ens-general-dev-1 server
         response = self.client.get(reverse('tgt_host-list'), {'name': 'mysql-ens-general'})
         response_dict = json.loads(response.content.decode('utf-8'))
