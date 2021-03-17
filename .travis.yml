@@ -16,5 +16,4 @@ install:
   - pip install -r requirements-dev.txt
   - pip install coverage==4.5.1
 script:
-  - ./src/manage.py migrate
   - coverage run --source='.' ./src/manage.py test ensembl.production.dbcopy.tests
