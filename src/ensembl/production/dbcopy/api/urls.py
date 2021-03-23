@@ -12,11 +12,11 @@
 from django.conf.urls import url, include
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
-from rest_framework import permissions
-from rest_framework_nested import routers
+from rest_framework import permissions, routers
 from ensembl.production.dbcopy.api import viewsets
 from ensembl.production.dbcopy.api.views import ListDatabases, ListTables
 
+app_name = 'ensembl_dbcopy_api'
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -31,7 +31,7 @@ schema_view = get_schema_view(
 )
 
 # API router setup
-router = routers.DefaultRouter(trailing_slash=False)
+router = routers.SimpleRouter(trailing_slash=False)
 # Services URIs configuration
 
 router.register(prefix=r'requestjob',
@@ -46,6 +46,7 @@ router.register(prefix=r'tgt_host',
                 viewset=viewsets.TargetHostViewSet,
                 basename='tgt_host')
 
+print(router.urls)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),

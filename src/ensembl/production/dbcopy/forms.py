@@ -13,8 +13,6 @@
 import logging
 import re
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from django import forms
 from django.core.validators import RegexValidator
 
@@ -229,13 +227,13 @@ class SubmitForm(forms.ModelForm):
         if 'initial' in kwargs and 'from_request_job' in kwargs['initial']:
             kwargs['instance'] = RequestJob.objects.get(pk=kwargs['initial']['from_request_job'])
         super(SubmitForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        #self.helper = FormHelper()
         self.fields["email_list"].initial = self.user.email
         self.fields["user"].initial = self.user.username
-        self.helper.form_id = 'copy-job-form'
-        self.helper.form_class = 'copy-job-form'
-        self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', 'Submit'))
+        #self.helper.form_id = 'copy-job-form'
+        #self.helper.form_class = 'copy-job-form'
+        #self.helper.form_method = 'post'
+        #self.helper.add_input(Submit('submit', 'Submit'))
 
         target_host_group_list = _target_host_group(self.user.username)
         if len(target_host_group_list):

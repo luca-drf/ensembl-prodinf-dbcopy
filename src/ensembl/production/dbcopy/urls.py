@@ -13,10 +13,9 @@ from django.urls import path, include
 
 from .views import reset_failed_jobs, group_choice
 
-app_name = 'ensembl.production.dbcopy'
+app_name = 'ensembl_dbcopy'
 
 urlpatterns = [
-    path('reset_failed_jobs/<uuid:job_id>', reset_failed_jobs, name='reset_failed_jobs'),
-    path('add', group_choice, name='group_choice'),
-    path(f'api', include('ensembl.production.dbcopy.api.urls')),
+    path(f'reset_failed_jobs/<uuid:job_id>', reset_failed_jobs, name='reset_failed_jobs'),
+    path(f'add', group_choice, name='group_choice'),
 ]
