@@ -179,7 +179,7 @@ class TargetHostGroup(models.Model):
 
 class Group(models.Model):
     class Meta:
-        # db_table = 'dbcopy_group'
+        db_table = 'host_group'
         app_label = 'ensembl_dbcopy'
         verbose_name = 'Host Group'
 
