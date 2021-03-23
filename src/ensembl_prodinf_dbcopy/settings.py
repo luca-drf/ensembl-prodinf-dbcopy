@@ -29,7 +29,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'ensembl.production.dbcopy',
-    'rest_framework'
+    'rest_framework',
+    'django_admin_inline_paginator',
 ]
 
 MIDDLEWARE = [
@@ -68,7 +69,7 @@ WSGI_APPLICATION = 'ensembl_prodinf_dbcopy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': Path.joinpath(BASE_DIR.parent, 'db.sqlite3'),
+        'NAME': Path.joinpath(BASE_DIR.parent, 'dbcopy.sqlite3'),
     }
 }
 

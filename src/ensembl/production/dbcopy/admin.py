@@ -9,28 +9,17 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django import forms
 from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.utils import model_ngettext
-from django.contrib.auth.models import Group as UsersGroup
 from django.core.paginator import Paginator
 from django.db.models import Count, F, Q
 from django.utils.html import format_html
 
-from ensembl.production.dbcopy.forms import SubmitForm
-from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup
+from ensembl.production.dbcopy.forms import SubmitForm, GroupInlineForm
+from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
 from ensembl.production.djcore.admin import SuperUserAdmin
 from ensembl.production.djcore.filters import UserFilter
-
-
-class GroupInlineForm(forms.ModelForm):
-    class Meta:
-        model = Group
-        fields = ('group_name',)
-
-    group_name = forms.ModelChoiceField(queryset=UsersGroup.objects.all().order_by('name'), to_field_name='name',
-                                        empty_label='Please Select', required=True)
 
 
 class GroupInline(admin.TabularInline):
@@ -100,6 +89,18 @@ class OverallStatusFilter(SimpleListFilter):
         elif self.value() == 'Submitted':
             qs = queryset.filter(end_date__isnull=True, status__isnull=True)
             return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)
+from django_admin_inline_paginator.admin import TabularInlinePaginated
+
+class TransferLogInline(TabularInlinePaginated):
+    model = TransferLog
+    per_page = 30
+    fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'table_status')
+    readonly_fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'table_status')
+    can_delete = False
+
+    def has_add_permission(self, request, obj):
+        # TODO add superuser capability to add / copy an existing line / reset timeline to tweak copy job
+        return False
 
 
 @admin.register(RequestJob)
@@ -114,6 +115,7 @@ class RequestJobAdmin(admin.ModelAdmin):
         }
 
     actions = ['resubmit_jobs', ]
+    inlines = (TransferLogInline, )
 
     def resubmit_jobs(self, request, queryset):
         for query in queryset:
@@ -138,11 +140,8 @@ class RequestJobAdmin(admin.ModelAdmin):
     list_filter = ('tgt_host', 'src_host', UserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
 
-    def has_add_permission(self, request):
-        return request.user.is_staff
-
     def has_change_permission(self, request, obj=None):
-        return request.user.is_staff
+        return False
 
     def has_module_permission(self, request):
         return request.user.is_staff
@@ -165,10 +164,11 @@ class RequestJobAdmin(admin.ModelAdmin):
                     tgt_host__contains=search_query) | Q(renamed_table_schema__contains=search_query))
         else:
             transfers_logs = self.get_object(request, object_id).transfer_logs
-        paginator = Paginator(transfers_logs.order_by(F('end_date').asc(nulls_first=True), F('auto_id')), 30)
-        page_number = request.GET.get('page', 1)
-        page = paginator.page(page_number)
+        # paginator = Paginator(transfers_logs.order_by(F('end_date').asc(nulls_first=True), F('auto_id')), 30)
+        # page_number = request.GET.get('page', 1)
+        # page = paginator.page(page_number)
         context['transfer_logs'] = page
+        context['label_create'] = 'Duplicate/Update' if 'from_request_job' in request.GET else 'Add'
         if transfers_logs.filter(end_date__isnull=True):
             context["running_copy"] = transfers_logs.filter(end_date__isnull=True).order_by(
                 F('end_date').desc(nulls_first=True)).earliest('auto_id')
@@ -193,12 +193,12 @@ class RequestJobAdmin(admin.ModelAdmin):
         pass
 
     def log_deletion(self, request, obj, obj_display):
-        if obj.status != 'Creating Requests' and obj.status != 'Processing Requests':
+        if obj.status not in ('Creating Requests', 'Processing Requests'):
             super().log_deletion(request, obj, obj_display)
 
     def overall_status(self, obj):
         return format_html(
             '<div class="overall_status {}">{}</div>',
             obj.overall_status,
-            obj.overall_status,
+            obj.overall_status
         )

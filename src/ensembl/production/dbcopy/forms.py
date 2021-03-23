@@ -19,7 +19,7 @@ from django.core.validators import RegexValidator
 from ensembl.production.djcore.forms import TrimmedCharField, ListFieldRegexValidator, EmailListFieldValidator
 from ensembl.production.dbcopy.api.views import get_database_set  # , get_engine
 from ensembl.production.dbcopy.models import RequestJob, Group, Host, TargetHostGroup
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group as UsersGroup
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
@@ -250,4 +250,10 @@ class SubmitForm(forms.ModelForm):
             self.fields = OrderedDict(field_order)
 
 
-     
+class GroupInlineForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ('group_name',)
+
+    group_name = forms.ModelChoiceField(queryset=UsersGroup.objects.all().order_by('name'), to_field_name='name',
+                                        empty_label='Please Select', required=True)

@@ -46,7 +46,6 @@ router.register(prefix=r'tgt_host',
                 viewset=viewsets.TargetHostViewSet,
                 basename='tgt_host')
 
-print(router.urls)
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),
