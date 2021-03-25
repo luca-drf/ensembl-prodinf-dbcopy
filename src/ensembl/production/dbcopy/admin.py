@@ -12,11 +12,10 @@
 from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.utils import model_ngettext
-from django.core.paginator import Paginator
 from django.db.models import Count, F, Q
 from django.utils.html import format_html
-
-from ensembl.production.dbcopy.forms import SubmitForm, GroupInlineForm
+from django_admin_inline_paginator.admin import TabularInlinePaginated
+from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
 from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
 from ensembl.production.djcore.admin import SuperUserAdmin
 from ensembl.production.djcore.filters import UserFilter
@@ -89,14 +88,17 @@ class OverallStatusFilter(SimpleListFilter):
         elif self.value() == 'Submitted':
             qs = queryset.filter(end_date__isnull=True, status__isnull=True)
             return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)
-from django_admin_inline_paginator.admin import TabularInlinePaginated
+
+
+
 
 class TransferLogInline(TabularInlinePaginated):
     model = TransferLog
     per_page = 30
-    fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'table_status')
-    readonly_fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'table_status')
+    fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'table_status')
+    readonly_fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'table_status')
     can_delete = False
+    ordering = F('end_date').asc(nulls_first=True), F('auto_id')
 
     def has_add_permission(self, request, obj):
         # TODO add superuser capability to add / copy an existing line / reset timeline to tweak copy job
@@ -107,38 +109,25 @@ class TransferLogInline(TabularInlinePaginated):
 class RequestJobAdmin(admin.ModelAdmin):
     class Media:
         js = (
-            '//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-            'js/multiselect.js'
+            # '//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
+            'js/dbcopy/multiselect.js',
         )
         css = {
             'all': ('css/db_copy.css',)
         }
 
     actions = ['resubmit_jobs', ]
-    inlines = (TransferLogInline, )
-
-    def resubmit_jobs(self, request, queryset):
-        for query in queryset:
-            newJob = RequestJob.objects.get(pk=query.pk)
-            newJob.pk = None
-            newJob.request_date = None
-            newJob.start_date = None
-            newJob.end_date = None
-            newJob.status = None
-            newJob.save()
-            message = 'Job {} resubmitted [new job_id {}]'.format(query.pk, newJob.pk)
-            messages.add_message(request, messages.SUCCESS, message, extra_tags='', fail_silently=False)
-
-    resubmit_jobs.short_description = 'Resubmit Jobs'
-
-    form = SubmitForm
-
+    inlines = (TransferLogInline,)
+    form = RequestJobForm
     list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'user',
                     'start_date', 'end_date', 'request_date', 'overall_status')
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'user',
                      'start_date', 'end_date', 'request_date')
     list_filter = ('tgt_host', 'src_host', UserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
+
+    def get_queryset(self, request):
+        return super().get_queryset(request)
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -155,6 +144,20 @@ class RequestJobAdmin(admin.ModelAdmin):
         form.user = request.user
         return form
 
+    def resubmit_jobs(self, request, queryset):
+        for query in queryset:
+            newJob = RequestJob.objects.get(pk=query.pk)
+            newJob.pk = None
+            newJob.request_date = None
+            newJob.start_date = None
+            newJob.end_date = None
+            newJob.status = None
+            newJob.save()
+            message = 'Job {} resubmitted [new job_id {}]'.format(query.pk, newJob.pk)
+            messages.add_message(request, messages.SUCCESS, message, extra_tags='', fail_silently=False)
+
+    resubmit_jobs.short_description = 'Resubmit Jobs'
+
     def change_view(self, request, object_id, form_url='', extra_context=None):
         context = extra_context or {}
         search_query = request.GET.get('search_box')
@@ -167,7 +170,7 @@ class RequestJobAdmin(admin.ModelAdmin):
         # paginator = Paginator(transfers_logs.order_by(F('end_date').asc(nulls_first=True), F('auto_id')), 30)
         # page_number = request.GET.get('page', 1)
         # page = paginator.page(page_number)
-        context['transfer_logs'] = page
+        # context['transfer_logs'] = page
         context['label_create'] = 'Duplicate/Update' if 'from_request_job' in request.GET else 'Add'
         if transfers_logs.filter(end_date__isnull=True):
             context["running_copy"] = transfers_logs.filter(end_date__isnull=True).order_by(
@@ -202,3 +205,13 @@ class RequestJobAdmin(admin.ModelAdmin):
             obj.overall_status,
             obj.overall_status
         )
+
+    def get_fields(self, request, obj=None):
+        return super().get_fields(request, obj)
+
+    def get_inlines(self, request, obj):
+        """Hook for specifying custom inlines."""
+        if obj:
+            return super().get_inline(request, obj)
+        else:
+            return []

@@ -12,46 +12,42 @@
 
 import logging
 import re
+from collections import OrderedDict
 
 from django import forms
-from django.core.validators import RegexValidator
-
-from ensembl.production.djcore.forms import TrimmedCharField, ListFieldRegexValidator, EmailListFieldValidator
-from ensembl.production.dbcopy.api.views import get_database_set  # , get_engine
-from ensembl.production.dbcopy.models import RequestJob, Group, Host, TargetHostGroup
 from django.contrib.auth.models import User, Group as UsersGroup
-from collections import OrderedDict
+from django.core.validators import RegexValidator
+from ensembl.production.dbcopy.lookups import get_database_set
+from ensembl.production.dbcopy.models import RequestJob, Group, Host, TargetHostGroup
+from ensembl.production.djcore.forms import TrimmedCharField, EmailListFieldValidator
 
 logger = logging.getLogger(__name__)
 
 
-
 def _target_host_group(username):
+    # get groups, current user belongs to
+    user_groups = [each_group.name
+                   for user_obj in User.objects.filter(username__contains=username).prefetch_related('groups').all()
+                   for each_group in user_obj.groups.all()
+                   ]
 
-    # get groups, current user belongs to 
-    user_groups = [   each_group .name 
-        for user_obj in User.objects.filter(username__contains=username).prefetch_related('groups').all()
-        for each_group in user_obj.groups.all()
-    ]
+    # get all host user can copy  based on assigned group
+    user_hosts_ids = [host.auto_id for host in Host.objects.filter(groups__group_name__in=user_groups)]
 
-    #get all host user can copy  based on assigned group 
-    user_hosts_ids = [ host.auto_id for host in Host.objects.filter(groups__group_name__in=user_groups) ]  
-    
-    #get all host names that target group contains
-    target_host_dict = {} 
+    # get all host names that target group contains
+    target_host_dict = {}
     for each_group in TargetHostGroup.objects.all():
         target_host_dict[each_group.target_group_name] = ''
         for each_host in each_group.target_host.all():
-            target_host_dict[each_group.target_group_name] += each_host.name +':'+str(each_host.port)+','
-            
-     
-    #get all the target group that has access to host from authgroup
-    target_groups =  list(set([ (
-                            target_host_dict[groups.target_group_name], 
-                            groups.target_group_name
-                            )  
-                        for groups in TargetHostGroup.objects.filter(target_host__auto_id__in=user_hosts_ids) 
-                    ]))
+            target_host_dict[each_group.target_group_name] += each_host.name + ':' + str(each_host.port) + ','
+
+    # get all the target group that has access to host from authgroup
+    target_groups = list(set([(
+        target_host_dict[groups.target_group_name],
+        groups.target_group_name
+    )
+        for groups in TargetHostGroup.objects.filter(target_host__auto_id__in=user_hosts_ids)
+    ]))
     target_groups.insert(0, ('', '--select target group--'))
     return target_groups
 
@@ -68,61 +64,93 @@ def _apply_db_names_filter(db_names, all_db_names):
     return db_names
 
 
-class SubmitForm(forms.ModelForm):
+from dal import autocomplete, forward
+
+
+class RequestJobForm(forms.ModelForm):
     class Meta:
         model = RequestJob
         exclude = ('job_id', 'tgt_directory')
-        # fields = ["src_host","src_incl_db","src_skip_db","src_incl_tables",
-        #             "src_skip_tables","tgt_host","tgt_db_name", "skip_optimize",
-        #             "email_list"]
 
     src_host = TrimmedCharField(
         label="Source Host ",
         help_text="host:port",
-        max_length=2048,
+        # max_length=2048,
         required=True,
+        # queryset=Host.objects.none(),
         validators=[
             RegexValidator(
                 regex="^[\w-]+:[0-9]{4}",
                 message="Source Host should be formatted like this host:port"
             )
-        ])
+        ],
+        widget=autocomplete.Select2(url='ensembl_dbcopy:src-host-autocomplete',
+                                    attrs={
+                                        'data-placeholder': 'Start typing..',
+                                        # 'data-minimum-input-length': 2,
+                                        'data-result-html': True
+                                    })
+    )
+
     tgt_host = TrimmedCharField(
         label="Target Hosts",
         help_text="Host1:port1,Host2:port2",
-        max_length=2048,
         required=True,
         validators=[
-            ListFieldRegexValidator(
-                regex="^[\w-]+:[0-9]{4}",
-                message="Target Hosts should be formatted like this host:port or host1:port1,host2:port2"
-            )
-        ])
+            # ListFieldRegexValidator(
+            #    regex="^[\w-]+:[0-9]{4}",
+            #    message="Target Hosts should be formatted like this host:port or host1:port1,host2:port2"
+            # )
+        ],
+        # queryset=Host.objects.none(),
+        widget=autocomplete.TagSelect2(url='ensembl_dbcopy:tgt-host-autocomplete',
+                                       attrs={
+                                           'data-placeholder': 'Start typing..',
+                                           # 'data-minimum-input-length': 2,
+                                           'data-result-html': True
+                                       })
+    )
+
     src_incl_db = TrimmedCharField(
         label="Databases to copy",
         help_text='db1,db2,.. or %variation_99% ',
         max_length=2048,
-        required=False)
+        required=False,
+        widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-autocomplete',
+                                       forward=[forward.Field('src_host', 'db_host')])
+    )
+
     src_skip_db = TrimmedCharField(
         label="Databases to exclude",
         help_text='db1,db2 or %mart%',
         max_length=2048,
-        required=False)
+        required=False,
+        widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-autocomplete',
+                                       forward=[forward.Field('src_host', 'db_host')]))
+
     src_incl_tables = TrimmedCharField(
         label="Only Copy these tables",
         help_text='table1,table2,..',
         max_length=2048,
-        required=False)
+        required=False,
+        widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-table-autocomplete',
+                                       forward=[forward.Field('src_host', 'db_host'),
+                                                forward.Field('src_incl_db')]))
     src_skip_tables = TrimmedCharField(
         label="Skip these tables",
         help_text='table1,table2,..',
         max_length=2048,
-        required=False)
+        required=False,
+        widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-table-autocomplete',
+                                       forward=[forward.Field('src_host', 'db_host'),
+                                                forward.Field('src_incl_db')]))
+
     tgt_db_name = TrimmedCharField(
         label="Name of databases on Target Hosts",
         help_text='db1,db2,..',
         max_length=2048,
         required=False)
+
     email_list = TrimmedCharField(
         label="Email list",
         help_text='Comma separated list',
@@ -209,10 +237,13 @@ class SubmitForm(forms.ModelForm):
                     self.add_error('tgt_host', "You are not allowed to copy to " + hostname)
 
     def clean(self):
+        print('inclean')
         cleaned_data = super().clean()
+
         src_host = cleaned_data.get('src_host', '')
         # wipe_target = cleaned_data.get('wipe_target', False)
         # src_incl_tables = cleaned_data.get('src_incl_tables', '')
+        print(cleaned_data.get('tgt_host'))
         tgt_hosts = _text_field_as_set(cleaned_data.get('tgt_host', ''))
         src_dbs = _text_field_as_set(cleaned_data.get('src_incl_db', ''))
         src_skip_dbs = _text_field_as_set(cleaned_data.get('src_skip_db', ''))
@@ -222,31 +253,32 @@ class SubmitForm(forms.ModelForm):
         self._validate_source_and_target(src_host, tgt_hosts, src_dbs, src_skip_dbs, tgt_db_names)
         # self._validate_wipe_target(wipe_target, src_dbs, src_skip_dbs, tgt_hosts, tgt_db_names, src_incl_tables)
         self._validate_user_permission(tgt_hosts)
+        return self.cleaned_data
+        print('outclean')
 
     def __init__(self, *args, **kwargs):
         if 'initial' in kwargs and 'from_request_job' in kwargs['initial']:
             kwargs['instance'] = RequestJob.objects.get(pk=kwargs['initial']['from_request_job'])
-        super(SubmitForm, self).__init__(*args, **kwargs)
-        #self.helper = FormHelper()
+        super(RequestJobForm, self).__init__(*args, **kwargs)
+        # self.helper = FormHelper()
         self.fields["email_list"].initial = self.user.email
         self.fields["user"].initial = self.user.username
-        #self.helper.form_id = 'copy-job-form'
-        #self.helper.form_class = 'copy-job-form'
-        #self.helper.form_method = 'post'
-        #self.helper.add_input(Submit('submit', 'Submit'))
+        # self.helper.form_id = 'copy-job-form'
+        # self.helper.form_class = 'copy-job-form'
+        # self.helper.form_method = 'post'
+        # self.helper.add_input(Submit('submit', 'Submit'))
 
         target_host_group_list = _target_host_group(self.user.username)
         if len(target_host_group_list):
-
             tgt_group_host = forms.CharField()
             tgt_group_host.widget = forms.Select(choices=target_host_group_list,
-                                                    attrs={'onchange': "targetHosts()"}
-                                                )
+                                                 attrs={'onchange': "targetHosts()"}
+                                                 )
             tgt_group_host.label = 'Host Target Group'
-            tgt_group_host.help_text="Select Group to autofill the target host"
+            tgt_group_host.help_text = "Select Group to autofill the target host"
 
             field_order = list(self.fields.items())
-            field_order.insert(5, ("tgt_group_host", tgt_group_host ))
+            field_order.insert(5, ("tgt_group_host", tgt_group_host))
             self.fields = OrderedDict(field_order)
 
 

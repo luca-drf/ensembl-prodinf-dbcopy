@@ -27,9 +27,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from ajax_select import urls as ajax_select_urls
 
 urlpatterns = [
     path(f'', admin.site.urls),
     path(f'dbcopy/', include('ensembl.production.dbcopy.urls')),
-    path(f'api/dbcopy/', include('ensembl.production.dbcopy.api.urls')),
+    path(f'dbcopy/select/', include(ajax_select_urls), name="ajax_lookup" ),
 ]

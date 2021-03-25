@@ -9,6 +9,13 @@
     </div>
 {% endblock %}
 
+{% block content %}
+    {{  block.super }}
+
+{% endblock %}
+{% block after_related_objects %}
+
+{% endblock %}
 {% block object-tools %}
     {% if change %}
     <a href="{% url 'admin:ensembl_dbcopy_requestjob_changelist' %}" class="button btn btn-secondary" role="button">Back

@@ -22,6 +22,8 @@ ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
+    'dal',
+    'dal_select2',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -31,6 +33,7 @@ INSTALLED_APPS = [
     'ensembl.production.dbcopy',
     'rest_framework',
     'django_admin_inline_paginator',
+    'ajax_select',
 ]
 
 MIDDLEWARE = [

@@ -40,4 +40,3 @@ def group_choice(request, *args, **kwargs):
 
     url = reverse('admin:ensembl_dbcopy_group_changelist')
     return redirect(url)
-
