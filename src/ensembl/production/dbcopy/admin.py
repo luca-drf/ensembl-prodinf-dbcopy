@@ -80,7 +80,6 @@ class OverallStatusFilter(SimpleListFilter):
                 count_transfer=Count('transfer_logs')).filter(count_transfer__gt=0)
         elif self.value() == 'Complete':
             qs = queryset.filter(end_date__isnull=False, status__isnull=False)
-            print(qs.filter(transfer_logs__end_date__isnull=False).annotate(count_transfer=Count('transfer_logs')))
             return qs.exclude(transfer_logs__end_date__isnull=True)
         elif self.value() == 'Running':
             qs = queryset.filter(end_date__isnull=True, status__isnull=True)

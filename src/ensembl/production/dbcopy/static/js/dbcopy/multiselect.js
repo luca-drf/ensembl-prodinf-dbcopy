@@ -7,23 +7,60 @@
 
     var TableNames = [];
 
+    var SrcHostResults;
+    var change = new Event('change');
+
     $(function () {
         $(".field-wipe_target").hide();
         $(".field-wipe_target").hide();
         $(".field-convert_innodb").hide();
         $(".field-dry_run").hide();
+        const srcHostElem = $("#id_src_host");
+        const tgtHostElem = $("#id_tgt_host");
+        if (srcHostElem.val() && tgtHostElem.val()) {
+            SrcHostDetails = hostStringToDetails(srcHostElem.val());
+            TgtHostsDetails = getHostsDetails(tgtHostElem);
+            updateAlerts();
+        }
+        $("#id_src_host").dispatchEvent(change);
+        $("#id_src_host").on('change', function(event, ui) {
+            alert('Changed!!!');
+            console.log("id src _host changed triggered ", $("#id_src_host").val());
+            $(this).removeClass("is-invalid");
+            SrcHostDetails = hostStringToDetails($(this).val());
+            updateAlerts();
+        });
+    });
+    console.log("idtgt_host", $("#id_tgt_host"), $("#requestjob_form select"));
+    $('#requestjob_form select').change(function(){
+        console.log("idtgt_host changed triggered");
+        $(this).removeClass("is-invalid");
+        TgtHostsDetails = getHostsDetails(this);
+        updateAlerts();
+    });
+    $("#id_src_incl_db").change(function(){
+        $(this).removeClass("is-invalid");
+        updateAlerts();
+    });
+    $("#id_src_skip_db").change(function() {
+        $(this).removeClass("is-invalid");
+        updateAlerts();
+    });
+    $("#id_src_incl_tables").change(function() {
+        $(this).removeClass("is-invalid");
+        updateTableAlert(true);
+        // // Commented until Wipe target is enabled by DBAs
+        // checkWipeTarget();
+    });
+    $("#id_src_skip_tables").change(function(){
+        $(this).removeClass("is-invalid");
+        updateTableAlert(true);
     });
     $("#id_tgt_db_name").change(function () {
         $(this).removeClass("is-invalid");
         updateAlerts();
     });
-    const srcHostElem = $("#id_src_host");
-    const tgtHostElem = $("#id_tgt_host");
-    if (srcHostElem.length && tgtHostElem.length) {
-        SrcHostDetails = hostStringToDetails(srcHostElem.val());
-        TgtHostsDetails = getHostsDetails(tgtHostElem);
-        updateAlerts();
-    }
+
     // Commented until Wipe target feature is enabled by DBAs
     //
     function checkWipeTarget() {
