@@ -10,7 +10,7 @@
     var SrcHostResults;
     var change = new Event('change');
 
-    $(function () {
+    $(document).ready(function () {
         $(".field-wipe_target").hide();
         $(".field-wipe_target").hide();
         $(".field-convert_innodb").hide();
@@ -19,53 +19,53 @@
         const tgtHostElem = $("#id_tgt_host");
         if (srcHostElem.val() && tgtHostElem.val()) {
             SrcHostDetails = hostStringToDetails(srcHostElem.val());
-            TgtHostsDetails = getHostsDetails(tgtHostElem);
+            TgtHostsDetails = getHostsDetails(tgtHostElem.val());
             updateAlerts();
         }
-        $("#id_src_host").dispatchEvent(change);
-        $("#id_src_host").on('change', function(event, ui) {
-            alert('Changed!!!');
-            console.log("id src _host changed triggered ", $("#id_src_host").val());
+        // $("#id_src_host").dispatchEvent(change);
+        $("#id_src_host").on('change', function() {
+            console.log("id src _host changed triggered ", $(this).val());
             $(this).removeClass("is-invalid");
             SrcHostDetails = hostStringToDetails($(this).val());
+            console.log("src Host Details ", SrcHostDetails);
+            updateAlerts();
+        });
+        $('#id_tgt_host').change(function(){
+            console.log("idtgt_host changed triggered");
+            $(this).removeClass("is-invalid");
+            TgtHostsDetails = getHostsDetails($(this).val());
+            updateAlerts();
+        });
+        $("#id_src_incl_db").change(function(){
+            $(this).removeClass("is-invalid");
+            updateAlerts();
+        });
+        $("#id_src_skip_db").change(function() {
+            $(this).removeClass("is-invalid");
+            updateAlerts();
+        });
+        $("#id_src_incl_tables").change(function() {
+            $(this).removeClass("is-invalid");
+            updateTableAlert(true);
+            // // Commented until Wipe target is enabled by DBAs
+            // checkWipeTarget();
+        });
+        $("#id_src_skip_tables").change(function(){
+            $(this).removeClass("is-invalid");
+            updateTableAlert(true);
+        });
+        $("#id_tgt_db_name").change(function () {
+            $(this).removeClass("is-invalid");
             updateAlerts();
         });
     });
-    console.log("idtgt_host", $("#id_tgt_host"), $("#requestjob_form select"));
-    $('#requestjob_form select').change(function(){
-        console.log("idtgt_host changed triggered");
-        $(this).removeClass("is-invalid");
-        TgtHostsDetails = getHostsDetails(this);
-        updateAlerts();
-    });
-    $("#id_src_incl_db").change(function(){
-        $(this).removeClass("is-invalid");
-        updateAlerts();
-    });
-    $("#id_src_skip_db").change(function() {
-        $(this).removeClass("is-invalid");
-        updateAlerts();
-    });
-    $("#id_src_incl_tables").change(function() {
-        $(this).removeClass("is-invalid");
-        updateTableAlert(true);
-        // // Commented until Wipe target is enabled by DBAs
-        // checkWipeTarget();
-    });
-    $("#id_src_skip_tables").change(function(){
-        $(this).removeClass("is-invalid");
-        updateTableAlert(true);
-    });
-    $("#id_tgt_db_name").change(function () {
-        $(this).removeClass("is-invalid");
-        updateAlerts();
-    });
+
 
     // Commented until Wipe target feature is enabled by DBAs
     //
     function checkWipeTarget() {
-        const sourceDBNames = getSplitNames("#id_src_incl_db");
-        const targetDBNames = getSplitNames("#id_tgt_db_name");
+        const sourceDBNames = $("#id_src_incl_db").val();
+        const targetDBNames = $("#id_tgt_db_name").val();
         if (!(sourceDBNames.length || targetDBNames.length)) {
             $("#id_wipe_target").prop("disabled", "true");
         } else {
@@ -146,9 +146,10 @@
         return details.name + ":" + details.port;
     }
 
-    function getHostsDetails(elem) {
-        let serverNames = getSplitNames(elem);
-        return $.map(serverNames, function (val, i) {
+    function getHostsDetails(host) {
+        console.log('getHostsDetails', host);
+        // let serverNames = getSplitNames(host);
+        return $.map(host, function (val, i) {
             return hostStringToDetails(val);
         });
     }
@@ -245,11 +246,18 @@
     }
 
     function updateAlerts() {
+        console.log('tgtDBNames', $("#id_tgt_db_name").val());
         const tgtDBNames = getSplitNames("#id_tgt_db_name");
-        const inclDBNames = getSplitNames("#id_src_incl_db");
-        const skipDBNames = getSplitNames("#id_src_skip_db");
+        console.log('tgtDBNames', tgtDBNames, $("#id_tgt_db_name").val());
+        console.log('inclDBNames', $("#id_src_incl_db").val());
+        // Now is already an array
+        const inclDBNames = $("#id_src_incl_db").val();
+        console.log('inclDBNames', inclDBNames);
+        console.log('skipDBNames', $("#id_src_skip_db").val());
+        const skipDBNames = $("#id_src_skip_db").val();
+        console.log('skipDBNames', skipDBNames, $("#id_src_skip_db").val());
 
-        if (SrcHostDetails.name) {
+        if (SrcHostDetails && SrcHostDetails.name) {
             if (tgtDBNames.length) {
                 DBNames = tgtDBNames;
                 updateTableAlert();
@@ -273,8 +281,8 @@
 
     function updateTableAlert(tableOnly) {
         if (DBNames.length == 1) {
-            const inclTables = getSplitNames("#id_src_incl_tables");
-            const skipTables = getSplitNames("#id_src_skip_tables");
+            const inclTables = $("#id_src_incl_tables").val();
+            const skipTables = $("#id_src_skip_tables").val();
 
             checkTableNames(inclTables, SrcHostDetails, DBNames[0], function (foundTableNames) {
                 TableNames = arrayDiff(foundTableNames, skipTables);
@@ -320,7 +328,7 @@
     }
 
     function rebuildAlerts(tableOnly) {
-        if (SrcHostDetails.name && TgtHostsDetails.length && DBNames.length) {
+        if (SrcHostDetails && SrcHostDetails.name && TgtHostsDetails && TgtHostsDetails.length && DBNames.length) {
             $("#submit-id-submit").prop("disabled", "true");
             $("#table-alert").remove();
             if (TableNames.length && TgtHostsDetails.length == 1) {
