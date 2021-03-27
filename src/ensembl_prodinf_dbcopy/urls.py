@@ -30,7 +30,7 @@ from django.urls import path, include
 from ajax_select import urls as ajax_select_urls
 
 urlpatterns = [
+    # path('jet/', include('jet.urls', 'jet')),  # Django JET URLS
     path(f'', admin.site.urls),
     path(f'dbcopy/', include('ensembl.production.dbcopy.urls')),
-    path(f'dbcopy/select/', include(ajax_select_urls), name="ajax_lookup" ),
 ]

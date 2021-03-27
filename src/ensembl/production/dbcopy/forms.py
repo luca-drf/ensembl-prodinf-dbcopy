@@ -70,10 +70,13 @@ from dal import autocomplete, forward
 class RequestJobForm(forms.ModelForm):
     class Meta:
         model = RequestJob
-        # exclude = ('job_id', 'tgt_directory')
+        exclude = ('job_id', 'tgt_directory', 'overall_status')
         fields = ('src_host', 'tgt_host', 'email_list',
                   'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
-                  'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
+                  'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run', 'overall_status')
+        widgets = {
+            'overall_status': forms.HiddenInput()
+        }
 
     src_host = TrimmedCharField(
         label="Source Host ",

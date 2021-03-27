@@ -24,6 +24,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'dal',
     'dal_select2',
+    # 'jet',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -33,7 +34,6 @@ INSTALLED_APPS = [
     'ensembl.production.dbcopy',
     'rest_framework',
     'django_admin_inline_paginator',
-    'ajax_select',
 ]
 
 MIDDLEWARE = [
@@ -72,7 +72,7 @@ WSGI_APPLICATION = 'ensembl_prodinf_dbcopy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': Path.joinpath(BASE_DIR.parent, 'dbcopy.sqlite3'),
+        'NAME': str(Path.joinpath(BASE_DIR.parent, 'dbcopy.sqlite3')),
     }
 }
 

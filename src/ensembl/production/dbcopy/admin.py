@@ -125,6 +125,7 @@ class RequestJobAdmin(admin.ModelAdmin):
     fields = ('overall_status', 'src_host', 'tgt_host', 'email_list',
               'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name')
               # 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
+    readonly_fields = ('overall_status', 'request_date', 'start_date', 'end_date')
 
 
     def get_queryset(self, request):
