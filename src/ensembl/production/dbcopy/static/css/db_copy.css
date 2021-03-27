@@ -1,4 +1,4 @@
-.tablekey {
+/* .tablekey {
   background-color: lightgray;
   text-align : right;
   font-weight: bold;
@@ -10,43 +10,7 @@
   padding: 5px 5px 5px 5px;
   border-radius: 4px;
 }
-.overall_status {
-  font-weight: bold;
-  padding: 0.75em;
-}
 
-.Complete {
-  background-color: lightgreen;
-}
-.Incomplete {
-  background-color: lightblue;
-}
-.Submitted, .Scheduled {
-  background-color: lightblue;
-}
-.Running {
-  background-color: gold;
-}
-.Failed{
-  background-color: lightpink;
-}
-.progress {
-  background-color: #bdd3fb;
-  border-radius: 0;
-  box-shadow: none;
-  height: 29px;
-  margin-bottom: 0;
-  overflow: hidden;
-  padding: 0 !important;
-  margin-top: 1px;
-}
-.progress-bar > .job-completed {
-  font-size:1.0rem;
-  left:8px;
-  position:absolute;
-  top:3px;
-  white-space: nowrap;
-}
 .table{
   table-layout:fixed;
 }
@@ -73,4 +37,74 @@
 }
 .tabular.inline-related .empty-form {
   display: none;
+}*/
+/* Alerts */
+#db-alert, #table-alert {
+    max-height: 400px;
+    overflow-y: scroll;
+}
+
+.form-row input[type='text'], .form-row label {
+    min-width: 29em !important;
+}
+.field-overall_status {
+    min-width: 29em !important;
+}
+/* Status */
+.overall_status {
+    font-weight: bold;
+    padding: 0.5em;
+    float: left;
+}
+
+.Complete {
+    background-color: lightgreen;
+}
+
+.Incomplete {
+    background-color: lightblue;
+}
+
+.Submitted, .Scheduled {
+    background-color: lightblue;
+}
+
+.Running {
+    background-color: gold;
+}
+
+.Failed {
+    background-color: lightpink;
+}
+
+.progress {
+    background-color: #bdd3fb;
+    border-radius: 0;
+    box-shadow: none;
+    height: 29px;
+    margin-bottom: 0;
+    overflow: hidden;
+    padding: 0 !important;
+    margin-top: 1px;
+}
+
+.progress-bar > .job-completed {
+    font-size: 1.0rem;
+    left: 8px;
+    position: absolute;
+    top: 3px;
+    white-space: nowrap;
+}
+
+/* DAL CSS */
+.select2-container {
+    min-width: 30em !important;
+}
+
+/* in case of Django-jet usage do not display the jet init fields */
+.select2-container--default + .select2-container--jet {
+    display: none;
+}
+
+.closelink {
 }

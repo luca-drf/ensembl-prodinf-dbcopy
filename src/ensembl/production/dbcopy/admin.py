@@ -89,8 +89,6 @@ class OverallStatusFilter(SimpleListFilter):
             return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)
 
 
-
-
 class TransferLogInline(TabularInlinePaginated):
     model = TransferLog
     per_page = 30
@@ -119,11 +117,15 @@ class RequestJobAdmin(admin.ModelAdmin):
     inlines = (TransferLogInline,)
     form = RequestJobForm
     list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'user',
-                    'start_date', 'end_date', 'request_date', 'overall_status')
+                    'request_date', 'overall_status')
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'user',
                      'start_date', 'end_date', 'request_date')
     list_filter = ('tgt_host', 'src_host', UserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
+    fields = ('overall_status', 'src_host', 'tgt_host', 'email_list',
+              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name')
+              # 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
+
 
     def get_queryset(self, request):
         return super().get_queryset(request)
@@ -211,6 +213,6 @@ class RequestJobAdmin(admin.ModelAdmin):
     def get_inlines(self, request, obj):
         """Hook for specifying custom inlines."""
         if obj:
-            return super().get_inline(request, obj)
+            return super().get_inlines(request, obj)
         else:
             return []

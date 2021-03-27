@@ -19,7 +19,7 @@ from django.contrib.auth.models import User, Group as UsersGroup
 from django.core.validators import RegexValidator
 from ensembl.production.dbcopy.lookups import get_database_set
 from ensembl.production.dbcopy.models import RequestJob, Group, Host, TargetHostGroup
-from ensembl.production.djcore.forms import TrimmedCharField, EmailListFieldValidator
+from ensembl.production.djcore.forms import TrimmedCharField, EmailListFieldValidator, ListFieldRegexValidator
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,10 @@ from dal import autocomplete, forward
 class RequestJobForm(forms.ModelForm):
     class Meta:
         model = RequestJob
-        exclude = ('job_id', 'tgt_directory')
+        # exclude = ('job_id', 'tgt_directory')
+        fields = ('src_host', 'tgt_host', 'email_list',
+                  'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
+                  'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
 
     src_host = TrimmedCharField(
         label="Source Host ",
@@ -86,8 +89,7 @@ class RequestJobForm(forms.ModelForm):
         ],
         widget=autocomplete.Select2(url='ensembl_dbcopy:src-host-autocomplete',
                                     attrs={
-                                        'data-placeholder': 'Start typing..',
-                                        # 'data-minimum-input-length': 2,
+                                        'data-placeholder': 'Source host',
                                         'data-result-html': True
                                     })
     )
@@ -97,16 +99,15 @@ class RequestJobForm(forms.ModelForm):
         help_text="Host1:port1,Host2:port2",
         required=True,
         validators=[
-            # ListFieldRegexValidator(
-            #    regex="^[\w-]+:[0-9]{4}",
-            #    message="Target Hosts should be formatted like this host:port or host1:port1,host2:port2"
-            # )
+            ListFieldRegexValidator(
+                regex="^[\w-]+:[0-9]{4}",
+                message="Target Hosts should be formatted like this host:port or host1:port1,host2:port2"
+            )
         ],
         # queryset=Host.objects.none(),
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:tgt-host-autocomplete',
                                        attrs={
-                                           'data-placeholder': 'Start typing..',
-                                           # 'data-minimum-input-length': 2,
+                                           'data-placeholder': 'Target(s)',
                                            'data-result-html': True
                                        })
     )
@@ -146,14 +147,14 @@ class RequestJobForm(forms.ModelForm):
                                                 forward.Field('src_incl_db')]))
 
     tgt_db_name = TrimmedCharField(
-        label="Name of databases on Target Hosts",
+        label="Rename DB(s)on target(s)",
         help_text='db1,db2,..',
         max_length=2048,
         required=False)
 
     email_list = TrimmedCharField(
-        label="Email list",
-        help_text='Comma separated list',
+        label="Email(s)",
+        help_text='Comma separated mail list',
         max_length=2048,
         required=True,
         validators=[
@@ -161,8 +162,7 @@ class RequestJobForm(forms.ModelForm):
                 message="Email list should contain one or more comma separated valid email addresses."
             )
         ])
-    user = forms.CharField(
-        widget=forms.HiddenInput())
+    user = forms.CharField(widget=forms.HiddenInput())
 
     def _validate_db_skipping(self, src_skip_db_names, tgt_db_names):
         if src_skip_db_names and tgt_db_names:
@@ -260,13 +260,8 @@ class RequestJobForm(forms.ModelForm):
         if 'initial' in kwargs and 'from_request_job' in kwargs['initial']:
             kwargs['instance'] = RequestJob.objects.get(pk=kwargs['initial']['from_request_job'])
         super(RequestJobForm, self).__init__(*args, **kwargs)
-        # self.helper = FormHelper()
         self.fields["email_list"].initial = self.user.email
         self.fields["user"].initial = self.user.username
-        # self.helper.form_id = 'copy-job-form'
-        # self.helper.form_class = 'copy-job-form'
-        # self.helper.form_method = 'post'
-        # self.helper.add_input(Submit('submit', 'Submit'))
 
         target_host_group_list = _target_host_group(self.user.username)
         if len(target_host_group_list):

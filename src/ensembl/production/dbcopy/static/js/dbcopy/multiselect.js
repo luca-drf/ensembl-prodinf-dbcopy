@@ -58,6 +58,14 @@
             $(this).removeClass("is-invalid");
             updateAlerts();
         });
+        // Inline paginator refactored url to reuse the possible # part
+        // #TODO instead of relading all content, just reload the inlines.
+        var selectedPane = window.location.hash.substr(1);
+        $('.paginator a').each(function (index) {
+            console.log("item ", $(this).attr('href'));
+            var _href = $(this).attr('href');
+            $(this).attr('href', _href + '#' + selectedPane);
+        });
     });
 
 
@@ -119,7 +127,7 @@
     }
 
     function insertAlertBefore(elem, divID, alertText) {
-        $($("#bootstrapAlert").html()).insertBefore(elem).attr('id', divID).append(alertText);
+        $($("#bootstrapAlert").html()).insertBefore(elem).attr('id', div3ID).append(alertText);
     }
 
 // Clean and split the string in elem and return an array
@@ -246,16 +254,16 @@
     }
 
     function updateAlerts() {
-        console.log('tgtDBNames', $("#id_tgt_db_name").val());
+        // console.log('tgtDBNames', $("#id_tgt_db_name").val());
         const tgtDBNames = getSplitNames("#id_tgt_db_name");
-        console.log('tgtDBNames', tgtDBNames, $("#id_tgt_db_name").val());
-        console.log('inclDBNames', $("#id_src_incl_db").val());
+        //console.log('tgtDBNames', tgtDBNames, $("#id_tgt_db_name").val());
+        //console.log('inclDBNames', $("#id_src_incl_db").val());
         // Now is already an array
         const inclDBNames = $("#id_src_incl_db").val();
-        console.log('inclDBNames', inclDBNames);
-        console.log('skipDBNames', $("#id_src_skip_db").val());
+        //console.log('inclDBNames', inclDBNames);
+        //console.log('skipDBNames', $("#id_src_skip_db").val());
         const skipDBNames = $("#id_src_skip_db").val();
-        console.log('skipDBNames', skipDBNames, $("#id_src_skip_db").val());
+        //console.log('skipDBNames', skipDBNames, $("#id_src_skip_db").val());
 
         if (SrcHostDetails && SrcHostDetails.name) {
             if (tgtDBNames.length) {
@@ -312,7 +320,7 @@
             let alertMsg = "<strong>Alert!</strong> The following database(s) are already present:";
             const alertText = buildAlertText(alertMsg, toWipeDBs);
             if (alertText.length) {
-                insertAlertAfter("#div_id_email_list", "db-alert", alertText);
+                insertAlertAfter($(".field-src_skip_db"), "db-alert", alertText);
             }
         });
     }
@@ -322,7 +330,7 @@
             let alertMsg = "<strong>Alert!</strong> The following table(s) are already present in the selected database:";
             const alertText = buildAlertText(alertMsg, foundTableNames);
             if (alertText.length) {
-                insertAlertBefore($("#submit-id-submit").parent().parent(), "table-alert", alertText);
+                insertAlertAfter($(".field-src_skip_tables"), "table-alert", alertText);
             }
         });
     }
@@ -352,5 +360,6 @@
             $('#id_tgt_host').val(selectVal);
         }
     }
+
 
 })(jQuery || django.jQuery);
