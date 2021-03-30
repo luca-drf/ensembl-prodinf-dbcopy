@@ -4,8 +4,9 @@ django-admin-inline-paginator~=0.1.1
 djangorestframework~=3.12.2
 drf-nested-routers~=0.93.3
 drf-yasg~=1.20.0
+django-autocomplete-light~=3.8.2
 # Until dedicated services in dbspy
-sqlalchemy~=1.4.0
+sqlalchemy~=1.4.3
 mysqlclient~=2.0.3
 ####
 -e git+git://github.com/Ensembl/ensembl-prodinf-djcore.git#egg=ensembl_prodinf_djcore
