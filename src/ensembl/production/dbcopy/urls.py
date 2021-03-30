@@ -12,8 +12,8 @@
 from django.urls import path, include
 
 from .views import reset_failed_jobs, group_choice
-from ajax_select import urls as ajax_select_urls
 from .lookups import SrcHostLookup, TgtHostLookup, DbLookup, TableLookup
+
 app_name = 'ensembl_dbcopy'
 
 urlpatterns = [
