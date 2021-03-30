@@ -16,8 +16,6 @@ from rest_framework import permissions, routers
 from ensembl.production.dbcopy.api import viewsets
 from ensembl.production.dbcopy.api.views import ListDatabases, ListTables
 
-app_name = 'ensembl_dbcopy_api'
-
 schema_view = get_schema_view(
     openapi.Info(
         title="Copy DB API snippets",
@@ -51,5 +49,5 @@ urlpatterns = [
     re_path('databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),
     re_path('tables/(?P<host>[\w-]+)/(?P<port>\d+)/(?P<database>\w+)', ListTables.as_view(), name='tablelist'),
     re_path('swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    path('docs$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path(f'docs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
