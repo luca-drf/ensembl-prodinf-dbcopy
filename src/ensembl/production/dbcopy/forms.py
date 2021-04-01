@@ -14,9 +14,11 @@ import logging
 import re
 from collections import OrderedDict
 
+from dal import autocomplete, forward
 from django import forms
 from django.contrib.auth.models import User, Group as UsersGroup
 from django.core.validators import RegexValidator
+
 from ensembl.production.dbcopy.lookups import get_database_set
 from ensembl.production.dbcopy.models import RequestJob, Group, Host, TargetHostGroup
 from ensembl.production.djcore.forms import TrimmedCharField, EmailListFieldValidator, ListFieldRegexValidator
@@ -24,15 +26,13 @@ from ensembl.production.djcore.forms import TrimmedCharField, EmailListFieldVali
 logger = logging.getLogger(__name__)
 
 
-def _target_host_group(username):
+def _target_host_group(user):
     # get groups, current user belongs to
-    user_groups = [each_group.name
-                   for user_obj in User.objects.filter(username__contains=username).prefetch_related('groups').all()
-                   for each_group in user_obj.groups.all()
-                   ]
 
+    user_groups = user.groups.values_list('name', flat=True)
+    logger.debug("User Groups", user_groups)
     # get all host user can copy  based on assigned group
-    user_hosts_ids = [host.auto_id for host in Host.objects.filter(groups__group_name__in=user_groups)]
+    user_hosts_ids = Host.objects.filter(groups__group_name__in=user_groups).values_list('auto_id', flat=True)
 
     # get all host names that target group contains
     target_host_dict = {}
@@ -42,13 +42,10 @@ def _target_host_group(username):
             target_host_dict[each_group.target_group_name] += each_host.name + ':' + str(each_host.port) + ','
 
     # get all the target group that has access to host from authgroup
-    target_groups = list(set([(
-        target_host_dict[groups.target_group_name],
-        groups.target_group_name
-    )
+    target_groups = list(set([(target_host_dict[groups.target_group_name], groups.target_group_name)
         for groups in TargetHostGroup.objects.filter(target_host__auto_id__in=user_hosts_ids)
     ]))
-    target_groups.insert(0, ('', '--select target group--'))
+    # target_groups.insert(0, ('', '--select target group--'))
     return target_groups
 
 
@@ -62,9 +59,6 @@ def _apply_db_names_filter(db_names, all_db_names):
         filter_re = re.compile(db_name.replace('%', '.*').replace('_', '.'))
         return set(filter(filter_re.search, all_db_names))
     return db_names
-
-
-from dal import autocomplete, forward
 
 
 class RequestJobForm(forms.ModelForm):
@@ -170,13 +164,15 @@ class RequestJobForm(forms.ModelForm):
     def _validate_db_skipping(self, src_skip_db_names, tgt_db_names):
         if src_skip_db_names and tgt_db_names:
             self.add_error('src_skip_db',
-                           'Field "Names of databases on Target Host" is not empty. Consider clear it, or clear this field.')
+                           'Field "Names of databases on Target Host" is not empty. \n'
+                           'Consider clear it, or clear this field.')
 
     def _validate_db_renaming(self, src_dbs, tgt_dbs):
         if tgt_dbs:
             if len(tgt_dbs) != len(src_dbs):
                 self.add_error('tgt_db_name',
-                               "The number of databases to copy should match the number of databases renamed on target hosts")
+                               "The number of databases to copy should match the number of databases \n"
+                               "renamed on target hosts")
             for dbname in src_dbs:
                 if '%' in dbname:
                     self.add_error('tgt_db_name', "You can't rename a pattern")
@@ -265,13 +261,16 @@ class RequestJobForm(forms.ModelForm):
         super(RequestJobForm, self).__init__(*args, **kwargs)
         self.fields["email_list"].initial = self.user.email
         self.fields["user"].initial = self.user.username
-
-        target_host_group_list = _target_host_group(self.user.username)
-        if len(target_host_group_list):
-            tgt_group_host = forms.CharField()
-            tgt_group_host.widget = forms.Select(choices=target_host_group_list,
-                                                 attrs={'onchange': "targetHosts()"}
-                                                 )
+        print('instance', self.instance)
+        if not self.instance:
+            ## edit mode no status
+            self.fields.pop('overall_status', None)
+        target_host_group_list = _target_host_group(self.user)
+        if len(target_host_group_list) >= 1:
+            tgt_group_host = forms.TypedChoiceField(required=False,
+                                                    choices=target_host_group_list,
+                                                    empty_value='--select target group--')
+            tgt_group_host.widget.attrs = {'onchange': "targetHosts()"}
             tgt_group_host.label = 'Host Target Group'
             tgt_group_host.help_text = "Select Group to autofill the target host"
 

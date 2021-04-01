@@ -15,6 +15,7 @@ from django.contrib.admin.utils import model_ngettext
 from django.db.models import Count, F, Q
 from django.utils.html import format_html
 from django_admin_inline_paginator.admin import TabularInlinePaginated
+
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
 from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
 from ensembl.production.djcore.admin import SuperUserAdmin
@@ -106,8 +107,7 @@ class TransferLogInline(TabularInlinePaginated):
 class RequestJobAdmin(admin.ModelAdmin):
     class Media:
         js = (
-            # '//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-            'js/dbcopy/multiselect.js',
+            'js/dbcopy/dbcopy.js',
         )
         css = {
             'all': ('css/db_copy.css',)
@@ -124,9 +124,8 @@ class RequestJobAdmin(admin.ModelAdmin):
     ordering = ('-request_date', '-start_date')
     fields = ('overall_status', 'src_host', 'tgt_host', 'email_list',
               'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name')
-              # 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
+    # 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
     readonly_fields = ('overall_status', 'request_date', 'start_date', 'end_date')
-
 
     def get_queryset(self, request):
         return super().get_queryset(request)
@@ -148,14 +147,14 @@ class RequestJobAdmin(admin.ModelAdmin):
 
     def resubmit_jobs(self, request, queryset):
         for query in queryset:
-            newJob = RequestJob.objects.get(pk=query.pk)
-            newJob.pk = None
-            newJob.request_date = None
-            newJob.start_date = None
-            newJob.end_date = None
-            newJob.status = None
-            newJob.save()
-            message = 'Job {} resubmitted [new job_id {}]'.format(query.pk, newJob.pk)
+            new_job = RequestJob.objects.get(pk=query.pk)
+            new_job.pk = None
+            new_job.request_date = None
+            new_job.start_date = None
+            new_job.end_date = None
+            new_job.status = None
+            new_job.save()
+            message = 'Job {} resubmitted [new job_id {}]'.format(query.pk, new_job.pk)
             messages.add_message(request, messages.SUCCESS, message, extra_tags='', fail_silently=False)
 
     resubmit_jobs.short_description = 'Resubmit Jobs'
@@ -169,11 +168,6 @@ class RequestJobAdmin(admin.ModelAdmin):
                     tgt_host__contains=search_query) | Q(renamed_table_schema__contains=search_query))
         else:
             transfers_logs = self.get_object(request, object_id).transfer_logs
-        # paginator = Paginator(transfers_logs.order_by(F('end_date').asc(nulls_first=True), F('auto_id')), 30)
-        # page_number = request.GET.get('page', 1)
-        # page = paginator.page(page_number)
-        # context['transfer_logs'] = page
-        context['label_create'] = 'Duplicate/Update' if 'from_request_job' in request.GET else 'Add'
         if transfers_logs.filter(end_date__isnull=True):
             context["running_copy"] = transfers_logs.filter(end_date__isnull=True).order_by(
                 F('end_date').desc(nulls_first=True)).earliest('auto_id')

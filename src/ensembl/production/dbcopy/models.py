@@ -17,7 +17,8 @@ from ensembl.production.djcore.models import NullTextField
 
 
 class Dbs2Exclude(models.Model):
-    table_schema = models.CharField(primary_key=True, db_column='TABLE_SCHEMA', max_length=64)  # Field name made lowercase.
+    table_schema = models.CharField(primary_key=True, db_column='TABLE_SCHEMA',
+                                    max_length=64)  # Field name made lowercase.
 
     class Meta:
         db_table = 'dbs_2_exclude'
@@ -51,7 +52,7 @@ class RequestJob(models.Model):
     tgt_host = models.TextField("Target Host(s)", max_length=2048)
     tgt_db_name = NullTextField("Target DbName(s)", max_length=2048, blank=True, null=True)
     tgt_directory = NullTextField(max_length=2048, blank=True, null=True)
-    skip_optimize = models.BooleanField("Optimize on target",  default=False)
+    skip_optimize = models.BooleanField("Optimize on target", default=False)
     wipe_target = models.BooleanField("Wipe target", default=False)
     convert_innodb = models.BooleanField("Convert Innodb=>MyISAM", default=False)
     dry_run = models.BooleanField("Dry Run", default=False)
@@ -61,7 +62,6 @@ class RequestJob(models.Model):
     user = models.CharField("Submitter", max_length=64, blank=True, null=True)
     status = models.CharField("Status", max_length=20, blank=True, null=True, editable=False)
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
-
 
     def __str__(self):
         return str(self.job_id)
@@ -159,9 +159,10 @@ class Host(models.Model):
     virtual_machine = models.CharField(max_length=255, blank=True, null=True)
     mysqld_file_owner = models.CharField(max_length=128, null=True, blank=True)
     active = models.BooleanField(default=True, blank=False)
-    
+
     def __str__(self):
         return '{}:{}'.format(self.name, self.port)
+
 
 class TargetHostGroup(models.Model):
     class Meta:
@@ -169,13 +170,13 @@ class TargetHostGroup(models.Model):
         app_label = 'ensembl_dbcopy'
         verbose_name = 'Hosts Target Group'
 
-
     target_group_id = models.BigAutoField(primary_key=True)
     target_group_name = models.CharField('Hosts Group', max_length=80, unique=True)
-    target_host=models.ManyToManyField('Host')
+    target_host = models.ManyToManyField('Host')
 
     def __str__(self):
         return '{}'.format(self.target_group_name)
+
 
 class Group(models.Model):
     class Meta:
@@ -186,6 +187,6 @@ class Group(models.Model):
     group_id = models.BigAutoField(primary_key=True)
     host_id = models.ForeignKey(Host, db_column='auto_id', on_delete=models.CASCADE, related_name='groups')
     group_name = models.CharField('User Group', max_length=80)
-    
+
     def __str__(self):
         return '{}'.format(self.group_name)

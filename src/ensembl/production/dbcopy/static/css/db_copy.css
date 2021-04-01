@@ -38,6 +38,18 @@
 .tabular.inline-related .empty-form {
   display: none;
 }*/
+/* Table lists */
+#result_list .field-src_incl_db, #result_list .field-src_skip_db, #result_list .field-tgt_host,
+#result_list .field-tgt_db_name, #result_list .field-src_host {
+    max-width: available;
+    overflow-wrap: anywhere;
+}
+
+div#changelist-filter ul {
+    overflow-y: scroll;
+    max-height: 350px;
+}
+
 /* Alerts */
 #db-alert, #table-alert {
     max-height: 400px;
@@ -47,9 +59,11 @@
 #requestjob_form .form-row input[type='text'], #requestjob_form .form-row label {
     min-width: 29em !important;
 }
+
 #requestjob_form .field-overall_status {
     min-width: 29em !important;
 }
+
 /* Status */
 .overall_status {
     font-weight: bold;
