@@ -31,5 +31,4 @@ from django.urls import path, include
 urlpatterns = [
     path(f'', admin.site.urls),
     path(f'dbcopy/', include('ensembl.production.dbcopy.urls')),
-    path('api/dbcopy/', include('ensembl.production.dbcopy.api.urls')),
 ]

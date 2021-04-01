@@ -9,14 +9,12 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django.conf.urls import url, include
+from django.urls import path, include, re_path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
-from rest_framework import permissions
-from rest_framework_nested import routers
+from rest_framework import permissions, routers
 from ensembl.production.dbcopy.api import viewsets
 from ensembl.production.dbcopy.api.views import ListDatabases, ListTables
-
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -31,7 +29,7 @@ schema_view = get_schema_view(
 )
 
 # API router setup
-router = routers.DefaultRouter(trailing_slash=False)
+router = routers.SimpleRouter(trailing_slash=False)
 # Services URIs configuration
 
 router.register(prefix=r'requestjob',
@@ -47,9 +45,9 @@ router.register(prefix=r'tgt_host',
                 basename='tgt_host')
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
-    url(r'^databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),
-    url(r'^tables/(?P<host>[\w-]+)/(?P<port>\d+)/(?P<database>\w+)', ListTables.as_view(), name='tablelist'),
-    url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    url(r'^docs$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('', include(router.urls)),
+    re_path('databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),
+    re_path('tables/(?P<host>[\w-]+)/(?P<port>\d+)/(?P<database>\w+)', ListTables.as_view(), name='tablelist'),
+    re_path('swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path(f'docs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

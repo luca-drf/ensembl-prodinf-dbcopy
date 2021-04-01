@@ -22,6 +22,9 @@ ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
+    'dal',
+    'dal_select2',
+    # 'jet',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -29,7 +32,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'ensembl.production.dbcopy',
-    'rest_framework'
+    'rest_framework',
+    'django_admin_inline_paginator',
 ]
 
 MIDDLEWARE = [
@@ -68,7 +72,7 @@ WSGI_APPLICATION = 'ensembl_prodinf_dbcopy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': Path.joinpath(BASE_DIR.parent, 'db.sqlite3'),
+        'NAME': str(Path.joinpath(BASE_DIR.parent, 'dbcopy.sqlite3')),
     }
 }
 
@@ -81,5 +85,4 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-
-
+STATIC_URL = '/static/'

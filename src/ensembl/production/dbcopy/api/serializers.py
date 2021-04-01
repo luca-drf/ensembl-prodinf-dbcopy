@@ -91,7 +91,7 @@ class RequestJobListSerializer(serializers.HyperlinkedModelSerializer):
             'overall_status')
         read_only_fields = ['job_id']
         extra_kwargs = {
-            'url': {'view_name': 'requestjob-detail', 'lookup_field': 'job_id'},
+            'url': {'view_name': 'ensembl_dbcopy:requestjob-detail', 'lookup_field': 'job_id'},
         }
 
 
