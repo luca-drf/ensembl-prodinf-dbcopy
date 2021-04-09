@@ -1,17 +1,14 @@
+/*jshint esversion: 6 */
+
 (function ($) {
-    var SrcHostDetails;
+    "use strict";
 
-    var TgtHostsDetails;
-
-    var DBNames = [];
-
-    var TableNames = [];
-
-    var SrcHostResults;
-    var change = new Event('change');
+    let SrcHostDetails;
+    let TgtHostsDetails;
+    let DBNames = [];
+    let TableNames = [];
 
     $(document).ready(function () {
-        $(".field-wipe_target").hide();
         $(".field-wipe_target").hide();
         $(".field-convert_innodb").hide();
         $(".field-dry_run").hide();
@@ -23,15 +20,15 @@
             updateAlerts();
         }
         // $("#id_src_host").dispatchEvent(change);
-        $("#id_src_host").on('change', function() {
-            console.log("id src _host changed triggered ", $(this).val());
+        srcHostElem.on('change', function() {
+            // console.log("id src _host changed triggered ", $(this).val());
             $(this).removeClass("is-invalid");
             SrcHostDetails = hostStringToDetails($(this).val());
-            console.log("src Host Details ", SrcHostDetails);
+            // console.log("src Host Details ", SrcHostDetails);
             updateAlerts();
         });
-        $('#id_tgt_host').change(function(){
-            console.log("idtgt_host changed triggered");
+        tgtHostElem.change(function(){
+            // console.log("idtgt_host changed triggered");
             $(this).removeClass("is-invalid");
             TgtHostsDetails = getHostsDetails($(this).val());
             updateAlerts();
@@ -60,11 +57,10 @@
         });
         // Inline paginator refactored url to reuse the possible # part
         // #TODO instead of relading all content, just reload the inlines.
-        var selectedPane = window.location.hash.substr(1);
+        let selectedPane = window.location.hash.substr(1);
         $('.paginator a').each(function (index) {
-            console.log("item ", $(this).attr('href'));
-            var _href = $(this).attr('href');
-            $(this).attr('href', _href + '#' + selectedPane);
+            // console.log("item ", $(this).attr('href'));
+            $(this).attr('href', $(this).attr('href') + '#' + selectedPane);
         });
     });
 

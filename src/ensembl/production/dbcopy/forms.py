@@ -16,10 +16,10 @@ from collections import OrderedDict
 
 from dal import autocomplete, forward
 from django import forms
-from django.contrib.auth.models import User, Group as UsersGroup
+from django.contrib.auth.models import Group as UsersGroup
 from django.core.validators import RegexValidator
 
-from ensembl.production.dbcopy.lookups import get_database_set
+from ensembl.production.dbcopy.lookups import get_excluded_schemas
 from ensembl.production.dbcopy.models import RequestJob, Group, Host, TargetHostGroup
 from ensembl.production.djcore.forms import TrimmedCharField, EmailListFieldValidator, ListFieldRegexValidator
 
@@ -30,9 +30,11 @@ def _target_host_group(user):
     # get groups, current user belongs to
 
     user_groups = user.groups.values_list('name', flat=True)
-    logger.debug("User Groups", user_groups)
+    logger.debug("User Groups %s", user_groups)
     # get all host user can copy  based on assigned group
-    user_hosts_ids = Host.objects.filter(groups__group_name__in=user_groups).values_list('auto_id', flat=True)
+    user_hosts_ids = Host.objects.filter(targethostgroup__target_group_name__in=list(user_groups)).values_list(
+        'auto_id', flat=True)
+    logger.debug("User Hosts Ids %s", user_hosts_ids)
 
     # get all host names that target group contains
     target_host_dict = {}
@@ -41,11 +43,11 @@ def _target_host_group(user):
         for each_host in each_group.target_host.all():
             target_host_dict[each_group.target_group_name] += each_host.name + ':' + str(each_host.port) + ','
 
-    # get all the target group that has access to host from authgroup
-    target_groups = list(set([(target_host_dict[groups.target_group_name], groups.target_group_name)
-        for groups in TargetHostGroup.objects.filter(target_host__auto_id__in=user_hosts_ids)
-    ]))
-    # target_groups.insert(0, ('', '--select target group--'))
+    logger.debug('Target_host_dict %s', target_host_dict)
+    logger.debug('TargetHostGroup %s', TargetHostGroup.objects.all())
+    target_groups = list(set([(target_host_dict[group.target_group_name], group.target_group_name)
+                              for group in TargetHostGroup.objects.filter(target_host__auto_id__in=list(user_hosts_ids))
+                              ]))
     return target_groups
 
 
@@ -178,10 +180,11 @@ class RequestJobForm(forms.ModelForm):
                     self.add_error('tgt_db_name', "You can't rename a pattern")
 
     def _validate_source_and_target(self, src_host, tgt_hosts, src_dbs, src_skip_dbs, tgt_db_names):
+        from ensembl.production.core.db_introspects import get_database_set
         if src_host in tgt_hosts:
             hostname, port = src_host.split(':')
             try:
-                present_dbs = get_database_set(hostname, port)
+                present_dbs = get_database_set(hostname, port, excluded_schemas=get_excluded_schemas)
             except ValueError as e:
                 raise forms.ValidationError('Invalid source hostname or port')
             src_names = present_dbs
@@ -208,7 +211,7 @@ class RequestJobForm(forms.ModelForm):
     #          for tgt_host in tgt_hosts:
     #              hostname, port = tgt_host.split(':')
     #              try:
-    #                  db_engine = get_engine(hostname, port)
+    #                  db_engine = get_engine_for_host(hostname, port)
     #              except RuntimeError as e:
     #                  self.add_error('tgt_host', 'Invalid host: {}'.format(tgt_host))
     #                  continue
@@ -232,7 +235,7 @@ class RequestJobForm(forms.ModelForm):
                 host_groups = group.values_list('group_name', flat=True)
                 user_groups = self.user.groups.values_list('name', flat=True)
                 common_groups = set(host_groups).intersection(set(user_groups))
-                if not common_groups:
+                if not common_groups and not self.user.is_superuser:
                     self.add_error('tgt_host', "You are not allowed to copy to " + hostname)
 
     def clean(self):
