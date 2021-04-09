@@ -29,9 +29,12 @@ class ListDatabases(APIView):
         name_filter = request.query_params.get('search', '').replace('%', '.*').replace('_', '.')
         name_matches = request.query_params.getlist('matches[]')
         try:
-            result = get_database_set(hostname, port, name_filter, name_matches)
+            result = get_database_set(hostname=hostname, port=port,
+                                      name_filter=name_filter, name_matches=name_matches)
         except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         return Response(result)
 
 
@@ -50,7 +53,10 @@ class ListTables(APIView):
         name_filter = request.query_params.get('search', '')
         name_matches = request.query_params.getlist('matches[]')
         try:
-            result = get_table_set(hostname, port, database, name_filter, name_matches)
+            result = get_table_set(hostname=hostname, port=port, database=database,
+                                   name_filter=name_filter, name_matches=name_matches)
         except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         return Response(result)

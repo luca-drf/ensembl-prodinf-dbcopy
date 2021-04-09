@@ -12,8 +12,8 @@
 
 import json
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import connections
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -129,59 +129,72 @@ class RequestJobTest(APITestCase):
         response_dict = json.loads(response.content.decode('utf-8'))
         self.assertEqual(len(response_dict), 2)
 
-    # Test DatabaseList endpoint
-    # TODO REINSTANTIATE THIS TEST WITHOUT PRODUCTION DB NEEDED
-#  def testDatabaseList(self):
-#      # Test getting test Production dbs
-#      args = {
-#          'host': PRODUCTION_DB.get('HOST', 'localhost'),
-#          'port': PRODUCTION_DB.get('PORT', 3306)
-#      }
-#      response = self.client.get(reverse('databaselist', kwargs=args),
-#                                 {'search': 'test_production_services'})
-#      response_list = json.loads(response.content.decode('utf-8'))
-#      self.assertEqual(response.status_code, status.HTTP_200_OK)
-#      self.assertEqual(len(response_list), 1)
-#      response = self.client.get(reverse('databaselist', kwargs={**args, 'host': 'bad-host'}),
-#                                 {'search': 'test_production_services'})
-#      response_list = json.loads(response.content.decode('utf-8'))
-#      self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-#      response = self.client.get(reverse('databaselist', kwargs=args),
-#                                 {'search': 'no_result_search'})
-#      response_list = json.loads(response.content.decode('utf-8'))
-#      self.assertEqual(response.status_code, status.HTTP_200_OK)
-#      self.assertEqual(len(response_list), 0)
-#      response = self.client.get(reverse('databaselist', kwargs=args),
-#                                 {'matches[]': ['test_production_services']})
-#      response_list = json.loads(response.content.decode('utf-8'))
-#      self.assertEqual(response.status_code, status.HTTP_200_OK)
-#      self.assertEqual(len(response_list), 1)
-#      response = self.client.get(reverse('databaselist', kwargs=args),
-#                                 {'matches[]': ['no_match']})
-#      response_list = json.loads(response.content.decode('utf-8'))
-#      self.assertEqual(response.status_code, status.HTTP_200_OK)
-#      self.assertEqual(len(response_list), 0)
-
     # Test TableList endpoint
     # TODO REINSTANTIATE THIS TEST WITHOUT PRODUCTION DB NEEDED
-#    def testTableList(self):
-#        args = {
-#            'host': PRODUCTION_DB.get('HOST', 'localhost'),
-#            'port': PRODUCTION_DB.get('PORT', 3306),
-#            'database': PRODUCTION_DB.get('NAME', 'ensembl_tests')
-#        }
-#        # Test getting meta_key table for Production dbs
-#        response = self.client.get(reverse('tablelist', kwargs=args),
-#                                   {'search': 'meta'})
-#        response_list = json.loads(response.content.decode('utf-8'))
-#        self.assertEqual(response.status_code, status.HTTP_200_OK)
-#        self.assertEqual(len(response_list), 1)
-#        response = self.client.get(reverse('tablelist', kwargs={**args, 'host': 'bad-host'}),
-#                                   {'search': 'meta'})
-#        response_list = json.loads(response.content.decode('utf-8'))
-#        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-#        response = self.client.get(reverse('tablelist', kwargs={**args, 'database': 'bad_database'}),
-#                                   {'search': 'bad_table_name'})
-#        response_list = json.loads(response.content.decode('utf-8'))
-#        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+
+class DBIntrospectTest(APITestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        with connections['default'].cursor() as cursor:
+            cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
+            cursor.execute("CREATE DATABASE `test_homo_sapiens`")
+            cursor.execute("USE `test_homo_sapiens`")
+            cursor.execute("CREATE TABLE `assembly` (`id` INT(10))")
+            cursor.execute("CREATE TABLE `assembly_exception` (`id` INT(10))")
+            cursor.execute("CREATE TABLE `coord_system` (`id` INT(10))")
+        cls.host = connections.databases['default'].get('HOST', 'localhost')
+        cls.port = connections.databases['default'].get('PORT', 3306)
+        cls.database = 'test_homo_sapiens'
+
+    def testDatabaseList(self):
+        # Test getting test Production dbs
+        args = {'host': self.host, 'port': self.port}
+        response = self.client.get(reverse('ensembl_dbcopy:databaselist', kwargs=args),
+                                   {'search': 'test_homo'})
+        response_list = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response_list), 1)
+        self.assertEqual(response_list[0], 'test_homo_sapiens')
+        response = self.client.get(reverse('ensembl_dbcopy:databaselist',
+                                           kwargs={**args, 'host': 'bad-host'}),
+                                   {'search': 'test_production_services'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.get(reverse('ensembl_dbcopy:databaselist', kwargs=args),
+                                   {'search': 'no_result_search'})
+        response_list = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_list), 0)
+        response = self.client.get(reverse('ensembl_dbcopy:databaselist', kwargs=args),
+                                   {'matches[]': ['test_homo_sapiens']})
+        response_list = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_list), 1)
+        response = self.client.get(reverse('ensembl_dbcopy:databaselist', kwargs=args),
+                                   {'matches[]': ['no_match']})
+        response_list = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_list), 0)
+
+    def testTableList(self):
+        args = {'host': self.host,
+                'port': self.port,
+                'database': self.database}
+        # Test getting meta_key table for Production dbs
+        response = self.client.get(reverse('ensembl_dbcopy:tablelist', kwargs=args),
+                                   {'search': 'ass'})
+        response_list = json.loads(response.content.decode('utf-8'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_list), 2)
+        args['host'] = 'badhost-name'
+        response = self.client.get(reverse('ensembl_dbcopy:tablelist', kwargs=args),
+                                   {'search': 'meta'})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        args['host'] = self.host
+        response = self.client.get(reverse('ensembl_dbcopy:tablelist', kwargs=args),
+                                   {'search': 'unknown'})
+        response_list = json.loads(response.content.decode('utf-8'))
+        print(response_list)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

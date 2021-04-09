@@ -123,14 +123,14 @@
     }
 
     function insertAlertBefore(elem, divID, alertText) {
-        $($("#bootstrapAlert").html()).insertBefore(elem).attr('id', div3ID).append(alertText);
+        $($("#bootstrapAlert").html()).insertBefore(elem).attr('id', divID).append(alertText);
     }
 
 // Clean and split the string in elem and return an array
     function getSplitNames(elem) {
         const namesArr = split($(elem).val());
         return namesArr.filter(function (item) {
-            return item != "";
+            return item !== "";
         });
     }
 
@@ -142,7 +142,7 @@
     }
 
     function hostStringToDetails(string) {
-        details = string.split(':');
+        let details = string.split(':');
         return {'name': details[0], 'port': details[1]};
     }
 
@@ -151,7 +151,7 @@
     }
 
     function getHostsDetails(host) {
-        console.log('getHostsDetails', host);
+        // console.log('getHostsDetails', host);
         // let serverNames = getSplitNames(host);
         return $.map(host, function (val, i) {
             return hostStringToDetails(val);
@@ -284,7 +284,7 @@
     }
 
     function updateTableAlert(tableOnly) {
-        if (DBNames.length == 1) {
+        if (DBNames.length === 1) {
             const inclTables = $("#id_src_incl_tables").val();
             const skipTables = $("#id_src_skip_tables").val();
 
@@ -302,11 +302,11 @@
         let alertText = "";
         if (lines.length > 0) {
             alertText += alertMsg;
-            alertText += "<ul>"
+            alertText += "<ul>";
             lines.forEach(function (value) {
                 alertText += "<li>" + value + "</li>";
             });
-            alertText += "</ul>"
+            alertText += "</ul>";
         }
         return alertText;
     }
@@ -335,7 +335,7 @@
         if (SrcHostDetails && SrcHostDetails.name && TgtHostsDetails && TgtHostsDetails.length && DBNames.length) {
             $("#submit-id-submit").prop("disabled", "true");
             $("#table-alert").remove();
-            if (TableNames.length && TgtHostsDetails.length == 1) {
+            if (TableNames.length && TgtHostsDetails.length === 1) {
                 buildTableConflictsAlert(TgtHostsDetails[0], DBNames[0], TableNames);
             }
             if (!tableOnly) {

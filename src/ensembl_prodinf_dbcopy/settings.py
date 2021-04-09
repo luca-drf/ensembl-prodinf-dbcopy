@@ -70,8 +70,12 @@ WSGI_APPLICATION = 'ensembl_prodinf_dbcopy.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': str(Path.joinpath(BASE_DIR.parent, 'dbcopy.sqlite3')),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'db_copy',
+        'USER': 'ensembl',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': 3306,
     }
 }
 
@@ -83,5 +87,4 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
 STATIC_URL = '/static/'
