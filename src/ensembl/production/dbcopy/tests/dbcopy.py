@@ -144,6 +144,11 @@ class DBIntrospectTest(APITestCase):
         cls.port = connections.databases['default'].get('PORT', 3306)
         cls.database = 'test_homo_sapiens'
 
+    @classmethod
+    def tearDownClass(cls):
+        with connections['default'].cursor() as cursor:
+            cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
+
     def testDatabaseList(self):
         # Test getting test Production dbs
         args = {'host': self.host, 'port': self.port}
