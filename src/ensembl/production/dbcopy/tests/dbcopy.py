@@ -13,7 +13,7 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.db import connections
+from django.db import connections, connection
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -134,7 +134,7 @@ class DBIntrospectTest(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        with connections['default'].cursor() as cursor:
+        with connection.cursor() as cursor:
             cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
             cursor.execute("CREATE DATABASE `test_homo_sapiens`")
             cursor.execute("CREATE TABLE test_homo_sapiens.`assembly` (`id` INT(10))")
@@ -146,7 +146,7 @@ class DBIntrospectTest(APITestCase):
 
     @classmethod
     def tearDownClass(cls):
-        with connections['default'].cursor() as cursor:
+        with connection.cursor() as cursor:
             cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
 
     def testDatabaseList(self):
