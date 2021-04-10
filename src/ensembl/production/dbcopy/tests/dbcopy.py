@@ -129,9 +129,6 @@ class RequestJobTest(APITestCase):
         response_dict = json.loads(response.content.decode('utf-8'))
         self.assertEqual(len(response_dict), 2)
 
-    # Test TableList endpoint
-    # TODO REINSTANTIATE THIS TEST WITHOUT PRODUCTION DB NEEDED
-
 
 class DBIntrospectTest(APITestCase):
 
@@ -140,10 +137,9 @@ class DBIntrospectTest(APITestCase):
         with connections['default'].cursor() as cursor:
             cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
             cursor.execute("CREATE DATABASE `test_homo_sapiens`")
-            cursor.execute("USE `test_homo_sapiens`")
-            cursor.execute("CREATE TABLE `assembly` (`id` INT(10))")
-            cursor.execute("CREATE TABLE `assembly_exception` (`id` INT(10))")
-            cursor.execute("CREATE TABLE `coord_system` (`id` INT(10))")
+            cursor.execute("CREATE TABLE test_homo_sapiens.`assembly` (`id` INT(10))")
+            cursor.execute("CREATE TABLE test_homo_sapiens.`assembly_exception` (`id` INT(10))")
+            cursor.execute("CREATE TABLE test_homo_sapiens.`coord_system` (`id` INT(10))")
         cls.host = connections.databases['default'].get('HOST', 'localhost')
         cls.port = connections.databases['default'].get('PORT', 3306)
         cls.database = 'test_homo_sapiens'
@@ -153,6 +149,7 @@ class DBIntrospectTest(APITestCase):
         args = {'host': self.host, 'port': self.port}
         response = self.client.get(reverse('ensembl_dbcopy:databaselist', kwargs=args),
                                    {'search': 'test_homo'})
+
         response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response_list), 1)
@@ -196,4 +193,5 @@ class DBIntrospectTest(APITestCase):
         response = self.client.get(reverse('ensembl_dbcopy:tablelist', kwargs=args),
                                    {'search': 'unknown'})
         response_list = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_list), 0)

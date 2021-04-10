@@ -21,31 +21,30 @@ User = get_user_model()
 
 
 class BaseUserTimestampSerializer(serializers.ModelSerializer):
-    user = serializers.CharField(required=False)
+    user = serializers.CharField(required=False, source='username')
 
     def create(self, validated_data):
-        if 'user' in validated_data:
-            validated_data['user'] = validated_data.pop('user')
+        if 'username' in validated_data:
+            validated_data['username'] = validated_data.pop('username')
             validated_data['email_list'] = validated_data.pop('email')
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        if 'user' in validated_data:
-            validated_data['user'] = validated_data.pop('user')
+        if 'username' in validated_data:
+            validated_data['username'] = validated_data.pop('username')
             validated_data['email_list'] = validated_data.pop('email')
         return super().update(instance, validated_data)
 
     def validate(self, data):
-        if "user" in data:
+        if "username" in data:
             try:
-                data['user'] = User.objects.get(username=data.pop('user', ''), is_staff=True)
+                user = User.objects.get(username=data.pop('username', ''))
+                data['email_list'] = user.email
             except ObjectDoesNotExist:
                 exc = APIException(code='error', detail="User not found")
                 # hack to update status code. :-(
                 exc.status_code = status.HTTP_400_BAD_REQUEST
                 raise exc
-            user_info = User.objects.filter(username=data.get('user')).first()
-            data['email'] = user_info.email
         data = super().validate(data)
         return data
 
@@ -94,6 +93,8 @@ class RequestJobListSerializer(serializers.HyperlinkedModelSerializer):
             'url': {'view_name': 'ensembl_dbcopy:requestjob-detail', 'lookup_field': 'job_id'},
         }
 
+    user = serializers.CharField(required=False, source='username')
+
 
 class RequestJobDetailSerializer(BaseUserTimestampSerializer):
     class Meta:
@@ -121,6 +122,7 @@ class RequestJobDetailSerializer(BaseUserTimestampSerializer):
         read_only_fields = ['job_id']
 
     transfer_log = TransferLogSerializer(many=True, source='transfer_logs', read_only=True)
+    user = serializers.CharField(required=False, source='username')
 
 
 class HostSerializer(serializers.ModelSerializer):
