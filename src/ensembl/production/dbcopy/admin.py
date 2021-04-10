@@ -16,7 +16,7 @@ from django.db.models import Count, F, Q
 from django.utils.html import format_html
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 from ensembl.production.djcore.admin import SuperUserAdmin
-from ensembl.production.djcore.filters import UserFilter
+from ensembl.production.dbcopy.filters import UserFilter
 
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
 from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
