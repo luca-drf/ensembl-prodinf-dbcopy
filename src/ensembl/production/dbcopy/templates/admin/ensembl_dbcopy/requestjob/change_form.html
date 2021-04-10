@@ -10,12 +10,9 @@
 {% block object-tools-items %}
     {% if change %}
         {% if not is_popup %}
-            <div class="submit-row">
                 <li>
                     {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
                     <a href="{% add_preserved_filters history_url %}" class="historylink">{% trans "History" %}</a>
-                    <a href="{% url 'admin:ensembl_dbcopy_requestjob_changelist' %}"
-                       class="button btn btn-secondary" role="button">Back to list</a>
                     <a href="{% url 'admin:ensembl_dbcopy_requestjob_add' %}"
                        class="button btn btn-secondary" role="button">Submit New Copy</a>
                     <a href="{% url 'admin:ensembl_dbcopy_requestjob_change' original.job_id %}"
@@ -28,7 +25,6 @@
                            class="button btn btn-secondary" role="button">Reset failed jobs</a>
                     {% endif %}
                 </li>
-            </div>
         {% endif %}
     {% endif %}
 {% endblock %}

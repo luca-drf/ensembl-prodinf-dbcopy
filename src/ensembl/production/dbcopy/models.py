@@ -59,7 +59,7 @@ class RequestJob(models.Model):
     email_list = models.TextField("Notify Email(s)", max_length=2048, blank=True, null=True)
     start_date = models.DateTimeField("Started on", blank=True, null=True, editable=False)
     end_date = models.DateTimeField("Ended on", blank=True, null=True, editable=False)
-    user = models.CharField("Submitter", max_length=64, blank=True, null=True)
+    username = models.CharField("Submitter", max_length=64, blank=True, null=True, db_column='user')
     status = models.CharField("Status", max_length=20, blank=True, null=True, editable=False)
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
 

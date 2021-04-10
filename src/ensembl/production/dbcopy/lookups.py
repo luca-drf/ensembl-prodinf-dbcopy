@@ -13,9 +13,8 @@ import logging
 
 from dal import autocomplete
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.html import format_html
-
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
+
 from ensembl.production.dbcopy.models import Dbs2Exclude
 from .models import Host, Group
 
@@ -29,7 +28,6 @@ def make_excluded_schemas():
         if not schemas:
             schemas.update(Dbs2Exclude.objects.values_list('table_schema', flat=True))
         return schemas
-
     return closure
 
 
@@ -44,15 +42,6 @@ class SrcHostLookup(autocomplete.Select2QuerySetView):
         if self.q:
             qs = qs.filter(name__icontains=self.q).order_by('name')[:50]
         return qs
-
-    def get_result_label(self, result):
-        if result.active:
-            active = 'badge-success';
-            desc = 'Active'
-        else:
-            active = ''
-            desc = 'Inactive'
-        return format_html('<span class="badge badge-pill %s">%s</span><span> %s</span>' % (active, desc, result.name))
 
     def get_selected_result_label(self, result):
         return '%s:%s' % (result.name, result.port)
@@ -102,7 +91,8 @@ class DbLookup(autocomplete.Select2ListView):
                 host = self.forwarded.get('db_host').split(':')[0]
                 port = self.forwarded.get('db_host').split(':')[1]
                 name_filter = search.replace('%', '.*').replace('_', '.')
-                result = get_database_set(host, port, name_filter, get_excluded_schemas)
+                result = get_database_set(host, port, name_filter=name_filter,
+                                          excluded_schemas=get_excluded_schemas())
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Lookup query error: ", e)

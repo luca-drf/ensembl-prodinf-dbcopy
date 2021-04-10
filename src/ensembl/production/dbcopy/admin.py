@@ -15,11 +15,11 @@ from django.contrib.admin.utils import model_ngettext
 from django.db.models import Count, F, Q
 from django.utils.html import format_html
 from django_admin_inline_paginator.admin import TabularInlinePaginated
+from ensembl.production.djcore.admin import SuperUserAdmin
+from ensembl.production.djcore.filters import UserFilter
 
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
 from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
-from ensembl.production.djcore.admin import SuperUserAdmin
-from ensembl.production.djcore.filters import UserFilter
 
 
 class GroupInline(admin.TabularInline):
@@ -106,29 +106,22 @@ class TransferLogInline(TabularInlinePaginated):
 @admin.register(RequestJob)
 class RequestJobAdmin(admin.ModelAdmin):
     class Media:
-        js = (
-            'js/dbcopy/dbcopy.js',
-        )
-        css = {
-            'all': ('css/db_copy.css',)
-        }
+        js = ('js/dbcopy/dbcopy.js',)
+        css = {'all': ('css/db_copy.css',)}
 
     actions = ['resubmit_jobs', ]
     inlines = (TransferLogInline,)
     form = RequestJobForm
-    list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'user',
+    list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'username',
                     'request_date', 'overall_status')
-    search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'user',
+    search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'username',
                      'start_date', 'end_date', 'request_date')
     list_filter = ('tgt_host', 'src_host', UserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
-    fields = ('overall_status', 'src_host', 'tgt_host', 'email_list',
-              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name')
-    # 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
+    fields = ['overall_status', 'src_host', 'tgt_host', 'email_list', 'username',
+              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name']
+    # TODO re-add when available 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
     readonly_fields = ('overall_status', 'request_date', 'start_date', 'end_date')
-
-    def get_queryset(self, request):
-        return super().get_queryset(request)
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -137,12 +130,17 @@ class RequestJobAdmin(admin.ModelAdmin):
         return request.user.is_staff
 
     def has_delete_permission(self, request, obj=None):
-        # Allow delete only for superusers and obj owners
-        return request.user.is_superuser or (obj is not None and request.user.username == obj.user)
+        # Allow delete only for superusers and obj owners when status avail deletion.
+        return request.user.is_superuser or \
+               (obj is not None and obj.overall_status in ('Submitted', 'Failed') and request.user.username == obj.user)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)
+        if obj is None:
+            self.fields.remove('overall_status') if 'overall_status' in self.fields else None
         form.user = request.user
+        form.username = request.user.username
+        form.email_list = request.user.email
         return form
 
     def resubmit_jobs(self, request, queryset):
@@ -201,9 +199,6 @@ class RequestJobAdmin(admin.ModelAdmin):
             obj.overall_status,
             obj.overall_status
         )
-
-    def get_fields(self, request, obj=None):
-        return super().get_fields(request, obj)
 
     def get_inlines(self, request, obj):
         """Hook for specifying custom inlines."""

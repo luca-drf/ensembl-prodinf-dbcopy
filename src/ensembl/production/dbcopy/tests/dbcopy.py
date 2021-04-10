@@ -196,5 +196,4 @@ class DBIntrospectTest(APITestCase):
         response = self.client.get(reverse('ensembl_dbcopy:tablelist', kwargs=args),
                                    {'search': 'unknown'})
         response_list = json.loads(response.content.decode('utf-8'))
-        print(response_list)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

@@ -9,7 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ensembl.production.dbcopy.lookups import get_database_set, get_table_set
+from ensembl.production.dbcopy.lookups import get_database_set, get_table_set, get_excluded_schemas
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -30,7 +30,8 @@ class ListDatabases(APIView):
         name_matches = request.query_params.getlist('matches[]')
         try:
             result = get_database_set(hostname=hostname, port=port,
-                                      name_filter=name_filter, name_matches=name_matches)
+                                      name_filter=name_filter, name_matches=name_matches,
+                                      excluded_schemas=get_excluded_schemas())
         except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
