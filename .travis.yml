@@ -9,8 +9,9 @@ services:
 env:
   - DB=mysql DEBUG=f
 before_script:
-  - mysql -u root -e "CREATE USER 'ensembl'@'localhost' IDENTIFIED BY '';"
-  - mysql -u root -e "GRANT ALL ON *.* TO 'ensembl'@'localhost';"
+  - mysql -u root -e "CREATE USER 'ensembl'@'%' IDENTIFIED BY '';"
+  - mysql -u root -e "GRANT ALL ON *.* TO 'ensembl'@'%';"
+  - mysql -u root -e "FLUSH PRIVILEGES;"
 install:
   - pip install -r requirements-dev.txt
 script:
