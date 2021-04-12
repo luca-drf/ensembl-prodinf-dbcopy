@@ -134,34 +134,23 @@ class DBIntrospectTest(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        with connection.cursor() as cursor:
-            cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
-            cursor.execute("CREATE DATABASE `test_homo_sapiens`")
-            cursor.execute("CREATE TABLE test_homo_sapiens.`assembly` (`id` INT(10))")
-            cursor.execute("CREATE TABLE test_homo_sapiens.`assembly_exception` (`id` INT(10))")
-            cursor.execute("CREATE TABLE test_homo_sapiens.`coord_system` (`id` INT(10))")
         cls.host = connections.databases['default'].get('HOST', 'localhost')
         cls.port = connections.databases['default'].get('PORT', 3306)
-        cls.database = 'test_homo_sapiens'
-
-    @classmethod
-    def tearDownClass(cls):
-        with connection.cursor() as cursor:
-            cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
+        cls.database = 'test_db_copy'
 
     def testDatabaseList(self):
         # Test getting test Production dbs
         args = {'host': self.host, 'port': self.port}
         response = self.client.get(reverse('ensembl_dbcopy:databaselist', kwargs=args),
-                                   {'search': 'test_homo'})
+                                   {'search': 'test_db'})
 
         response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response_list), 1)
-        self.assertEqual(response_list[0], 'test_homo_sapiens')
+        self.assertEqual(response_list[0], 'test_db_copy')
         response = self.client.get(reverse('ensembl_dbcopy:databaselist',
                                            kwargs={**args, 'host': 'bad-host'}),
-                                   {'search': 'test_production_services'})
+                                   {'search': 'test'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         response = self.client.get(reverse('ensembl_dbcopy:databaselist', kwargs=args),
@@ -170,7 +159,7 @@ class DBIntrospectTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_list), 0)
         response = self.client.get(reverse('ensembl_dbcopy:databaselist', kwargs=args),
-                                   {'matches[]': ['test_homo_sapiens']})
+                                   {'matches[]': ['test_db_copy']})
         response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_list), 1)
@@ -186,17 +175,17 @@ class DBIntrospectTest(APITestCase):
                 'database': self.database}
         # Test getting meta_key table for Production dbs
         response = self.client.get(reverse('ensembl_dbcopy:tablelist', kwargs=args),
-                                   {'search': 'ass'})
+                                   {'search': 'auth'})
         response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_list), 2)
+        self.assertEqual(len(response_list), 6)
         args['host'] = 'badhost-name'
         response = self.client.get(reverse('ensembl_dbcopy:tablelist', kwargs=args),
-                                   {'search': 'meta'})
+                                   {'search': 'django'})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         args['host'] = self.host
         response = self.client.get(reverse('ensembl_dbcopy:tablelist', kwargs=args),
-                                   {'search': 'unknown'})
+                                   {'search': 'homo_sapiens'})
         response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_list), 0)
