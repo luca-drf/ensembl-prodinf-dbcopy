@@ -2,19 +2,29 @@
 {% block object-tools-items %}
     <li>
         {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
+    </li>
+    <li>
         <a href="{% add_preserved_filters history_url %}" class="historylink">{% trans "History" %}</a>
+    </li>
+    <li>
         <a href="{% url 'admin:ensembl_dbcopy_requestjob_add' %}"
            class="button btn btn-secondary" role="button">Submit New Copy</a>
+    </li>
+    <li>
         <a href="{% url 'admin:ensembl_dbcopy_requestjob_change' original.job_id %}"
            class="button btn btn-secondary" role="button">Refresh</a>
+    </li>
+    <li>
         <a href="{% url 'admin:ensembl_dbcopy_requestjob_add' %}?from_request_job={{ original.pk }}"
            class="button btn btn-secondary" role="button">Resubmit job</a>
-        {% if user.is_superuser %}
+    </li>
+    {% if user.is_superuser %}
+        <li>
             <a href="{% url 'ensembl_dbcopy:reset_failed_jobs' original.job_id %}"
                style="background-color: #c14747;color:white"
                class="button btn btn-secondary" role="button">Reset failed jobs</a>
-        {% endif %}
-    </li>
+        </li>
+    {% endif %}
     {% if has_absolute_url %}
         <li><a href="{{ absolute_url }}" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif %}
 {% endblock %}

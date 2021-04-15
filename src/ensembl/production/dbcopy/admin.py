@@ -18,6 +18,7 @@ from django_admin_inline_paginator.admin import TabularInlinePaginated
 from ensembl.production.djcore.admin import SuperUserAdmin
 from ensembl.production.dbcopy.filters import UserFilter
 
+
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
 from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
 
@@ -92,6 +93,7 @@ class OverallStatusFilter(SimpleListFilter):
 
 class TransferLogInline(TabularInlinePaginated):
     model = TransferLog
+    template = "admin/ensembl_dbcopy/edit_inline/tabular_paginated.html"
     per_page = 30
     fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'table_status')
     readonly_fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'table_status')
@@ -138,6 +140,7 @@ class RequestJobAdmin(admin.ModelAdmin):
         form = super().get_form(request, obj, change, **kwargs)
         if obj is None:
             self.fields.remove('overall_status') if 'overall_status' in self.fields else None
+            pass
         form.user = request.user
         form.username = request.user.username
         form.email_list = request.user.email

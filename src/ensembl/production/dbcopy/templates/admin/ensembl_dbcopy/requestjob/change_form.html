@@ -2,29 +2,8 @@
 {% load i18n admin_urls static admin_modify %}
 {% block content %}
     {{ block.super }}
-    <script language="text/html" id="bootstrapAlert" class="errorlist" xmlns="http://www.w3.org/1999/html">
+    <script type="text/html" id="bootstrapAlert" class="errorlist" xmlns="http://www.w3.org/1999/html">
         <p class="errornote alert alert-warning alert-dismissible fade show" role="alert">
         </p>
     </script>
-{% endblock %}
-{% block object-tools-items %}
-    {% if change %}
-        {% if not is_popup %}
-                <li>
-                    {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
-                    <a href="{% add_preserved_filters history_url %}" class="historylink">{% trans "History" %}</a>
-                    <a href="{% url 'admin:ensembl_dbcopy_requestjob_add' %}"
-                       class="button btn btn-secondary" role="button">Submit New Copy</a>
-                    <a href="{% url 'admin:ensembl_dbcopy_requestjob_change' original.job_id %}"
-                       class="button btn btn-secondary" role="button">Refresh</a>
-                    <a href="{% url 'admin:ensembl_dbcopy_requestjob_add' %}?from_request_job={{ original.pk }}"
-                       class="button btn btn-secondary" role="button">Resubmit job</a>
-                    {% if user.is_superuser %}
-                        <a href="{% url 'ensembl_dbcopy:reset_failed_jobs' original.job_id %}"
-                           style="background-color: #c14747;color:#fff!important"
-                           class="button btn btn-secondary" role="button">Reset failed jobs</a>
-                    {% endif %}
-                </li>
-        {% endif %}
-    {% endif %}
 {% endblock %}

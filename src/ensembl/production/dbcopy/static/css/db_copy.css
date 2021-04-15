@@ -39,6 +39,9 @@
   display: none;
 }*/
 /* Table lists */
+.tabular-pagination {
+    padding-top: 2rem;
+}
 #result_list .field-src_incl_db, #result_list .field-src_skip_db, #result_list .field-tgt_host,
 #result_list .field-tgt_db_name, #result_list .field-src_host {
     max-width: available;
@@ -54,14 +57,6 @@ div#changelist-filter ul {
 #db-alert, #table-alert {
     max-height: 400px;
     overflow-y: scroll;
-}
-
-#requestjob_form .form-row input[type='text'], #requestjob_form .form-row label {
-    min-width: 29em !important;
-}
-
-#requestjob_form .field-overall_status {
-    min-width: 29em !important;
 }
 
 /* Status */
