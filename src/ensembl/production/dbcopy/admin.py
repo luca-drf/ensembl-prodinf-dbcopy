@@ -10,14 +10,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from django.contrib import admin, messages
-from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.utils import model_ngettext
-from django.db.models import Count, F, Q
+from django.db.models import F, Q
 from django.utils.html import format_html
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 from ensembl.production.djcore.admin import SuperUserAdmin
-from ensembl.production.dbcopy.filters import UserFilter
-
+from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
 
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
 from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
@@ -67,30 +65,6 @@ class HostItemAdmin(admin.ModelAdmin, SuperUserAdmin):
     get_target_groups.short_description = 'Host Target Groups '
 
 
-class OverallStatusFilter(SimpleListFilter):
-    title = 'status'  # or use _('country') for translated title
-    parameter_name = 'status'
-
-    def lookups(self, request, model_admin):
-        status = set([s.overall_status for s in model_admin.model.objects.all()])
-        return [(s, s) for s in status]
-
-    def queryset(self, request, queryset):
-        if self.value() == 'Failed':
-            qs = queryset.filter(end_date__isnull=False, status__isnull=False)
-            return qs.filter(transfer_logs__end_date__isnull=True).annotate(
-                count_transfer=Count('transfer_logs')).filter(count_transfer__gt=0)
-        elif self.value() == 'Complete':
-            qs = queryset.filter(end_date__isnull=False, status__isnull=False)
-            return qs.exclude(transfer_logs__end_date__isnull=True)
-        elif self.value() == 'Running':
-            qs = queryset.filter(end_date__isnull=True, status__isnull=True)
-            return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer__gt=0)
-        elif self.value() == 'Submitted':
-            qs = queryset.filter(end_date__isnull=True, status__isnull=True)
-            return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)
-
-
 class TransferLogInline(TabularInlinePaginated):
     model = TransferLog
     template = "admin/ensembl_dbcopy/edit_inline/tabular_paginated.html"
@@ -118,7 +92,7 @@ class RequestJobAdmin(admin.ModelAdmin):
                     'request_date', 'overall_status')
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'username',
                      'start_date', 'end_date', 'request_date')
-    list_filter = ('tgt_host', 'src_host', UserFilter, OverallStatusFilter)
+    list_filter = (DBCopyUserFilter, OverallStatusFilter, 'src_host', 'tgt_host')
     ordering = ('-request_date', '-start_date')
     fields = ['overall_status', 'src_host', 'tgt_host', 'email_list', 'username',
               'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name']
@@ -209,3 +183,13 @@ class RequestJobAdmin(admin.ModelAdmin):
             return super().get_inlines(request, obj)
         else:
             return []
+
+    def changelist_view(self, request, extra_context=None):
+        if 'user' not in request.GET:
+            # set default filter to the request user
+            q = request.GET.copy()
+            q['user'] = request.user
+            request.GET = q
+            request.META['QUERY_STRING'] = request.GET.urlencode()
+        return super().changelist_view(request, extra_context)
+

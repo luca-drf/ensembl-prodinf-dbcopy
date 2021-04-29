@@ -10,9 +10,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from django.contrib.admin import SimpleListFilter
+from django.db.models import Count
 
 
-class UserFilter(SimpleListFilter):
+class DBCopyUserFilter(SimpleListFilter):
     """
     This filter will always return a subset of the instances in a Model, either filtering by the
     user choice or by a default value.
@@ -24,6 +25,10 @@ class UserFilter(SimpleListFilter):
     parameter_name = 'user'
     default_value = None
 
+    def __init__(self, request, params, model, model_admin):
+        super().__init__(request, params, model, model_admin)
+        self.username = request.user.username
+
     def lookups(self, request, model_admin):
         """
         Returns a list of tuples. The first element in each
@@ -32,14 +37,24 @@ class UserFilter(SimpleListFilter):
         human-readable name for the option that will appear
         in the right sidebar.
         """
-        list_of_users = []
-        queryset = model_admin.model.objects.all()
-        for q in queryset:
-            if q.username:
-                list_of_users.append(
-                    (str(q.username), q.username)
-                )
-        return sorted(list(set(list_of_users + [("all", "all"), ])), key=lambda tp: tp[1])
+        list_of_users = model_admin.model.objects.filter(username__isnull=False).distinct(). \
+            order_by('username').values_list('username', 'username')
+        return list_of_users
+
+    def choices(self, changelist):
+        """ Enable 'All' value passed instead of empty string,
+        list item to fetch all values instead of default user's ones. """
+        yield {
+            'selected': self.value() == "All",
+            'query_string': changelist.get_query_string({self.parameter_name: 'All'}),
+            'display': 'All',
+        }
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == str(lookup),
+                'query_string': changelist.get_query_string({self.parameter_name: lookup}),
+                'display': title,
+            }
 
     def queryset(self, request, queryset):
         """
@@ -49,8 +64,33 @@ class UserFilter(SimpleListFilter):
         """
         # Compare the requested value to decide how to filter the queryset.
         if self.value():
-            if self.value() != "all":
+            if self.value() != 'All':
                 return queryset.filter(username=self.value())
             else:
                 return queryset.all()
+        # default query set per request user
         return queryset.filter(username=request.user)
+
+
+class OverallStatusFilter(SimpleListFilter):
+    title = 'status'  # or use _('country') for translated title
+    parameter_name = 'status'
+
+    def lookups(self, request, model_admin):
+        status = set([s.overall_status for s in model_admin.model.objects.all()])
+        return [(s, s) for s in status]
+
+    def queryset(self, request, queryset):
+        if self.value() == 'Failed':
+            qs = queryset.filter(end_date__isnull=False, status__isnull=False)
+            return qs.filter(transfer_logs__end_date__isnull=True).annotate(
+                count_transfer=Count('transfer_logs')).filter(count_transfer__gt=0)
+        elif self.value() == 'Complete':
+            qs = queryset.filter(end_date__isnull=False, status__isnull=False)
+            return qs.exclude(transfer_logs__end_date__isnull=True)
+        elif self.value() == 'Running':
+            qs = queryset.filter(end_date__isnull=True, status__isnull=True)
+            return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer__gt=0)
+        elif self.value() == 'Submitted':
+            qs = queryset.filter(end_date__isnull=True, status__isnull=True)
+            return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)

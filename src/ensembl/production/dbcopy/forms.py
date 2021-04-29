@@ -84,7 +84,7 @@ class RequestJobForm(forms.ModelForm):
                            message="Source Host should be formatted like this host:port")
         ],
         widget=autocomplete.ListSelect2(url='ensembl_dbcopy:src-host-autocomplete',
-                                         attrs={'data-placeholder': 'Source host'})
+                                        attrs={'data-placeholder': 'Source host'})
     )
 
     tgt_host = TrimmedCharField(
