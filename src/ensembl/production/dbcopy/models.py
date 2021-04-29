@@ -147,7 +147,7 @@ class TransferLog(models.Model):
 
 class Host(models.Model):
     class Meta:
-        db_table = 'host'
+        db_table = 'server_host'
         unique_together = (('name', 'port'),)
         app_label = 'ensembl_dbcopy'
         verbose_name = 'Host'
