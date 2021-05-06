@@ -9,13 +9,17 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins, response, status
 
 from ensembl.production.dbcopy.api.serializers import RequestJobDetailSerializer, RequestJobListSerializer, HostSerializer
 from ensembl.production.dbcopy.models import RequestJob, Host, Group
 
 
-class RequestJobViewSet(viewsets.ModelViewSet):
+class RequestJobViewSet(mixins.CreateModelMixin,
+                        mixins.RetrieveModelMixin,
+                        mixins.ListModelMixin,
+                        mixins.DestroyModelMixin,
+                        viewsets.GenericViewSet):
     serializer_class = RequestJobListSerializer
     queryset = RequestJob.objects.all()
     pagination_class = None
@@ -26,6 +30,21 @@ class RequestJobViewSet(viewsets.ModelViewSet):
             return RequestJobListSerializer
         else:
             return RequestJobDetailSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Only destroy object when status is still "submitted" otherwise raise an error and do not delete object
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        instance = self.get_object()
+        if instance.overall_status == 'Submitted':
+            self.perform_destroy(instance)
+            return response.Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return response.Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class SourceHostViewSet(viewsets.ReadOnlyModelViewSet):

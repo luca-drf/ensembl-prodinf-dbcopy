@@ -27,7 +27,7 @@ schema_view = get_schema_view(
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
-
+app_name = 'dbcopy_api'
 # API router setup
 router = routers.SimpleRouter(trailing_slash=False)
 # Services URIs configuration
@@ -36,18 +36,18 @@ router.register(prefix=r'requestjob',
                 viewset=viewsets.RequestJobViewSet,
                 basename='requestjob')
 
-router.register(prefix=r'src_host',
+router.register(prefix=r'srchost',
                 viewset=viewsets.SourceHostViewSet,
-                basename='src_host')
+                basename='srchost')
 
-router.register(prefix=r'tgt_host',
+router.register(prefix=r'tgthost',
                 viewset=viewsets.TargetHostViewSet,
-                basename='tgt_host')
+                basename='tgthost')
 
 urlpatterns = [
-    path('', include(router.urls)),
-    re_path('databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),
-    re_path('tables/(?P<host>[\w-]+)/(?P<port>\d+)/(?P<database>\w+)', ListTables.as_view(), name='tablelist'),
-    re_path('swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    path(f'docs/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path(f'', include(router.urls)),
+    re_path(r'databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),
+    re_path(r'tables/(?P<host>[\w-]+)/(?P<port>\d+)/(?P<database>\w+)', ListTables.as_view(), name='tablelist'),
+    re_path(r'swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path(f'docs', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
