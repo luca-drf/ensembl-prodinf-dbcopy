@@ -55,13 +55,6 @@
             $(this).removeClass("is-invalid");
             updateAlerts();
         });
-        // Inline paginator refactored url to reuse the possible # part
-        // #TODO instead of reloading all content, just reload the inlines.
-        let selectedPane = window.location.hash.substr(1);
-        $('.paginator a').each(function (index) {
-            // console.log("item ", $(this).attr('href'));
-            $(this).attr('href', $(this).attr('href') + '#' + selectedPane);
-        });
     });
 
 

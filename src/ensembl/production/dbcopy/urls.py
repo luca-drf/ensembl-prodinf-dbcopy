@@ -23,5 +23,4 @@ urlpatterns = [
     path('tgthost', TgtHostLookup.as_view(), name='tgt-host-autocomplete'),
     path('srcdb', DbLookup.as_view(), name='host-db-autocomplete'),
     path('srctables', TableLookup.as_view(), name='host-db-table-autocomplete'),
-    path('api', include('ensembl.production.dbcopy.api.urls')),
 ]

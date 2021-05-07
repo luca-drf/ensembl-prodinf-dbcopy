@@ -90,7 +90,7 @@ class RequestJobListSerializer(serializers.HyperlinkedModelSerializer):
             'overall_status')
         read_only_fields = ['job_id']
         extra_kwargs = {
-            'url': {'view_name': 'ensembl_dbcopy:requestjob-detail', 'lookup_field': 'job_id'},
+            'url': {'view_name': 'dbcopy_api:requestjob-detail', 'lookup_field': 'job_id'},
         }
 
     user = serializers.CharField(required=False, source='username')
@@ -122,7 +122,7 @@ class RequestJobDetailSerializer(BaseUserTimestampSerializer):
         read_only_fields = ['job_id']
 
     transfer_log = TransferLogSerializer(many=True, source='transfer_logs', read_only=True)
-    user = serializers.CharField(required=False, source='username')
+    user = serializers.CharField(required=True, source='username')
 
 
 class HostSerializer(serializers.ModelSerializer):
