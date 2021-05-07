@@ -88,8 +88,6 @@ class RequestJobTest(APITestCase):
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': 'ddbdc15a-07af-11ea-bdcd-9801a79243a5'}))
         self.assertEqual(response.status_code, status.HTTP_406_NOT_ACCEPTABLE)
 
-
-
     # Test Source host endpoint
     def testSourceHost(self):
         # Test get
