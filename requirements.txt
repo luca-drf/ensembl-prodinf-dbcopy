@@ -1,8 +1,8 @@
-Django~=3.1.7
+Django~=3.2.2
 django-admin-inline-paginator~=0.1.1
 djangorestframework~=3.12.2
 drf-nested-routers~=0.93.3
 drf-yasg~=1.20.0
 django-autocomplete-light~=3.8.2
-ensembl_prodinf_djcore@git+https://github.com/Ensembl/ensembl-prodinf-djcore.git#egg=ensembl_prodinf_djcore
-ensembl_prodinf_core@git+https://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl_prodinf_core
+ensembl-prodinf-djcore@git+https://github.com/Ensembl/ensembl-prodinf-djcore.git#egg=ensembl-prodinf-djcore
+ensembl-prodinf-core@git+https://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
