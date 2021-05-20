@@ -1,35 +1,21 @@
-Ensembl Django project template
-=================================
+Ensembl Django DBCopy portable App
+==================================
 
-Ensembl Django project template
+Ensembl DBCopy service support Database manager
 
 Quick start
 -----------
 
 1. Create a project
 
-```shell script
-django-admin startproject --template=https://github.com/ensembl/ensembl-dj-project/archive/main.zip --extension=py,env,example [your_project_name]
-
-cd your_project_name
-mv .env.example .env
-pip install -r requirements.txt
-
-# Check everything is in place with 
-./manage.py check
-# Should output 
-```
+Check out repo from github
 
 
 2. Create an app within your project
 
     2.1 Init your app
     
-    ```shell script
-    cd your_project_name # if not already in project dir from previous step
-    django-admin startapp --template=https://github.com/ensembl/ensembl-dj-app/archive/main.zip [your_app_name]
-
-    ```
+    ```run ./manage.py migrate ensembl_dbcopy```
 
     2.2 Register your new app: Edit  your_project_name/settings/base.py
      
