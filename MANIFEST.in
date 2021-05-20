@@ -3,3 +3,5 @@ include VERSION
 include NOTICE
 include requirements.txt
 include requirements-prod.txt
+recursive-include src/ensembl/production/dbcopy/static *
+recursive-include src/ensembl/production/dbcopy/templates *
