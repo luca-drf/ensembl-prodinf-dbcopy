@@ -39,6 +39,7 @@ setup(
     maintainer_email='ensembl-production@ebi.ac.uk',
     description='Ensembl Production infrastructure core package',
     python_requires='>=3.7',
+    include_package_data=True,
     dependency_links=['https://github.com/Ensembl/ensembl-prodinf-djcore#egg=ensembl_prodinf_djcore'],
     install_requires=import_requirements(),
     classifiers=[
