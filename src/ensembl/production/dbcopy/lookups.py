@@ -17,6 +17,7 @@ from ensembl.production.core.db_introspects import get_database_set, get_table_s
 
 from ensembl.production.dbcopy.models import Dbs2Exclude
 from .models import Host, Group
+from sqlalchemy.exc import DBAPIError
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,6 @@ class TgtHostLookup(autocomplete.Select2QuerySetView):
         # If he is not allowed, the server will be removed from the autocomplete
         if self.q:
             host_queryset = host_queryset.filter(name__icontains=self.q, active=True)
-            host_queryset_final = host_queryset
             for host in host_queryset:
                 group = group_queryset.filter(host_id=host.auto_id)
                 if group:
@@ -95,8 +95,10 @@ class DbLookup(autocomplete.Select2ListView):
                                           excluded_schemas=get_excluded_schemas())
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
-                logger.error("Db Lookup query error: ", e)
+                logger.error("Db Lookup query error: ", str(e))
                 pass
+            except DBAPIError as e:
+                logger.error("Db Lookup query error: ", str(e.orig))
         return result
 
 
@@ -114,6 +116,8 @@ class TableLookup(autocomplete.Select2ListView):
                 result = get_table_set(host, port, database, self.q)
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
-                logger.error("Db Table Lookup query error: ", e)
+                logger.error("Db Table Lookup query error: ", str(e))
                 pass
+            except DBAPIError as e:
+                logger.error("TableLookup query error: ", str(e.orig))
         return result

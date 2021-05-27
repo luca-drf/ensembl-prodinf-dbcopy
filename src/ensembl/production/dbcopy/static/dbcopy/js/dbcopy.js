@@ -167,7 +167,7 @@
         $(hostsDetails).each(function (_i, hostDetails) {
             asyncCalls.push(
                 $.ajax({
-                    url: `/dbcopy/api/databases/${hostDetails.name}/${hostDetails.port}`,
+                    url: `/api/dbcopy/databases/${hostDetails.name}/${hostDetails.port}`,
                     dataType: "json",
                     data: {
                         matches: matchesDBs,
@@ -191,7 +191,7 @@
 // Fetch Databases per server
     function fetchPresentTableNames(hostDetails, databaseName, matchesTables, thenFunc) {
         $.ajax({
-            url: `/dbcopy/api/tables/${hostDetails.name}/${hostDetails.port}/${databaseName}`,
+            url: `/api/dbcopy/tables/${hostDetails.name}/${hostDetails.port}/${databaseName}`,
             dataType: "json",
             data: {
                 matches: matchesTables,
@@ -210,7 +210,7 @@
             thenFunc(dbNames);
         } else {
             $.ajax({
-                url: `/dbcopy/api/databases/${hostDetails.name}/${hostDetails.port}`,
+                url: `/api/dbcopy/databases/${hostDetails.name}/${hostDetails.port}`,
                 dataType: "json",
                 data: {
                     search: dbNames[0],
@@ -230,7 +230,7 @@
             thenFunc(tableNames);
         } else {
             $.ajax({
-                url: `/dbcopy/api/tables/${hostDetails.name}/${hostDetails.port}/${databaseName}`,
+                url: `/api/dbcopy/tables/${hostDetails.name}/${hostDetails.port}/${databaseName}`,
                 dataType: "json",
                 success: function (data) {
                     thenFunc($.makeArray(data));
