@@ -12,6 +12,12 @@
         $(".field-wipe_target").hide();
         $(".field-convert_innodb").hide();
         $(".field-dry_run").hide();
+        $("td.field-overall_status").has("div.Complete").addClass('Complete');
+        $("td.field-overall_status").has("div.Running").addClass('Running');
+        $("td.field-overall_status").has("div.Incomplete").addClass('Incomplete');
+        $("td.field-overall_status").has("div.Submitted").addClass('Submitted');
+        $("td.field-overall_status").has("div.Scheduled").addClass('Scheduled');
+        $("td.field-overall_status").has("div.Failed").addClass('Failed');
         const srcHostElem = $("#id_src_host");
         const tgtHostElem = $("#id_tgt_host");
         if (srcHostElem.val() && tgtHostElem.val()) {

@@ -68,22 +68,27 @@ div#changelist-filter ul {
 
 .Complete {
     background-color: lightgreen;
+    background-clip:content-box;
 }
 
 .Incomplete {
     background-color: lightblue;
+    background-clip:content-box;
 }
 
 .Submitted, .Scheduled {
     background-color: lightblue;
+    background-clip:content-box;
 }
 
 .Running {
     background-color: gold;
+    background-clip:content-box;
 }
 
 .Failed {
     background-color: lightpink;
+    background-clip:content-box;
 }
 
 .progress {
