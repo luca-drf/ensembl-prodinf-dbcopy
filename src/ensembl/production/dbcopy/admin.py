@@ -48,7 +48,7 @@ class TargetGroupInline(admin.TabularInline):
 class HostItemAdmin(admin.ModelAdmin, SuperUserAdmin):
     class Media:
         css = {
-            'all': ('css/db_copy.css',)
+            'all': ('dbcopy/css/db_copy.css',)
         }
 
     # form = HostRecordForm
@@ -82,8 +82,8 @@ class TransferLogInline(TabularInlinePaginated):
 @admin.register(RequestJob)
 class RequestJobAdmin(admin.ModelAdmin):
     class Media:
-        js = ('js/dbcopy/dbcopy.js',)
-        css = {'all': ('css/db_copy.css',)}
+        js = ('dbcopy/js/dbcopy.js',)
+        css = {'all': ('dbcopy/css/db_copy.css',)}
 
     actions = ['resubmit_jobs', ]
     inlines = (TransferLogInline,)
