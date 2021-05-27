@@ -31,6 +31,7 @@ class RequestJobTest(APITestCase):
     def testRequestJob(self):
         # Check get all
         response = self.client.get(reverse('dbcopy_api:requestjob-list'))
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Test post
         response = self.client.post(reverse('dbcopy_api:requestjob-list'),
@@ -153,9 +154,10 @@ class DBIntrospectTest(APITestCase):
     def testDatabaseList(self):
         # Test getting test Production dbs
         args = {'host': self.host, 'port': self.port}
+        print(reverse('dbcopy_api:databaselist', kwargs=args))
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'test_homo'})
-
+        print("content", response.content)
         response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response_list), 1)
