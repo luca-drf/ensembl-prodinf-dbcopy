@@ -118,10 +118,14 @@
 
 // Insert alert after
     function insertAlertAfter(elem, divID, alertText) {
+        $("#table-alert").remove();
+        $("#db-alert").remove();
         $($("#bootstrapAlert").html()).insertAfter(elem).attr('id', divID).append(alertText);
     }
 
     function insertAlertBefore(elem, divID, alertText) {
+        $("#table-alert").remove();
+        $("#db-alert").remove();
         $($("#bootstrapAlert").html()).insertBefore(elem).attr('id', divID).append(alertText);
     }
 
@@ -170,13 +174,19 @@
     function fetchPresentDBNames(hostsDetails, matchesDBs, thenFunc) {
         let presentDBs = [];
         let asyncCalls = [];
+        $("#table-alert").remove();
+        $("#db-alert").remove();
+
         $(hostsDetails).each(function (_i, hostDetails) {
             asyncCalls.push(
-                $.ajax({
+                $.post({
                     url: `/api/dbcopy/databases/${hostDetails.name}/${hostDetails.port}`,
                     dataType: "json",
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').attr('value'),
+                    },
                     data: {
-                        matches: matchesDBs,
+                        matches: matchesDBs
                     },
                     success: function (data) {
                         const hostString = hostDetailsToString(hostDetails);
@@ -196,9 +206,14 @@
 
 // Fetch Databases per server
     function fetchPresentTableNames(hostDetails, databaseName, matchesTables, thenFunc) {
-        $.ajax({
+        $("#table-alert").remove();
+        $("#db-alert").remove();
+        $.post({
             url: `/api/dbcopy/tables/${hostDetails.name}/${hostDetails.port}/${databaseName}`,
             dataType: "json",
+            headers: {
+                'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').attr('value'),
+            },
             data: {
                 matches: matchesTables,
             },
@@ -215,9 +230,14 @@
         if (dbNames.length && dbNames.length > 1) {
             thenFunc(dbNames);
         } else {
-            $.ajax({
+            $("#db-alert").remove();
+            $("#table-alert").remove();
+            $.post({
                 url: `/api/dbcopy/databases/${hostDetails.name}/${hostDetails.port}`,
                 dataType: "json",
+                headers: {
+                    'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').attr('value'),
+                },
                 data: {
                     search: dbNames[0],
                 },
@@ -235,8 +255,13 @@
         if (tableNames.length) {
             thenFunc(tableNames);
         } else {
-            $.ajax({
+            $("#table-alert").remove();
+            $("#db-alert").remove();
+            $.post({
                 url: `/api/dbcopy/tables/${hostDetails.name}/${hostDetails.port}/${databaseName}`,
+                headers: {
+                    'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').attr('value'),
+                },
                 dataType: "json",
                 success: function (data) {
                     thenFunc($.makeArray(data));

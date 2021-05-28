@@ -13,14 +13,19 @@ from ensembl.production.dbcopy.lookups import get_database_set, get_table_set, g
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.views.decorators.csrf import csrf_exempt
 
 
 class ListDatabases(APIView):
     """
     View to list all databases from a given server
     """
-
+    @csrf_exempt
     def get(self, request, *args, **kwargs):
+        return self.post(request, *args, **kwargs)
+
+    @csrf_exempt
+    def post(self, request, *args, **kwargs):
         """
         Return a list of all schema names
         """
@@ -43,8 +48,12 @@ class ListTables(APIView):
     """
     View to list all tables from a given database
     """
-
+    @csrf_exempt
     def get(self, request, *args, **kwargs):
+        return self.post(request, *args, **kwargs)
+
+    @csrf_exempt
+    def post(self, request, *args, **kwargs):
         """
         Return a list of tables
         """

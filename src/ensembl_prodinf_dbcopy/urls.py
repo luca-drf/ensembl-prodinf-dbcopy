@@ -29,7 +29,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    path(f'api/dbcopy/', include('ensembl.production.dbcopy.api.urls')),
     path(f'dbcopy/', include('ensembl.production.dbcopy.urls')),
-    path(f'api/', include('ensembl.production.dbcopy.api.urls')),
     path(f'', admin.site.urls)
 ]
