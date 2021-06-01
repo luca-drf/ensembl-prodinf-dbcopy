@@ -131,6 +131,37 @@ class RequestJobTest(APITestCase):
         response_dict = json.loads(response.content.decode('utf-8'))
         self.assertEqual(len(response_dict), 2)
 
+    def testRequestModelClean(self):
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):
+            # test db_name repeated on same target
+            job = RequestJob.objects.create(src_host="host1",
+                                            tgt_host="host4,host1",
+                                            src_incl_db="db1,db4",
+                                            tgt_db_name="db5,db1")
+        with self.assertRaises(ValidationError):
+            # test target db name not set at all 9same target dn names
+            job = RequestJob.objects.create(src_host="host1",
+                                            tgt_host="host1,host3",
+                                            src_incl_db="db1")
+        with self.assertRaises(ValidationError):
+            # test target host contains src host and all db selected
+            job = RequestJob.objects.create(src_host="host1",
+                                            tgt_host="host2,host1")
+        # Test a normal job would pass.
+        job = RequestJob.objects.create(src_host="host2",
+                                        tgt_host="host4,host3",
+                                        src_incl_db="db1,db4",
+                                        tgt_db_name="db5,db1")
+        self.assertIsNotNone(job)
+
+        # test a job with same target but different db name would pass
+        job = RequestJob.objects.create(src_host="host2",
+                                        tgt_host="host2",
+                                        src_incl_db="db1",
+                                        tgt_db_name="db5")
+        self.assertIsNotNone(job)
+
 
 class DBIntrospectTest(APITestCase):
 

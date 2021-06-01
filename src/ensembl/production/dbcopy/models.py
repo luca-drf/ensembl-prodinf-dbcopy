@@ -111,6 +111,20 @@ class RequestJob(models.Model):
     def count_copied(self, log):
         return 1 if log.end_date else 0
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        tgts = self.tgt_host.split(',')
+        src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
+        tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
+        one_src_db_tgts = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
+        if self.src_host in tgts and one_src_db_tgts:
+            raise ValidationError("You can't set a copy with identical source/target host/db pair.")
+        super().clean()
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.clean()
+        super().save(force_insert, force_update, using, update_fields)
+
 
 class TransferLog(models.Model):
     class Meta:
