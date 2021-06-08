@@ -108,7 +108,8 @@ class RequestJobAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Allow delete only for superusers and obj owners when status avail deletion.
         return request.user.is_superuser or \
-               (obj is not None and obj.overall_status in ('Submitted', 'Failed') and request.user.username == obj.user)
+               (obj is not None and obj.overall_status in (
+               'Submitted', 'Failed') and request.user.username == obj.username)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)
@@ -192,4 +193,3 @@ class RequestJobAdmin(admin.ModelAdmin):
             request.GET = q
             request.META['QUERY_STRING'] = request.GET.urlencode()
         return super().changelist_view(request, extra_context)
-
