@@ -12,6 +12,7 @@
 from django.contrib import admin, messages
 from django.contrib.admin.utils import model_ngettext
 from django.db.models import F, Q
+from django.db.models.query import QuerySet
 from django.utils.html import format_html
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 from ensembl.production.djcore.admin import SuperUserAdmin
@@ -149,12 +150,17 @@ class RequestJobAdmin(admin.ModelAdmin):
                 F('end_date').desc(nulls_first=True)).earliest('auto_id')
         return super().change_view(request, object_id, form_url, context)
 
-    def _get_deletable_objects(self, queryset):
-        return queryset.exclude(Q(status='Creating Requests') | Q(status='Processing Requests'))
+    def _is_deletable(self, obj):
+        return obj.status not in ('Creating Requests', 'Processing Requests')
 
-    def get_deleted_objects(self, queryset, request):
-        deletable_queryset = self._get_deletable_objects(queryset)
-        return super().get_deleted_objects(deletable_queryset, request)
+    def _get_deletable_objects(self, objs):
+        if isinstance(objs, QuerySet):
+            return objs.exclude(Q(status='Creating Requests') | Q(status='Processing Requests'))
+        return list(filter(self._is_deletable, objs))
+
+    def get_deleted_objects(self, objs, request):
+        deletable_objs = self._get_deletable_objects(objs)
+        return super().get_deleted_objects(deletable_objs, request)
 
     def delete_queryset(self, request, queryset):
         deletable_queryset = self._get_deletable_objects(queryset)
@@ -168,7 +174,7 @@ class RequestJobAdmin(admin.ModelAdmin):
         pass
 
     def log_deletion(self, request, obj, obj_display):
-        if obj.status not in ('Creating Requests', 'Processing Requests'):
+        if self._is_deletable(obj):
             super().log_deletion(request, obj, obj_display)
 
     def overall_status(self, obj):
