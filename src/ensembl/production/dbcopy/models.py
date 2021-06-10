@@ -10,11 +10,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import uuid
+import logging
 
+from django.contrib.auth.models import AnonymousUser
 from django.db import models
-
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from ensembl.production.djcore.models import NullTextField
 
+logger = logging.getLogger(__name__)
 
 class Dbs2Exclude(models.Model):
     table_schema = models.CharField(primary_key=True, db_column='TABLE_SCHEMA',
@@ -59,12 +63,36 @@ class RequestJob(models.Model):
     email_list = models.TextField("Notify Email(s)", max_length=2048, blank=True, null=True)
     start_date = models.DateTimeField("Started on", blank=True, null=True, editable=False)
     end_date = models.DateTimeField("Ended on", blank=True, null=True, editable=False)
-    username = models.CharField("Submitter", max_length=64, blank=True, null=True, db_column='user')
+    username = models.CharField("Submitter", max_length=64, blank=False, null=False, db_column='user')
     status = models.CharField("Status", max_length=20, blank=True, null=True, editable=False)
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
 
     def __str__(self):
         return str(self.job_id)
+
+    @property
+    def user(self):
+        """
+        Wrapper to make sure we have a way to retrieve the user from the field
+        Assuming username is unique (in case of an overriden default user model)
+        :return: User or AnonymousUser
+        """
+        User = get_user_model()
+        try:
+            return User.objects.get(username=self.username)
+        except ObjectDoesNotExist:
+            logger.error("Request job %s has no user attached", self.job_id)
+            return AnonymousUser()
+
+    @user.setter
+    def user(self, user):
+        """
+        Set the username field value from the user in parameters
+        :param user: User (see django.contrib.auth)
+        :return: None
+        """
+        assert(isinstance(user, get_user_model()))
+        self.username = user.username
 
     @property
     def overall_status(self):
@@ -105,19 +133,21 @@ class RequestJob(models.Model):
 
     @property
     def table_copied(self):
-        nbr_tables = sum(map(lambda log: self.count_copied(log), self.transfer_logs.all()))
+        nbr_tables = sum(map(lambda log: 1 if log.end_date else 0, self.transfer_logs.all()))
         return nbr_tables
 
-    def count_copied(self, log):
-        return 1 if log.end_date else 0
-
     def clean(self):
+        """
+        Main Object clean
+        :raise: ValidationError
+        :return: None
+        """
         from django.core.exceptions import ValidationError
-        tgts = self.tgt_host.split(',')
+        targets = self.tgt_host.split(',')
         src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
         tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
-        one_src_db_tgts = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
-        if self.src_host in tgts and one_src_db_tgts:
+        one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
+        if self.src_host in targets and one_src_db_targets:
             raise ValidationError("You can't set a copy with identical source/target host/db pair.")
         super().clean()
 
