@@ -16,7 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
 from ensembl.production.dbcopy.models import Dbs2Exclude
-from .models import Host, Group
+from .models import Host, HostGroup
 from sqlalchemy.exc import DBAPIError
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class TgtHostLookup(autocomplete.Select2QuerySetView):
 
     def get_queryset(self):
         host_queryset = Host.objects.all()
-        group_queryset = Group.objects.all()
+        group_queryset = HostGroup.objects.all()
         host_queryset_final = host_queryset
         # Checking that user is allowed to copy to the matching server
         # If he is not allowed, the server will be removed from the autocomplete

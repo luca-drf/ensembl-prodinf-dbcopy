@@ -31,22 +31,29 @@ class RequestJobTest(APITestCase):
     def testRequestJob(self):
         # Check get all
         response = self.client.get(reverse('dbcopy_api:requestjob-list'))
-        print(response.data)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Test post
         response = self.client.post(reverse('dbcopy_api:requestjob-list'),
-                                    {'src_host': 'mysql-ens-sta-1', 'src_incl_db': 'homo_sapiens_core_99_38',
-                                     'tgt_host': 'mysql-ens-general-dev-1', 'user': 'testuser'})
+                                    {'src_host': 'mysql-ens-sta-1:4519', 'src_incl_db': 'homo_sapiens_core_99_38',
+                                     'tgt_host': 'mysql-ens-general-dev-1:4484', 'user': 'testuser'})
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Test user email
         response_dict = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response_dict['email_list'], 'testuser@ebi.ac.uk')
-        # Test bad post
+        # Test bad post (no user and src_host)
         response = self.client.post(reverse('dbcopy_api:requestjob-list'),
                                     {'src_host': '', 'src_incl_db': 'homo_sapiens_core_99_38',
-                                     'tgt_host': 'mysql-ens-general-dev-1'})
+                                     'tgt_host': 'mysql-ens-general-dev-1:3306'})
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('src_host', response.data)
+        self.assertIn('user', response.data)
+        self.assertEqual('blank', response.data['src_host'][0].code)
+        self.assertEqual('required', response.data['user'][0].code)
+
         # Test get
         response = self.client.get(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': '8f084180-07ae-11ea-ace0-9801a79243a5'}))
@@ -63,8 +70,8 @@ class RequestJobTest(APITestCase):
         # Test put
         response = self.client.put(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': '8f084180-07ae-11ea-ace0-9801a79243a5'}),
-            {'src_host': 'mysql-ens-sta-1', 'src_incl_db': 'homo_sapiens_core_99_38',
-             'tgt_host': 'mysql-ens-general-dev-2', 'user': 'testuser'})
+            {'src_host': 'mysql-ens-sta-1:4519', 'src_incl_db': 'homo_sapiens_core_99_38',
+             'tgt_host': 'mysql-ens-general-dev-2:4586,mysql-ens-general-dev-1:4484,', 'user': 'testuser'})
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         # Test patch
         response = self.client.patch(
@@ -119,6 +126,7 @@ class RequestJobTest(APITestCase):
         self.client.login(username='testuser', password='testgroup123')
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-sta'})
         response_dict = json.loads(response.content.decode('utf-8'))
+        print(response.data)
         self.assertEqual(len(response_dict), 2)
         # Test getting 2 mysql-ens-sta servers with non-allowed user
         User.objects.get(username='testuser2')
@@ -135,29 +143,29 @@ class RequestJobTest(APITestCase):
         from django.core.exceptions import ValidationError
         with self.assertRaises(ValidationError):
             # test db_name repeated on same target
-            job = RequestJob.objects.create(src_host="host1",
-                                            tgt_host="host4,host1",
-                                            src_incl_db="db1,db4",
-                                            tgt_db_name="db5,db1")
+            RequestJob.objects.create(src_host="host1:3306",
+                                      tgt_host="host4:3306,host1:3306",
+                                      src_incl_db="db1,db4",
+                                      tgt_db_name="db5,db1")
         with self.assertRaises(ValidationError):
             # test target db name not set at all 9same target dn names
-            job = RequestJob.objects.create(src_host="host1",
-                                            tgt_host="host1,host3",
-                                            src_incl_db="db1")
+            RequestJob.objects.create(src_host="host1:3306",
+                                      tgt_host="host1:3306,host3:3306",
+                                      src_incl_db="db1")
         with self.assertRaises(ValidationError):
             # test target host contains src host and all db selected
-            job = RequestJob.objects.create(src_host="host1",
-                                            tgt_host="host2,host1")
+            RequestJob.objects.create(src_host="host1:3306",
+                                      tgt_host="host2:3306,host1:3306")
         # Test a normal job would pass.
-        job = RequestJob.objects.create(src_host="host2",
-                                        tgt_host="host4,host3",
+        job = RequestJob.objects.create(src_host="host2:3306",
+                                        tgt_host="host4:3306,host3:3306",
                                         src_incl_db="db1,db4",
                                         tgt_db_name="db5,db1")
         self.assertIsNotNone(job)
 
         # test a job with same target but different db name would pass
-        job = RequestJob.objects.create(src_host="host2",
-                                        tgt_host="host2",
+        job = RequestJob.objects.create(src_host="host2:3306",
+                                        tgt_host="host2:3306",
                                         src_incl_db="db1",
                                         tgt_db_name="db5")
         self.assertIsNotNone(job)

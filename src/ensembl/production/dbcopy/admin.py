@@ -19,16 +19,16 @@ from ensembl.production.djcore.admin import SuperUserAdmin
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
 
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
-from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
+from ensembl.production.dbcopy.models import Host, RequestJob, HostGroup, TargetHostGroup, TransferLog
 
 
 class GroupInline(admin.TabularInline):
-    model = Group
+    model = HostGroup
     extra = 1
     form = GroupInlineForm
     fields = ('group_name',)
-    verbose_name = "Group restriction"
-    verbose_name_plural = "Group restrictions"
+    verbose_name = "HostGroup restriction"
+    verbose_name_plural = "HostGroup restrictions"
 
 
 @admin.register(TargetHostGroup)

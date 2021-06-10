@@ -12,7 +12,7 @@
 from rest_framework import viewsets, mixins, response, status
 
 from ensembl.production.dbcopy.api.serializers import RequestJobDetailSerializer, RequestJobListSerializer, HostSerializer
-from ensembl.production.dbcopy.models import RequestJob, Host, Group
+from ensembl.production.dbcopy.models import RequestJob, Host, HostGroup
 
 
 class RequestJobViewSet(mixins.CreateModelMixin,
@@ -73,7 +73,7 @@ class TargetHostViewSet(viewsets.ReadOnlyModelViewSet):
 
         """
         host_queryset = Host.objects.all()
-        group_queryset = Group.objects.all()
+        group_queryset = HostGroup.objects.all()
         host_name = self.request.query_params.get('name', None)
         host_queryset_final = host_queryset
         # Checking that user is allowed to copy to the matching server

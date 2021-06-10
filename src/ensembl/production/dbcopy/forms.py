@@ -11,18 +11,14 @@
 #   limitations under the License.
 
 import logging
-import re
 from collections import OrderedDict
 
 from dal import autocomplete, forward
 from django import forms
 from django.contrib.auth.models import Group as UsersGroup
-from django.core.validators import RegexValidator
-from ensembl.production.core.db_introspects import get_engine, get_schema_names
-from ensembl.production.djcore.forms import TrimmedCharField, EmailListFieldValidator, ListFieldRegexValidator
+from ensembl.production.djcore.forms import TrimmedCharField
 
-from ensembl.production.dbcopy.lookups import get_excluded_schemas
-from ensembl.production.dbcopy.models import RequestJob, Group, Host, TargetHostGroup
+from ensembl.production.dbcopy.models import RequestJob, HostGroup, Host, TargetHostGroup
 
 logger = logging.getLogger(__name__)
 
@@ -52,18 +48,6 @@ def _target_host_group(user):
     return target_groups
 
 
-def _text_field_as_set(text):
-    return set(filter(lambda x: x != '', text.split(',')))
-
-
-def _apply_db_names_filter(db_names, all_db_names):
-    if len(db_names) == 1:
-        db_name = db_names.pop()
-        filter_re = re.compile(db_name.replace('%', '.*').replace('_', '.'))
-        return set(filter(filter_re.search, all_db_names))
-    return db_names
-
-
 class RequestJobForm(forms.ModelForm):
     class Meta:
         model = RequestJob
@@ -78,24 +62,13 @@ class RequestJobForm(forms.ModelForm):
     src_host = forms.CharField(
         label="Source Host ",
         help_text="host:port",
-        required=True,
-        validators=[
-            RegexValidator(regex="^[\w-]+:[0-9]{4}",
-                           message="Source Host should be formatted like this host:port")
-        ],
         widget=autocomplete.ListSelect2(url='ensembl_dbcopy:src-host-autocomplete',
                                         attrs={'data-placeholder': 'Source host'})
     )
 
     tgt_host = TrimmedCharField(
         label="Target Hosts",
-        help_text="Host1:port1,Host2:port2",
-        required=True,
-        validators=[
-            ListFieldRegexValidator(regex="^[\w-]+:[0-9]{4}",
-                                    message="Target Hosts should be formatted like this"
-                                            " host:port or host1:port1,host2:port2")
-        ],
+        help_text="List of target hosts",
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:tgt-host-autocomplete',
                                        attrs={
                                            'data-placeholder': 'Target(s)',
@@ -146,104 +119,7 @@ class RequestJobForm(forms.ModelForm):
     email_list = TrimmedCharField(
         label="Email(s)",
         help_text='Comma separated mail list',
-        max_length=2048,
-        required=True,
-        validators=[
-            EmailListFieldValidator(
-                message="Email list should contain one or more comma separated valid email addresses."
-            )
-        ])
-
-    def _validate_db_skipping(self, src_skip_db_names, tgt_db_names):
-        if src_skip_db_names and tgt_db_names:
-            self.add_error('src_skip_db',
-                           'Field "Names of databases on Target Host" is not empty. \n'
-                           'Consider clear it, or clear this field.')
-
-    def _validate_db_renaming(self, src_dbs, tgt_dbs):
-        if tgt_dbs:
-            if len(tgt_dbs) != len(src_dbs):
-                self.add_error('tgt_db_name',
-                               "The number of databases to copy should match the number of databases \n"
-                               "renamed on target hosts")
-            for dbname in src_dbs:
-                if '%' in dbname:
-                    self.add_error('tgt_db_name', "You can't rename a pattern")
-
-    def _validate_source_and_target(self, src_host, tgt_hosts, src_dbs, src_skip_dbs, tgt_db_names):
-        from ensembl.production.core.db_introspects import get_database_set
-        if src_host in tgt_hosts:
-            hostname, port = src_host.split(':')
-            try:
-                present_dbs = get_database_set(hostname, port, excluded_schemas=get_excluded_schemas())
-            except ValueError as e:
-                raise forms.ValidationError('Invalid source hostname or port')
-            src_names = present_dbs
-            if src_dbs:
-                src_names = _apply_db_names_filter(src_dbs, src_names)
-            if src_skip_dbs:
-                skip_names = _apply_db_names_filter(src_skip_dbs, present_dbs)
-                src_names = src_names.difference(skip_names)
-
-            if tgt_db_names:
-                tgt_conflicts = tgt_db_names.intersection(src_names)
-                if tgt_conflicts:
-                    raise forms.ValidationError(
-                        'Some source and target databases coincide. Please change conflicting target names')
-            elif src_names:
-                raise forms.ValidationError(
-                    'Some source and target databases coincide. Please add target names or change sources')
-
-    def _validate_wipe_target(self, wipe_target, src_dbs, src_skip_dbs, tgt_hosts, tgt_db_names, src_incl_tables):
-        src_db_names = src_dbs.difference(src_skip_dbs)
-        new_db_names = tgt_db_names if tgt_db_names else src_db_names
-        if (wipe_target is False) and (not src_incl_tables) and new_db_names:
-            for tgt_host in tgt_hosts:
-                hostname, port = tgt_host.split(':')
-                try:
-                    db_engine = get_engine(hostname, port)
-                except RuntimeError as e:
-                    self.add_error('tgt_host', 'Invalid host: {}'.format(tgt_host))
-                    continue
-                tgt_present_db_names = set(get_schema_names(db_engine))
-                if tgt_present_db_names.intersection(new_db_names):
-                    field_name = 'tgt_db_name' if tgt_db_names else 'src_incl_db'
-                    self.add_error(field_name, 'One or more database names already present on'
-                                               ' the target. Consider enabling Wipe target option.')
-                    break
-
-    def _validate_user_permission(self, tgt_hosts):
-        # Checking that user is allowed to copy to the target server.
-        for tgt_host in tgt_hosts:
-            hostname = tgt_host.split(':')[0]
-            hosts = Host.objects.filter(name=hostname)
-            if not hosts:
-                self.add_error('tgt_host', hostname + " is not present in our system")
-                return
-            group = Group.objects.filter(host_id=hosts[0].auto_id)
-            if group:
-                host_groups = group.values_list('group_name', flat=True)
-                user_groups = self.user.groups.values_list('name', flat=True)
-                common_groups = set(host_groups).intersection(set(user_groups))
-                if not common_groups and not self.user.is_superuser:
-                    self.add_error('tgt_host', "You are not allowed to copy to " + hostname)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        src_host = cleaned_data.get('src_host', '')
-        wipe_target = cleaned_data.get('wipe_target', False)
-        src_incl_tables = cleaned_data.get('src_incl_tables', '')
-        tgt_hosts = _text_field_as_set(cleaned_data.get('tgt_host', ''))
-        src_dbs = _text_field_as_set(cleaned_data.get('src_incl_db', ''))
-        src_skip_dbs = _text_field_as_set(cleaned_data.get('src_skip_db', ''))
-        tgt_db_names = _text_field_as_set(cleaned_data.get('tgt_db_name', ''))
-        self._validate_db_skipping(src_skip_dbs, tgt_db_names)
-        self._validate_db_renaming(src_dbs, tgt_db_names)
-        self._validate_source_and_target(src_host, tgt_hosts, src_dbs, src_skip_dbs, tgt_db_names)
-        # TODO reactivate this validation when wipe_target is available again
-        # self._validate_wipe_target(wipe_target, src_dbs, src_skip_dbs, tgt_hosts, tgt_db_names, src_incl_tables)
-        self._validate_user_permission(tgt_hosts)
-        return self.cleaned_data
+        max_length=2048)
 
     def __init__(self, *args, **kwargs):
         if 'initial' in kwargs and 'from_request_job' in kwargs['initial']:
@@ -258,8 +134,8 @@ class RequestJobForm(forms.ModelForm):
                                                     choices=target_host_group_list,
                                                     empty_value='--select target group--')
             tgt_group_host.widget.attrs = {'onchange': "targetHosts()"}
-            tgt_group_host.label = 'Host Target Group'
-            tgt_group_host.help_text = "Select Group to autofill the target host"
+            tgt_group_host.label = 'Host Target HostGroup'
+            tgt_group_host.help_text = "Select HostGroup to autofill the target host"
 
             field_order = list(self.fields.items())
             field_order.insert(5, ("tgt_group_host", tgt_group_host))
@@ -268,7 +144,7 @@ class RequestJobForm(forms.ModelForm):
 
 class GroupInlineForm(forms.ModelForm):
     class Meta:
-        model = Group
+        model = HostGroup
         fields = ('group_name',)
 
     group_name = forms.ModelChoiceField(queryset=UsersGroup.objects.all().order_by('name'), to_field_name='name',
