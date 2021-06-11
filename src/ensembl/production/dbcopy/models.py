@@ -19,6 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from django.utils.html import format_html
 from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
 from ensembl.production.djcore.models import NullTextField
 
@@ -81,7 +82,8 @@ class RequestJob(models.Model):
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
 
     def __str__(self):
-        return str(self.job_id)
+        tgt_hosts = self.tgt_host.split(',')
+        return "%s[%s]:%s -> %s" % (self.username, self.job_id, self.src_host, tgt_hosts[0])
 
     @property
     def user(self):
@@ -130,7 +132,7 @@ class RequestJob(models.Model):
         if self.status == 'Processing Requests' or self.status == 'Creating Requests':
             status_msg = 'Scheduled'
         if table_copied and total_tables:
-            progress = (table_copied / total_tables) * 100
+            progress = format((table_copied / total_tables) * 100, ".1f")
         if progress == 100.0 and self.status == 'Transfer Ended':
             status_msg = 'Complete'
         elif total_tables > 0:
@@ -191,7 +193,7 @@ class RequestJob(models.Model):
         if self.src_skip_db and self.tgt_db_name:
             raise ValidationError('src_skip_db',
                                   'Field "Names of databases on Target Host" is not empty. \n'
-                                  'You can\'t both skip and rename at the same time. \n' 
+                                  'You can\'t both skip and rename at the same time. \n'
                                   'Consider clear this field.')
 
     def clean_tgt_db_name(self):
@@ -219,6 +221,7 @@ class RequestJob(models.Model):
         """
         from ensembl.production.core.db_introspects import get_engine, get_schema_names
         incl_db = _text_field_as_set(self.src_incl_db)
+        tgt_db_names = _text_field_as_set(self.tgt_db_name)
         new_db_names = _text_field_as_set(self.tgt_db_name) if self.tgt_db_name else incl_db
         if (self.wipe_target is False) and (not self.src_incl_tables) and new_db_names:
             for tgt_host in self.tgt_host:
@@ -227,13 +230,11 @@ class RequestJob(models.Model):
                     db_engine = get_engine(hostname, port)
                 except RuntimeError as e:
                     raise ValidationError('tgt_host', 'Invalid host: {}'.format(tgt_host))
-                    continue
                 tgt_present_db_names = set(get_schema_names(db_engine))
                 if tgt_present_db_names.intersection(new_db_names):
                     field_name = 'tgt_db_name' if tgt_db_names else 'src_incl_db'
                     raise ValidationError(field_name, 'One or more database names already present on'
                                                       ' the target. Consider enabling Wipe target option.')
-                    break
 
     def clean_username(self):
         """not exactly cleaning the username field, but check that user had the permission to perform the
@@ -246,7 +247,6 @@ class RequestJob(models.Model):
             hosts = Host.objects.filter(name=hostname)
             if not hosts:
                 raise ValidationError('tgt_host', hostname + " is not present in our system")
-                return
             group = HostGroup.objects.filter(host_id=hosts[0].auto_id)
             if group:
                 host_groups = group.values_list('group_name', flat=True)
@@ -275,6 +275,16 @@ class RequestJob(models.Model):
         """
         self.clean()
         super().save(force_insert, force_update, using, update_fields)
+
+    def completion(self):
+        progress = self.detailed_status['progress']
+        return format_html(
+            '''
+            <progress value="{0}" max="100"></progress>
+            <span style="font-weight:bold">{0}%</span>
+            ''',
+            progress
+        )
 
 
 class TransferLog(models.Model):

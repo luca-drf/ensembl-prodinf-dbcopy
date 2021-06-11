@@ -15,6 +15,7 @@ from collections import OrderedDict
 
 from dal import autocomplete, forward
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group as UsersGroup
 from ensembl.production.djcore.forms import TrimmedCharField
 
@@ -25,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 def _target_host_group(user):
     # get groups, current user belongs to
-
     user_groups = user.groups.values_list('name', flat=True)
     logger.debug("User Groups %s", user_groups)
     # get all host user can copy  based on assigned group
@@ -55,9 +55,8 @@ class RequestJobForm(forms.ModelForm):
         fields = ('src_host', 'tgt_host', 'email_list', 'username',
                   'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
                   'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run', 'overall_status')
-        widgets = {
-            'username': forms.HiddenInput
-        }
+
+    username = forms.CharField(widget=forms.HiddenInput)
 
     src_host = forms.CharField(
         label="Source Host ",
@@ -122,12 +121,16 @@ class RequestJobForm(forms.ModelForm):
         max_length=2048)
 
     def __init__(self, *args, **kwargs):
-        if 'initial' in kwargs and 'from_request_job' in kwargs['initial']:
-            kwargs['instance'] = RequestJob.objects.get(pk=kwargs['initial']['from_request_job'])
         super(RequestJobForm, self).__init__(*args, **kwargs)
-        if self.instance:
-            self.fields['src_host'].initial = self.instance.src_host
-            self.fields['src_host'].widget.choices = [(self.instance.src_host, self.instance.src_host)]
+        print("Instance", self.instance)
+#        if self.instance.pk:
+#            self.fields['src_host'].initial = self.instance.src_host
+#            self.fields['src_host'].widget.choices = [(self.instance.src_host, self.instance.src_host)]
+#        else:
+#            print("No instance !")
+#            if 'overall_status' in self.fields:
+#                del self.fields['overall_status']
+
         target_host_group_list = _target_host_group(self.user)
         if len(target_host_group_list) >= 1:
             tgt_group_host = forms.TypedChoiceField(required=False,
@@ -136,10 +139,8 @@ class RequestJobForm(forms.ModelForm):
             tgt_group_host.widget.attrs = {'onchange': "targetHosts()"}
             tgt_group_host.label = 'Host Target HostGroup'
             tgt_group_host.help_text = "Select HostGroup to autofill the target host"
-
-            field_order = list(self.fields.items())
-            field_order.insert(5, ("tgt_group_host", tgt_group_host))
-            self.fields = OrderedDict(field_order)
+            self.fields['tgt_group_host'] = tgt_group_host
+            self.fields.move_to_end('tgt_group_host')
 
 
 class GroupInlineForm(forms.ModelForm):

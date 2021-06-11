@@ -42,6 +42,7 @@
 .tabular-pagination {
     padding-top: 2rem;
 }
+
 #result_list .field-src_incl_db, #result_list .field-src_skip_db, #result_list .field-tgt_host,
 #result_list .field-tgt_db_name, #result_list .field-src_host {
     max-width: available;
@@ -67,47 +68,48 @@ div#changelist-filter ul {
 }
 
 .Complete {
-    background-color: lightgreen;
-    background-clip:content-box;
+    background-color: lightgreen !important;
 }
 
+tr.Complete {
+    background-color: rgba(144, 238, 144, 0.5) !important;
+}
+
+
 .Incomplete {
-    background-color: lightblue;
-    background-clip:content-box;
+    background-color: skyblue;
+}
+
+tr.Incomplete {
+    background-color: rgba(135, 206, 235, 0.5) !important;
 }
 
 .Submitted, .Scheduled {
     background-color: lightblue;
-    background-clip:content-box;
+}
+
+tr.Submitted, tr.Scheduled {
+    background-color: rgba(173, 216, 230, 0.5) !important;
 }
 
 .Running {
     background-color: gold;
-    background-clip:content-box;
+}
+
+tr.Running {
+    background-color: rgba(255, 215, 0, 0.5) !important;
 }
 
 .Failed {
-    background-color: lightpink;
-    background-clip:content-box;
+    background-color: crimson;
 }
 
-.progress {
-    background-color: #bdd3fb;
-    border-radius: 0;
-    box-shadow: none;
-    height: 29px;
-    margin-bottom: 0;
-    overflow: hidden;
-    padding: 0 !important;
-    margin-top: 1px;
+tr.Failed {
+    background-color: rgba(220, 20, 60, 0.5) !important;
 }
 
-.progress-bar > .job-completed {
-    font-size: 1.0rem;
-    left: 8px;
-    position: absolute;
-    top: 3px;
-    white-space: nowrap;
+td.Complete, td.Incomplete, td.Running, td.Submitted, td.Scheduled. td.Failed {
+    background-clip: content-box;
 }
 
 /* DAL CSS */
@@ -121,4 +123,45 @@ div#changelist-filter ul {
 }
 
 .closelink {
+}
+
+table#result_list td.field-tgt_host,
+table#result_list td.field-src_skip_db,
+table#result_list td.field-src_incl_db {
+    word-break: break-all;
+    max-width: 25rem;
+}
+
+/* Progress bars */
+progress[value] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px;
+}
+/* Lists */
+table#result_list progress[value] {
+    max-width: 100px;
+}
+
+progress[value]::-moz-progress-bar {
+    background: cornflowerblue;
+}
+
+progress::-webkit-progress-value {
+    background: cornflowerblue;
+}
+
+progress {
+    background: lightgrey;
+    color: cornflowerblue;
+}
+/* Details */
+#requestjob_form progress[value] {
+    width: 90%;
+}
+
+progress[value]::-webkit-progress-bar {
+    background-color: lightgrey;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
 }

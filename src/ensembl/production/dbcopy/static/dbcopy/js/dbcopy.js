@@ -12,12 +12,18 @@
         $(".field-wipe_target").hide();
         $(".field-convert_innodb").hide();
         $(".field-dry_run").hide();
-        $("td.field-overall_status").has("div.Complete").addClass('Complete');
-        $("td.field-overall_status").has("div.Running").addClass('Running');
-        $("td.field-overall_status").has("div.Incomplete").addClass('Incomplete');
-        $("td.field-overall_status").has("div.Submitted").addClass('Submitted');
-        $("td.field-overall_status").has("div.Scheduled").addClass('Scheduled');
-        $("td.field-overall_status").has("div.Failed").addClass('Failed');
+        $("#changelist-form tr").has("td.field-overall_status div.Complete").addClass('Complete');
+        $("#changelist-form tr td.field-overall_status").has("div.Complete").addClass('Complete');
+        $("#changelist-form tr").has("td.field-overall_status div.Running").addClass('Running');
+        $("#changelist-form tr td.field-overall_status").has("div.Running").addClass('Running');
+        $("#changelist-form tr").has("td.field-overall_status div.Incomplete").addClass('Incomplete');
+        $("#changelist-form tr td.field-overall_status").has("div.Incomplete").addClass('Incomplete');
+        $("#changelist-form tr").has("td.field-overall_status div.Submitted").addClass('Submitted');
+        $("#changelist-form tr td.field-overall_status").has("div.Submitted").addClass('Submitted');
+        $("#changelist-form tr").has("td.field-overall_status div.Scheduled").addClass('Scheduled');
+        $("#changelist-form tr td.field-overall_status").has("div.Scheduled").addClass('Scheduled');
+        $("#changelist-form tr").has("td.field-overall_status div.Failed").addClass('Failed');
+        $("#changelist-form tr td.field-overall_status").has("div.Failed").addClass('Failed');
         const srcHostElem = $("#id_src_host");
         const tgtHostElem = $("#id_tgt_host");
         if (srcHostElem.val() && tgtHostElem.val()) {
@@ -60,6 +66,11 @@
         $("#id_tgt_db_name").change(function () {
             $(this).removeClass("is-invalid");
             updateAlerts();
+        });
+        $('#requestjob_form .nav-tabs a[href="#transferlogs-tab"]').on('shown.bs.tab', function(e) {
+            $('#transferlogs-tab .paginator a.page-link').each(function (index) {
+                $(this).attr('href', $(this).attr('href') + "#transferlogs-tab");
+            });
         });
     });
 
