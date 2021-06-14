@@ -320,6 +320,12 @@ class TransferLog(models.Model):
         return 'Submitted'
 
 
+def clean_host_pattern(pattern):
+    if ":" in pattern:
+        pattern = pattern.split(':')[0]
+    return pattern
+
+
 class HostManager(models.Manager):
 
     def qs_tgt_host_for_user(self, pattern, user):
@@ -332,7 +338,8 @@ class HostManager(models.Manager):
         host_queryset = self.all()
         group_queryset = HostGroup.objects.all()
         if pattern:
-            host_queryset = host_queryset.filter(name__icontains=pattern, active=True).order_by('name')
+            host_queryset = host_queryset.filter(name__icontains=clean_host_pattern(pattern), active=True).order_by(
+                'name')
         for host in host_queryset:
             group = group_queryset.filter(host_id=host.auto_id)
             if group:
@@ -346,9 +353,7 @@ class HostManager(models.Manager):
     def qs_src_host(self, pattern=None):
         qs = self.all()
         if pattern:
-            if ":" in pattern:
-                pattern = pattern.split(':')[0]
-            qs = qs.filter(name__icontains=pattern).order_by('name')[:50]
+            qs = qs.filter(name__icontains=clean_host_pattern(pattern)).order_by('name')[:50]
         return qs
 
 

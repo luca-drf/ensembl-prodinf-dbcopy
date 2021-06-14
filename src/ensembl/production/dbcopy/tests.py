@@ -116,6 +116,8 @@ class RequestJobTest(APITestCase):
     # Test Target host endpoint
     def testTargetHost(self):
         # Test get
+        logged = self.client.login(username='testuser', password='testgroup123')
+        self.assertTrue(logged)
         response = self.client.get(reverse('dbcopy_api:tgthost-detail', kwargs={'name': 'mysql-ens-sta-1'}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Test bad get
@@ -126,18 +128,17 @@ class RequestJobTest(APITestCase):
         self.client.login(username='testuser', password='testgroup123')
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-sta'})
         response_dict = json.loads(response.content.decode('utf-8'))
-        print(response.data)
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response_dict), 5)
         # Test getting 2 mysql-ens-sta servers with non-allowed user
         User.objects.get(username='testuser2')
         self.client.login(username='testuser2', password='testgroup1234')
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-sta'})
         response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 1)
+        self.assertEqual(len(response_dict), 4)
         # Test getting mysql-ens-general-dev-1 server
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-general'})
         response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response_dict), 4)
 
     def testRequestModelClean(self):
         from django.core.exceptions import ValidationError
