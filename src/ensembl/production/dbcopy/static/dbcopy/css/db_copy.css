@@ -160,6 +160,10 @@ progress {
     width: 90%;
 }
 
+#requestjob_form div.field-overall_status div.overall_status {
+    min-width: 200px;
+}
+
 progress[value]::-webkit-progress-bar {
     background-color: lightgrey;
     border-radius: 2px;
