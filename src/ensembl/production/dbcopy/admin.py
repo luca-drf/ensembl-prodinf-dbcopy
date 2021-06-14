@@ -117,9 +117,6 @@ class RequestJobAdmin(admin.ModelAdmin):
         return super().get_fields(request, obj)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
-        if 'from_request_job' in request.GET:
-            obj = RequestJob.objects.get(pk=request.GET['from_request_job'])
-            obj.pk = None
         form = super().get_form(request, obj, change, **kwargs)
         form.user = request.user
         return form
@@ -131,9 +128,19 @@ class RequestJobAdmin(admin.ModelAdmin):
         initial = super().get_changeform_initial_data(request)
         initial['email_list'] = request.user.email
         initial['username'] = request.user.username
+        if 'from_request_job' in request.GET:
+            obj = RequestJob.objects.get(pk=request.GET['from_request_job'])
+            initial['src_host'] = obj.src_host
+            initial['tgt_host'] = obj.tgt_host
+            initial['src_incl_db'] = obj.src_incl_db
+            initial['src_skip_db'] = obj.src_skip_db
+            initial['src_incl_tables'] = obj.src_incl_tables
+            initial['src_skip_tables'] = obj.src_skip_tables
+            initial['tgt_db_name'] = obj.tgt_db_name
         return initial
 
     def get_readonly_fields(self, request, obj=None):
+        return super().get_readonly_fields(request, obj)
         if obj is None:
             return super().get_readonly_fields(request, obj)
         else:
@@ -167,7 +174,8 @@ class RequestJobAdmin(admin.ModelAdmin):
                 context["running_copy"] = transfers_logs.filter(end_date__isnull=True).order_by(
                     F('end_date').desc(nulls_first=True)).earliest('auto_id')
         if 'completion' not in self.fields:
-            self.fields.insert(0, 'completion')
+            index = 1 if 'overall_status' in self.fields else 0
+            self.fields.insert(index, 'completion')
         return super().change_view(request, object_id, form_url, context)
 
     def _is_deletable(self, obj):

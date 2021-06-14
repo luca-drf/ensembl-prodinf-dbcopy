@@ -61,6 +61,7 @@ class RequestJobForm(forms.ModelForm):
     src_host = forms.CharField(
         label="Source Host ",
         help_text="host:port",
+        required=True,
         widget=autocomplete.ListSelect2(url='ensembl_dbcopy:src-host-autocomplete',
                                         attrs={'data-placeholder': 'Source host'})
     )
@@ -68,6 +69,7 @@ class RequestJobForm(forms.ModelForm):
     tgt_host = TrimmedCharField(
         label="Target Hosts",
         help_text="List of target hosts",
+        required=True,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:tgt-host-autocomplete',
                                        attrs={
                                            'data-placeholder': 'Target(s)',
@@ -122,15 +124,35 @@ class RequestJobForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(RequestJobForm, self).__init__(*args, **kwargs)
-        print("Instance", self.instance)
-#        if self.instance.pk:
-#            self.fields['src_host'].initial = self.instance.src_host
-#            self.fields['src_host'].widget.choices = [(self.instance.src_host, self.instance.src_host)]
-#        else:
-#            print("No instance !")
-#            if 'overall_status' in self.fields:
-#                del self.fields['overall_status']
-
+        from django.http import QueryDict
+        querydict = args[0] if args else kwargs.get('initial', QueryDict())
+        if querydict.get('src_host', None) is not None:
+            self.fields['src_host'].initial = querydict.get('src_host')
+            self.fields['src_host'].widget.choices = [(querydict.get('src_host'), querydict.get('src_host'))]
+        if querydict.get('tgt_host', None) is not None:
+            tgt_hosts = querydict.get('tgt_host').split(',')
+            self.fields['tgt_host'].initial = tgt_hosts
+            self.fields['tgt_host'].widget.choices = [(val, val) for val in tgt_hosts]
+#        if querydict.get('src_incl_db', None) is not None:
+#            src_incl_db = querydict.get('src_incl_db').split(',')
+#            self.fields['src_incl_db'].initial = src_incl_db
+#            self.fields['src_incl_db'].widget.choices = [(val, val) for val in src_incl_db]
+#        if querydict.get('src_skip_db', None) is not None:
+#            src_skip_db = querydict.get('src_skip_db').split(',')
+#            self.fields['src_skip_db'].initial = src_skip_db
+#            self.fields['src_skip_db'].widget.choices = [(val, val) for val in src_skip_db]
+#        if querydict.get('src_incl_tables', None) is not None:
+#            src_incl_tables = querydict.get('src_incl_tables').split(',')
+#            self.fields['src_incl_tables'].initial = src_incl_tables
+#            self.fields['src_incl_tables'].widget.choices = [(val, val) for val in src_incl_tables]
+#        if querydict.get('src_skip_tables', None) is not None:
+#            src_skip_tables = querydict.get('src_skip_tables').split(',')
+#            self.fields['src_skip_tables'].initial = src_skip_tables
+#            self.fields['src_skip_tables'].widget.choices = [(val, val) for val in src_skip_tables]
+#        if querydict.get('tgt_db_name', None) is not None:
+#            tgt_db_name = querydict.get('tgt_db_name').split(',')
+#            self.fields['tgt_db_name'].initial = tgt_db_name
+#            self.fields['tgt_db_name'].widget.choices = [(val, val) for val in tgt_db_name]
         target_host_group_list = _target_host_group(self.user)
         if len(target_host_group_list) >= 1:
             tgt_group_host = forms.TypedChoiceField(required=False,

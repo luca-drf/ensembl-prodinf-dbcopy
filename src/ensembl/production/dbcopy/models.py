@@ -320,12 +320,47 @@ class TransferLog(models.Model):
         return 'Submitted'
 
 
+class HostManager(models.Manager):
+
+    def qs_tgt_host_for_user(self, pattern, user):
+        """
+        Retrieve available target host for the specified user, in form of a QuerySet
+        :param pattern: str pattern to look for
+        :param user: request user to filter targets permission
+        :return:
+        """
+        host_queryset = self.all()
+        group_queryset = HostGroup.objects.all()
+        if pattern:
+            host_queryset = host_queryset.filter(name__icontains=pattern, active=True).order_by('name')
+        for host in host_queryset:
+            group = group_queryset.filter(host_id=host.auto_id)
+            if group:
+                host_groups = group.values_list('group_name', flat=True)
+                user_groups = user.groups.values_list('name', flat=True)
+                common_groups = set(host_groups).intersection(set(user_groups))
+                if not common_groups:
+                    host_queryset = host_queryset.exclude(name=host.name)
+        return host_queryset
+
+    def qs_src_host(self, pattern=None):
+        qs = self.all()
+        if pattern:
+            if ":" in pattern:
+                pattern = pattern.split(':')[0]
+            qs = qs.filter(name__icontains=pattern).order_by('name')[:50]
+        return qs
+
+
 class Host(models.Model):
     class Meta:
         db_table = 'server_host'
         unique_together = (('name', 'port'),)
         app_label = 'ensembl_dbcopy'
         verbose_name = 'Host'
+        ordering = ('name',)
+
+    objects = HostManager()
 
     auto_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=64)

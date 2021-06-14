@@ -39,10 +39,7 @@ class SrcHostLookup(autocomplete.Select2QuerySetView):
     model = Host
 
     def get_queryset(self):
-        qs = Host.objects.all()
-        if self.q:
-            qs = qs.filter(name__icontains=self.q).order_by('name')[:50]
-        return qs
+        return Host.objects.qs_src_host(self.q or None)
 
     def get_selected_result_label(self, result):
         return '%s:%s' % (result.name, result.port)
@@ -55,22 +52,7 @@ class TgtHostLookup(autocomplete.Select2QuerySetView):
     model = Host
 
     def get_queryset(self):
-        host_queryset = Host.objects.all()
-        group_queryset = HostGroup.objects.all()
-        host_queryset_final = host_queryset
-        # Checking that user is allowed to copy to the matching server
-        # If he is not allowed, the server will be removed from the autocomplete
-        if self.q:
-            host_queryset = host_queryset.filter(name__icontains=self.q, active=True)
-            for host in host_queryset:
-                group = group_queryset.filter(host_id=host.auto_id)
-                if group:
-                    host_groups = group.values_list('group_name', flat=True)
-                    user_groups = self.request.user.groups.values_list('name', flat=True)
-                    common_groups = set(host_groups).intersection(set(user_groups))
-                    if not common_groups:
-                        host_queryset_final = host_queryset.exclude(name=host.name)
-        return host_queryset_final
+        return Host.objects.qs_tgt_host_for_user(self.q or None, self.request.user)
 
     def get_selected_result_label(self, result):
         return '%s:%s' % (result.name, result.port)
