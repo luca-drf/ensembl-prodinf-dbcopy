@@ -55,7 +55,7 @@ class SourceHostViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Return a list of hosts according to a keyword
         """
-        return Host.objects.qs_src_host(self.kwargs.get('name', None))
+        return Host.objects.qs_src_host(self.request.GET.get('name', self.kwargs.get('name', None)))
 
 
 class TargetHostViewSet(viewsets.ReadOnlyModelViewSet):
@@ -64,4 +64,5 @@ class TargetHostViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         # WARNING request now need a user to perform the listing. But no use case found outside of Django admin so far.
-        return Host.objects.qs_tgt_host_for_user(self.kwargs.get('name', None), self.request.user)
+        return Host.objects.qs_tgt_host_for_user(self.request.GET.get('name', self.kwargs.get('name', None)),
+                                                 self.request.user)

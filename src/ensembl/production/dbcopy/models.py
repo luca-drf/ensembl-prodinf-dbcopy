@@ -350,10 +350,10 @@ class HostManager(models.Manager):
                     host_queryset = host_queryset.exclude(name=host.name)
         return host_queryset
 
-    def qs_src_host(self, pattern=None):
+    def qs_src_host(self, pattern):
         qs = self.all()
         if pattern:
-            qs = qs.filter(name__icontains=clean_host_pattern(pattern)).order_by('name')[:50]
+            qs = qs.filter(name__icontains=clean_host_pattern(pattern)).order_by('name')
         return qs
 
 
