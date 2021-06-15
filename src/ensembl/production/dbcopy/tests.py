@@ -14,6 +14,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.db import connections, connection
+from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -106,13 +107,11 @@ class RequestJobTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         # Test getting 2 mysql-ens-sta-2 servers
         response = self.client.get(reverse('dbcopy_api:srchost-list'), {'name': 'mysql-ens-sta'})
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response.data), 2)
         # Test getting mysql-ens-general-dev-1 server
         response = self.client.get(reverse('dbcopy_api:srchost-list'), {'name': 'mysql-ens-general'})
         response_dict = json.loads(response.content.decode('utf-8'))
-        print(response.data)
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response.data), 2)
 
     # Test Target host endpoint
     def testTargetHost(self):
@@ -126,18 +125,15 @@ class RequestJobTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         # Test getting 2 mysql-ens-sta servers with allowed user
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-sta'})
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response.data), 2)
         # Test getting 2 mysql-ens-sta servers with non-allowed user
         User.objects.get(username='testuser2')
         self.client.login(username='testuser2', password='testgroup1234')
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-sta'})
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 1)
+        self.assertEqual(len(response.data), 1)
         # Test getting mysql-ens-general-dev-1 server
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-general'})
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response.data), 2)
 
     def testRequestModelClean(self):
         from django.core.exceptions import ValidationError
@@ -196,11 +192,9 @@ class DBIntrospectTest(APITestCase):
         print(reverse('dbcopy_api:databaselist', kwargs=args))
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'test_homo'})
-        print("content", response.content)
-        response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response_list), 1)
-        self.assertEqual(response_list[0], 'test_homo_sapiens')
+        self.assertGreaterEqual(len(response.data), 1)
+        self.assertEqual(response.data[0], 'test_homo_sapiens')
         response = self.client.get(reverse('dbcopy_api:databaselist',
                                            kwargs={**args, 'host': 'bad-host'}),
                                    {'search': 'test_production_services'})
@@ -208,19 +202,16 @@ class DBIntrospectTest(APITestCase):
 
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'no_result_search'})
-        response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_list), 0)
+        self.assertEqual(len(response.data), 0)
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'matches[]': ['test_homo_sapiens']})
-        response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_list), 1)
+        self.assertEqual(len(response.data), 1)
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'matches[]': ['no_match']})
-        response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_list), 0)
+        self.assertEqual(len(response.data), 0)
 
     def testTableList(self):
         args = {'host': self.host,

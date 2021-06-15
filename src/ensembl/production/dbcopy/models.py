@@ -328,9 +328,10 @@ def clean_host_pattern(pattern):
 
 class HostManager(models.Manager):
 
-    def qs_tgt_host_for_user(self, pattern, user):
+    def qs_tgt_host_for_user(self, pattern, user, active=True):
         """
         Retrieve available target host for the specified user, in form of a QuerySet
+        :param active: filter only active ones
         :param pattern: str pattern to look for
         :param user: request user to filter targets permission
         :return:
@@ -338,8 +339,10 @@ class HostManager(models.Manager):
         host_queryset = self.all()
         group_queryset = HostGroup.objects.all()
         if pattern:
-            host_queryset = host_queryset.filter(name__icontains=clean_host_pattern(pattern), active=True).order_by(
+            host_queryset = host_queryset.filter(name__icontains=clean_host_pattern(pattern)).order_by(
                 'name')
+        if active:
+            host_queryset = host_queryset.filter(active=True)
         for host in host_queryset:
             group = group_queryset.filter(host_id=host.auto_id)
             if group:
@@ -350,11 +353,13 @@ class HostManager(models.Manager):
                     host_queryset = host_queryset.exclude(name=host.name)
         return host_queryset
 
-    def qs_src_host(self, pattern):
-        qs = self.all()
+    def qs_src_host(self, pattern, active=True):
+        host_queryset = self.all()
         if pattern:
-            qs = qs.filter(name__icontains=clean_host_pattern(pattern)).order_by('name')
-        return qs
+            host_queryset = host_queryset.filter(name__icontains=clean_host_pattern(pattern)).order_by('name')
+        if active:
+            host_queryset = host_queryset.filter(active=True)
+        return host_queryset
 
 
 class Host(models.Model):

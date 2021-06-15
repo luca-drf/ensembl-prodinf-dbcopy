@@ -12,26 +12,29 @@
         $(".field-wipe_target").hide();
         $(".field-convert_innodb").hide();
         $(".field-dry_run").hide();
-        $("#changelist-form tr").has("td.field-overall_status div.Complete").addClass('Complete');
-        $("#changelist-form tr td.field-overall_status").has("div.Complete").addClass('Complete');
-        $("#changelist-form tr").has("td.field-overall_status div.Running").addClass('Running');
-        $("#changelist-form tr td.field-overall_status").has("div.Running").addClass('Running');
-        $("#changelist-form tr").has("td.field-overall_status div.Incomplete").addClass('Incomplete');
-        $("#changelist-form tr td.field-overall_status").has("div.Incomplete").addClass('Incomplete');
-        $("#changelist-form tr").has("td.field-overall_status div.Submitted").addClass('Submitted');
-        $("#changelist-form tr td.field-overall_status").has("div.Submitted").addClass('Submitted');
-        $("#changelist-form tr").has("td.field-overall_status div.Scheduled").addClass('Scheduled');
-        $("#changelist-form tr td.field-overall_status").has("div.Scheduled").addClass('Scheduled');
-        $("#changelist-form tr").has("td.field-overall_status div.Failed").addClass('Failed');
-        $("#changelist-form tr td.field-overall_status").has("div.Failed").addClass('Failed');
-        const srcHostElem = $("#id_src_host");
-        const tgtHostElem = $("#id_tgt_host");
+        let trs = $("#changelist-form tr");
+        if (trs.has("td.field-overall_status div.Complete")) { trs.addClass('Complete'); }
+        if (trs.has("td.field-overall_status div.Running")) { trs.addClass('Running');}
+        if (trs.has("td.field-overall_status div.Incomplete")) { trs.addClass('Incomplete');}
+        if (trs.has("td.field-overall_status div.Submitted")) { trs.addClass('Submitted');}
+        if (trs.has("td.field-overall_status div.Scheduled")) { trs.addClass('Scheduled');}
+        if (trs.has("td.field-overall_status div.Failed")) { trs.addClass('Failed');}
+        let tds = $("#changelist-form tr td.field-overall_status");
+        if (tds.has("div.Complete")) { tds.addClass('Complete'); }
+        if (tds.has("div.Running")) { tds.addClass('Running'); }
+        if (tds.has("div.Incomplete")) { tds.addClass('Incomplete'); }
+        if (tds.has("div.Submitted")) { tds.addClass('Submitted'); }
+        if (tds.has("div.Scheduled")) { tds.addClass('Scheduled'); }
+        if (tds.has("div.Failed")) { tds.addClass('Failed'); }
+        let srcHostElem = $("#id_src_host");
+        let tgtHostElem = $("#id_tgt_host");
+
         if (srcHostElem.val() && tgtHostElem.val()) {
             SrcHostDetails = hostStringToDetails(srcHostElem.val());
             TgtHostsDetails = getHostsDetails(tgtHostElem.val());
             updateAlerts();
         }
-        // $("#id_src_host").dispatchEvent(change);
+       // $("#id_src_host").dispatchEvent(change);
         srcHostElem.on('change', function() {
             // console.log("id src _host changed triggered ", $(this).val());
             $(this).removeClass("is-invalid");
