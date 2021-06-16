@@ -87,19 +87,22 @@ class DbLookup(autocomplete.Select2ListView):
 class TableLookup(autocomplete.Select2ListView):
     def get_list(self):
         result = []
-        if len(self.forwarded.get('src_incl_db')) > 1:
-            return ['Cannot filter on table name on multiple dbs!!']
+        if len(self.forwarded.get('src_incl_db')) > 1 or  '%' in self.forwarded.get('src_incl_db')[0]:
+            return ['Cannot filter on table name on multiple/patterned dbs!!']
         if self.q and len(self.q) >= 2:
             try:
                 host = self.forwarded.get('db_host').split(':')[0]
                 port = self.forwarded.get('db_host').split(':')[1]
                 database = self.forwarded.get('src_incl_db')[0]
-                # See if we could managed a set of default excluded tables
-                result = get_table_set(host, port, database, self.q)
+                # TODO See if we could managed a set of default excluded tables
+                logger.debug("Inspecting %s:%s/%s w/ %s", host, port, database, self.q)
+                result = get_table_set(host, port, database, name_filter='.*' + self.q.replace('%', '.*') + '.*')
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
-                logger.error("Db Table Lookup query error: ", str(e))
+                logger.error("Db Table Lookup query error: %s ", str(e))
                 pass
             except DBAPIError as e:
-                logger.error("TableLookup query error: ", str(e.orig))
+                logger.error("TableLookup query error: %s ", str(e.orig))
         return result
+
+

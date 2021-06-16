@@ -89,3 +89,34 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} - {process:d} ({thread:d}) - {module} --: {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} - {module} --: {message}',
+            'style': '{',
+        },
+    },
+    'loggers': {
+        'asyncio': {
+            'level': 'WARNING',
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose' if DEBUG else 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG' if DEBUG else 'WARNING',
+    }
+
+}

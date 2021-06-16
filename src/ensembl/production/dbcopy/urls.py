@@ -11,16 +11,17 @@
 #   limitations under the License.
 from django.urls import path, include
 
-from .views import reset_failed_jobs, group_choice
+from .views import reset_failed_jobs, group_choice, requestjob_checks_warning
 from .lookups import SrcHostLookup, TgtHostLookup, DbLookup, TableLookup
 
 app_name = 'ensembl_dbcopy'
 
 urlpatterns = [
     path('reset_failed_jobs/<uuid:job_id>', reset_failed_jobs, name='reset_failed_jobs'),
-    path('add', group_choice, name='group_choice'),
+    path('grouphoice', group_choice, name='group_choice'),
     path('srchost', SrcHostLookup.as_view(), name='src-host-autocomplete'),
     path('tgthost', TgtHostLookup.as_view(), name='tgt-host-autocomplete'),
     path('srcdb', DbLookup.as_view(), name='host-db-autocomplete'),
     path('srctables', TableLookup.as_view(), name='host-db-table-autocomplete'),
+    path('jobschecks/dbnames/', requestjob_checks_warning, name='job-checks-host'),
 ]

@@ -140,19 +140,24 @@ class RequestJobAdmin(admin.ModelAdmin):
         return initial
 
     def get_readonly_fields(self, request, obj=None):
-        return super().get_readonly_fields(request, obj)
         if obj is None:
             return super().get_readonly_fields(request, obj)
         else:
             return self.fields
 
     def resubmit_jobs(self, request, queryset):
+        """
+        Bulk resubmit jobs as they were initially.
+        :return: None
+        # TODO add current user email to the list if not already present.#
+        """
         for query in queryset:
             new_job = RequestJob.objects.get(pk=query.pk)
             new_job.pk = None
             new_job.request_date = None
             new_job.start_date = None
             new_job.end_date = None
+            new_job.username = request.user.username
             new_job.status = None
             new_job.save()
             message = 'Job {} resubmitted [new job_id {}]'.format(query.pk, new_job.pk)

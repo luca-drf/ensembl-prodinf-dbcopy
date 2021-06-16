@@ -165,7 +165,8 @@ class RequestJob(models.Model):
             try:
                 present_dbs = get_database_set(hostname, port, excluded_schemas=get_excluded_schemas())
             except ValueError as e:
-                raise ValidationError('src_host', 'Invalid source hostname or port')
+                raise ValidationError({'src_host': 'Invalid source hostname or port'},
+                                      'invalid')
             src_names = present_dbs
             if self.src_incl_db:
                 src_names = _apply_db_names_filter(_text_field_as_set(self.src_incl_db), src_names)
@@ -176,13 +177,11 @@ class RequestJob(models.Model):
             if self.tgt_db_name:
                 tgt_conflicts = _text_field_as_set(self.tgt_db_name).intersection(src_names)
                 if tgt_conflicts:
-                    raise ValidationError('tgt_db_name',
-                                          'Some source and target databases coincide. '
-                                          'Please change conflicting target names')
+                    raise ValidationError({'tgt_db_name': 'Some source and target databases coincide. '
+                                                          'Please change conflicting target names'})
             elif src_names:
-                raise ValidationError('src_incl_db',
-                                      'Some source and target databases coincide. Please add target names '
-                                      'or change sources')
+                raise ValidationError({'src_incl_db': 'Some source and target databases coincide. '
+                                                      'Please add target names or change sources'})
 
     def clean_src_skip_db(self):
         """
@@ -191,10 +190,9 @@ class RequestJob(models.Model):
         :raise: ValidationError
         """
         if self.src_skip_db and self.tgt_db_name:
-            raise ValidationError('src_skip_db',
-                                  'Field "Names of databases on Target Host" is not empty. \n'
-                                  'You can\'t both skip and rename at the same time. \n'
-                                  'Consider clear this field.')
+            raise ValidationError({'src_skip_db': 'Field "Names of databases on Target Host" is not empty. \n'
+                                                  'You can\'t both skip and rename at the same time. \n'
+                                                  'Consider clear this field.'})
 
     def clean_tgt_db_name(self):
         """
@@ -206,12 +204,12 @@ class RequestJob(models.Model):
         tgt_db = _text_field_as_set(self.tgt_db_name)
         if tgt_db:
             if len(tgt_db) != len(incl_db):
-                raise ValidationError('tgt_db_name',
-                                      "The number of databases to copy should match the number of databases \n"
-                                      "renamed on target hosts")
+                raise ValidationError(
+                    {'tgt_db_name': "The number of databases to copy should match the number of databases \n"
+                                    "renamed on target hosts"}, 'invalid')
             for dbname in incl_db:
                 if '%' in dbname:
-                    raise ValidationError('tgt_db_name', "You can't rename a pattern")
+                    raise ValidationError({'tgt_db_name': "You can't rename a pattern"}, "invalid")
 
     def clean_wipe_target(self):
         """
@@ -229,12 +227,13 @@ class RequestJob(models.Model):
                 try:
                     db_engine = get_engine(hostname, port)
                 except RuntimeError as e:
-                    raise ValidationError('tgt_host', 'Invalid host: {}'.format(tgt_host))
+                    raise ValidationError({'tgt_host': 'Invalid host: %(tgt_host)s'}, 'invalid',
+                                          {'tgt_host', tgt_host})
                 tgt_present_db_names = set(get_schema_names(db_engine))
                 if tgt_present_db_names.intersection(new_db_names):
                     field_name = 'tgt_db_name' if tgt_db_names else 'src_incl_db'
-                    raise ValidationError(field_name, 'One or more database names already present on'
-                                                      ' the target. Consider enabling Wipe target option.')
+                    raise ValidationError({field_name: 'One or more database names already present on'
+                                                       ' the target. Consider enabling Wipe target option.'}, 'invalid')
 
     def clean_username(self):
         """not exactly cleaning the username field, but check that user had the permission to perform the
@@ -246,14 +245,18 @@ class RequestJob(models.Model):
             hostname = tgt_host.split(':')[0]
             hosts = Host.objects.filter(name=hostname)
             if not hosts:
-                raise ValidationError('tgt_host', hostname + " is not present in our system")
+                raise ValidationError({'tgt_host': "%(hostname)s is not present in our system"},
+                                      'invalid',
+                                      {'hostname': hostname})
             group = HostGroup.objects.filter(host_id=hosts[0].auto_id)
             if group:
                 host_groups = group.values_list('group_name', flat=True)
                 user_groups = self.user.groups.values_list('name', flat=True)
                 common_groups = set(host_groups).intersection(set(user_groups))
                 if not common_groups and not self.user.is_superuser:
-                    raise ValidationError('tgt_host', "You are not allowed to copy to " + hostname)
+                    raise ValidationError({'tgt_host': "You are not allowed to copy to %(hostname)s"},
+                                          'forbidden',
+                                          {'hostname': hostname})
 
     def clean(self):
         """
@@ -266,14 +269,16 @@ class RequestJob(models.Model):
         tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
         one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
         if self.src_host in targets and one_src_db_targets:
-            raise ValidationError("You can't set a copy with identical source/target host/db pair.")
+            raise ValidationError({'tgt_host': "You can't set a copy with identical source/target host/db pair.\n"
+                                               "Please rename target or change target host"},
+                                  'forbidden')
         super().clean()
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         """ Override default save.
         Enforce clean to be called on every save
         """
-        self.clean()
+        self.full_clean()
         super().save(force_insert, force_update, using, update_fields)
 
     def completion(self):
@@ -384,12 +389,40 @@ class Host(models.Model):
         return '{}:{}'.format(self.name, self.port)
 
 
+class TargetHostGroupManager(models.Manager):
+
+    def target_host_group_for_user(self, user):
+        # get groups, current user belongs to
+        user_groups = user.groups.values_list('name', flat=True)
+        logger.debug("User Groups %s", user_groups)
+        # get all host user can copy  based on assigned group
+        user_hosts_ids = Host.objects.filter(targethostgroup__target_group_name__in=list(user_groups)).values_list(
+            'auto_id', flat=True)
+        logger.debug("User Hosts Ids %s", user_hosts_ids)
+
+        # get all host names that target group contains
+        target_host_dict = {}
+        for each_group in self.all():
+            target_host_dict[each_group.target_group_name] = ''
+            for each_host in each_group.target_host.all():
+                target_host_dict[each_group.target_group_name] += each_host.name + ':' + str(each_host.port) + ','
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug('Target_host_dict %s', target_host_dict)
+            logger.debug('TargetHostGroup %s', TargetHostGroup.objects.all())
+        target_groups = list(set([(target_host_dict[group.target_group_name], group.target_group_name)
+                                  for group in self.filter(target_host__auto_id__in=list(user_hosts_ids))
+                                  ]))
+        return target_groups
+
+
 class TargetHostGroup(models.Model):
     class Meta:
         db_table = 'target_host_group'
         app_label = 'ensembl_dbcopy'
         verbose_name = 'Hosts Target HostGroup'
 
+    objects = TargetHostGroupManager()
     target_group_id = models.BigAutoField(primary_key=True)
     target_group_name = models.CharField('Hosts HostGroup', max_length=80, unique=True)
     target_host = models.ManyToManyField('Host')

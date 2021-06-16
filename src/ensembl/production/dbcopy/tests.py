@@ -189,7 +189,6 @@ class DBIntrospectTest(APITestCase):
     def testDatabaseList(self):
         # Test getting test Production dbs
         args = {'host': self.host, 'port': self.port}
-        print(reverse('dbcopy_api:databaselist', kwargs=args))
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'test_homo'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)

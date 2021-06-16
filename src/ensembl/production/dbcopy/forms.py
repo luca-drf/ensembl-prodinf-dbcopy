@@ -11,41 +11,16 @@
 #   limitations under the License.
 
 import logging
-from collections import OrderedDict
 
 from dal import autocomplete, forward
 from django import forms
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group as UsersGroup
+from django.http import QueryDict
 from ensembl.production.djcore.forms import TrimmedCharField
 
 from ensembl.production.dbcopy.models import RequestJob, HostGroup, Host, TargetHostGroup
 
 logger = logging.getLogger(__name__)
-
-
-def _target_host_group(user):
-    # get groups, current user belongs to
-    user_groups = user.groups.values_list('name', flat=True)
-    logger.debug("User Groups %s", user_groups)
-    # get all host user can copy  based on assigned group
-    user_hosts_ids = Host.objects.filter(targethostgroup__target_group_name__in=list(user_groups)).values_list(
-        'auto_id', flat=True)
-    logger.debug("User Hosts Ids %s", user_hosts_ids)
-
-    # get all host names that target group contains
-    target_host_dict = {}
-    for each_group in TargetHostGroup.objects.all():
-        target_host_dict[each_group.target_group_name] = ''
-        for each_host in each_group.target_host.all():
-            target_host_dict[each_group.target_group_name] += each_host.name + ':' + str(each_host.port) + ','
-
-    logger.debug('Target_host_dict %s', target_host_dict)
-    logger.debug('TargetHostGroup %s', TargetHostGroup.objects.all())
-    target_groups = list(set([(target_host_dict[group.target_group_name], group.target_group_name)
-                              for group in TargetHostGroup.objects.filter(target_host__auto_id__in=list(user_hosts_ids))
-                              ]))
-    return target_groups
 
 
 class RequestJobForm(forms.ModelForm):
@@ -71,10 +46,8 @@ class RequestJobForm(forms.ModelForm):
         help_text="List of target hosts",
         required=True,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:tgt-host-autocomplete',
-                                       attrs={
-                                           'data-placeholder': 'Target(s)',
-                                           'data-result-html': True
-                                       })
+                                       attrs={'data-placeholder': 'Target(s)',
+                                              'data-result-html': True})
     )
 
     src_incl_db = TrimmedCharField(
@@ -92,7 +65,8 @@ class RequestJobForm(forms.ModelForm):
         max_length=2048,
         required=False,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-autocomplete',
-                                       forward=[forward.Field('src_host', 'db_host')]))
+                                       forward=[forward.Field('src_host', 'db_host')])
+    )
 
     src_incl_tables = TrimmedCharField(
         label="Only Copy these tables",
@@ -101,7 +75,10 @@ class RequestJobForm(forms.ModelForm):
         required=False,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-table-autocomplete',
                                        forward=[forward.Field('src_host', 'db_host'),
-                                                forward.Field('src_incl_db')]))
+                                                forward.Field('src_incl_db')],
+                                       )
+    )
+
     src_skip_tables = TrimmedCharField(
         label="Skip these tables",
         help_text='table1,table2,..',
@@ -109,12 +86,14 @@ class RequestJobForm(forms.ModelForm):
         required=False,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-table-autocomplete',
                                        forward=[forward.Field('src_host', 'db_host'),
-                                                forward.Field('src_incl_db')]))
+                                                forward.Field('src_incl_db')])
+    )
 
     tgt_db_name = TrimmedCharField(
         label="Rename DB(s)on target(s)",
         help_text='db1,db2,..',
         max_length=2048,
+        widget=forms.TextInput(attrs={'size': 50}),
         required=False)
 
     email_list = TrimmedCharField(
@@ -124,7 +103,6 @@ class RequestJobForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(RequestJobForm, self).__init__(*args, **kwargs)
-        from django.http import QueryDict
         querydict = args[0] if args else kwargs.get('initial', QueryDict())
         if querydict.get('src_host', None) is not None:
             self.fields['src_host'].initial = querydict.get('src_host')
@@ -133,32 +111,12 @@ class RequestJobForm(forms.ModelForm):
             tgt_hosts = querydict.get('tgt_host').split(',')
             self.fields['tgt_host'].initial = tgt_hosts
             self.fields['tgt_host'].widget.choices = [(val, val) for val in tgt_hosts]
-#        if querydict.get('src_incl_db', None) is not None:
-#            src_incl_db = querydict.get('src_incl_db').split(',')
-#            self.fields['src_incl_db'].initial = src_incl_db
-#            self.fields['src_incl_db'].widget.choices = [(val, val) for val in src_incl_db]
-#        if querydict.get('src_skip_db', None) is not None:
-#            src_skip_db = querydict.get('src_skip_db').split(',')
-#            self.fields['src_skip_db'].initial = src_skip_db
-#            self.fields['src_skip_db'].widget.choices = [(val, val) for val in src_skip_db]
-#        if querydict.get('src_incl_tables', None) is not None:
-#            src_incl_tables = querydict.get('src_incl_tables').split(',')
-#            self.fields['src_incl_tables'].initial = src_incl_tables
-#            self.fields['src_incl_tables'].widget.choices = [(val, val) for val in src_incl_tables]
-#        if querydict.get('src_skip_tables', None) is not None:
-#            src_skip_tables = querydict.get('src_skip_tables').split(',')
-#            self.fields['src_skip_tables'].initial = src_skip_tables
-#            self.fields['src_skip_tables'].widget.choices = [(val, val) for val in src_skip_tables]
-#        if querydict.get('tgt_db_name', None) is not None:
-#            tgt_db_name = querydict.get('tgt_db_name').split(',')
-#            self.fields['tgt_db_name'].initial = tgt_db_name
-#            self.fields['tgt_db_name'].widget.choices = [(val, val) for val in tgt_db_name]
-        target_host_group_list = _target_host_group(self.user)
+        target_host_group_list = TargetHostGroup.objects.target_host_group_for_user(self.user)
         if len(target_host_group_list) >= 1:
             tgt_group_host = forms.TypedChoiceField(required=False,
                                                     choices=target_host_group_list,
                                                     empty_value='--select target group--')
-            tgt_group_host.widget.attrs = {'onchange': "targetHosts()"}
+            tgt_group_host.widget.attrs = {'onblur': "targetHosts()"}
             tgt_group_host.label = 'Host Target HostGroup'
             tgt_group_host.help_text = "Select HostGroup to autofill the target host"
             self.fields['tgt_group_host'] = tgt_group_host

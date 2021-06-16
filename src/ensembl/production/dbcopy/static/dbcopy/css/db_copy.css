@@ -1,52 +1,14 @@
-/* .tablekey {
-  background-color: lightgray;
-  text-align : right;
-  font-weight: bold;
-  padding: 5px 5px 5px 5px;
-  height: 100%;
-}
-.tablevalue {
-  text-align : left;
-  padding: 5px 5px 5px 5px;
-  border-radius: 4px;
-}
 
-.table{
-  table-layout:fixed;
-}
-.table-break-all, .field-src_incl_db, .field-src_skip_db, .field-tgt_host,  .field-tgt_db_name
-{
-  word-break: break-all;
-}
-
-.col-sm-2.tablekey {
-  background-color: lightgray;
-}
-.field-src_incl_db, .field-src_skip_db, .field-tgt_host, .field-tgt_db_name, .field-src_host
-{
-  max-width: available;
-}
-.row1, .row2 {
-  vertical-align: top;
-}
-.action-checkbox {
-  vertical-align: auto;
-}
-.tabular.inline-related .form-row {
-  display:table-row;
-}
-.tabular.inline-related .empty-form {
-  display: none;
-}*/
 /* Table lists */
 .tabular-pagination {
     padding-top: 2rem;
 }
 
-#result_list .field-src_incl_db, #result_list .field-src_skip_db, #result_list .field-tgt_host,
-#result_list .field-tgt_db_name, #result_list .field-src_host {
-    max-width: available;
+#result_list td.field-src_incl_db, #result_list td.field-src_skip_db, #result_list td.field-tgt_host,
+#result_list td.field-tgt_db_name, #result_list td.field-src_host {
+    max-width: 250px;
     overflow-wrap: anywhere;
+    word-break: break-all;
 }
 
 div#changelist-filter ul {
@@ -125,13 +87,6 @@ td.Complete, td.Incomplete, td.Running, td.Submitted, td.Scheduled. td.Failed {
 .closelink {
 }
 
-table#result_list td.field-tgt_host,
-table#result_list td.field-src_skip_db,
-table#result_list td.field-src_incl_db {
-    word-break: break-all;
-    max-width: 25rem;
-}
-
 /* Progress bars */
 progress[value] {
     -webkit-appearance: none;
@@ -168,4 +123,45 @@ progress[value]::-webkit-progress-bar {
     background-color: lightgrey;
     border-radius: 2px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+
+/* Errors */
+ul.dbcopy-messagelist {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#dbnamesAlertBox ul, #dbtablesAlertBox ul, #blockingAlertBox ul {
+    margin-left: 1.5em;
+}
+#dbnamesAlertBox ul li ul li, #dbtablesAlertBox ul li ul li, #blockingAlertBox ul li ul li{
+    list-style: square;
+    background: unset;
+    padding-left: 1rem;
+}
+
+/* Bootstrap like alerts */
+.alert {
+    position: relative;
+    padding: .75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+}
+.alert-warning {
+    background-image: url('/static/admin/img/icon-alert.svg') 40px 14px no-repeat;
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+.alert-danger {
+    background-image: url('/static/admin/img/icon-no.svg') 40px 12px no-repeat;;
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice, .select2-results {
+    color: brown;
 }
