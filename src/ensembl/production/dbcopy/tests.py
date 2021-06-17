@@ -40,6 +40,11 @@ class RequestJobTest(APITestCase):
                                      'tgt_host': 'mysql-ens-general-dev-1:4484', 'user': 'testuser'})
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        las_rq_job = RequestJob.objects.all().order_by('-request_date').first()
+        self.assertEqual("mysql-ens-sta-1:4519", las_rq_job.src_host)
+        self.assertEqual("mysql-ens-general-dev-1:4484", las_rq_job.tgt_host)
+        self.assertEqual("testuser@ebi.ac.uk", las_rq_job.email_list)
+        self.assertEqual("testuser", las_rq_job.user.username)
 
         # Test user email
         response_dict = json.loads(response.content.decode('utf-8'))
@@ -142,28 +147,33 @@ class RequestJobTest(APITestCase):
             RequestJob.objects.create(src_host="host1:3306",
                                       tgt_host="host4:3306,host1:3306",
                                       src_incl_db="db1,db4",
-                                      tgt_db_name="db5,db1")
+                                      tgt_db_name="db5,db1",
+                                      username='testuser')
         with self.assertRaises(ValidationError):
             # test target db name not set at all 9same target dn names
             RequestJob.objects.create(src_host="host1:3306",
                                       tgt_host="host1:3306,host3:3306",
-                                      src_incl_db="db1")
+                                      src_incl_db="db1",
+                                      username='testuser')
         with self.assertRaises(ValidationError):
             # test target host contains src host and all db selected
             RequestJob.objects.create(src_host="host1:3306",
-                                      tgt_host="host2:3306,host1:3306")
+                                      tgt_host="host2:3306,host1:3306",
+                                      username='testuser')
         # Test a normal job would pass.
         job = RequestJob.objects.create(src_host="host2:3306",
                                         tgt_host="host4:3306,host3:3306",
                                         src_incl_db="db1,db4",
-                                        tgt_db_name="db5,db1")
+                                        tgt_db_name="db5,db1",
+                                        username='testuser')
         self.assertIsNotNone(job)
 
         # test a job with same target but different db name would pass
         job = RequestJob.objects.create(src_host="host2:3306",
                                         tgt_host="host2:3306",
                                         src_incl_db="db1",
-                                        tgt_db_name="db5")
+                                        tgt_db_name="db5",
+                                        username='testuser')
         self.assertIsNotNone(job)
 
 

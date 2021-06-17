@@ -100,7 +100,11 @@ class RequestJobAdmin(admin.ModelAdmin):
     # TODO re-add when available 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
     readonly_fields = ('overall_status', 'request_date', 'start_date', 'end_date', 'completion')
 
-    # status_percentage.description = "Blabla"
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff
 
     def has_module_permission(self, request):
         return request.user.is_staff

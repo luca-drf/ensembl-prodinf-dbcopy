@@ -9,8 +9,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import logging
 from django.contrib.admin import SimpleListFilter
 from django.db.models import Count
+
+logger = logging.getLogger(__name__)
 
 
 class DBCopyUserFilter(SimpleListFilter):
@@ -94,3 +97,18 @@ class OverallStatusFilter(SimpleListFilter):
         elif self.value() == 'Submitted':
             qs = queryset.filter(end_date__isnull=True, status__isnull=True)
             return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)
+
+
+def get_filter_match(values):
+    exact_match = []
+    named_filters = []
+    for v in values:
+        if '%' in v:
+            # Convert MySQL pattern search to regexp
+            named_filters.append(v.replace('%', '.*'))
+        else:
+            exact_match.append(v)
+    logger.debug("from [%s]", values)
+    logger.debug("filter %s", named_filters)
+    logger.debug("exact %s", exact_match)
+    return "|".join(named_filters), exact_match

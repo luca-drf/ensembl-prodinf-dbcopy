@@ -11,7 +11,7 @@
 #   limitations under the License.
 from django.urls import path, include
 
-from .views import reset_failed_jobs, group_choice, requestjob_checks_warning
+from .views import reset_failed_jobs, requestjob_checks_warning, group_choice
 from .lookups import SrcHostLookup, TgtHostLookup, DbLookup, TableLookup
 
 app_name = 'ensembl_dbcopy'

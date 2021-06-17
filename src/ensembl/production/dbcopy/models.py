@@ -20,8 +20,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.html import format_html
+from ensembl.production.core.db_introspects import get_database_set
 from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
 from ensembl.production.djcore.models import NullTextField
+
+from ensembl.production.dbcopy.filters import get_filter_match
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +74,7 @@ class RequestJob(models.Model):
     wipe_target = models.BooleanField("Wipe target", default=False)
     convert_innodb = models.BooleanField("Convert Innodb=>MyISAM", default=False)
     dry_run = models.BooleanField("Dry Run", default=False)
-    email_list = models.TextField("Notify Email(s)", max_length=2048, blank=False, null=True,
+    email_list = models.TextField("Notify Email(s)", max_length=2048, blank=True, null=True,
                                   validators=[EmailListFieldValidator(
                                       message="Email list should contain one or more comma "
                                               "separated valid email addresses.")])
@@ -106,7 +109,6 @@ class RequestJob(models.Model):
         :param user: User (see django.contrib.auth)
         :return: None
         """
-        assert (isinstance(user, get_user_model()))
         self.username = user.username
 
     @property
@@ -151,6 +153,32 @@ class RequestJob(models.Model):
         nbr_tables = sum(map(lambda log: 1 if log.end_date else 0, self.transfer_logs.all()))
         return nbr_tables
 
+    def _clean_db_set_for_filters(self, from_host, field):
+        host = from_host.split(':')[0]
+        port = from_host.split(':')[1]
+        name_filter, name_matches = get_filter_match(getattr(self, field))
+        try:
+            src_db_set = get_database_set(hostname=host, port=port,
+                                          name_filter=name_filter,
+                                          name_matches=name_matches,
+                                          excluded_schemas=Dbs2Exclude.objects.values_list('table_schema', flat=True))
+            if len(src_db_set) == 0:
+                raise ValidationError({'src_incl_db': 'No db matching incl. [%s %s] ' % (name_filter, name_matches)})
+        except ValueError as e:
+            raise ValidationError({field: str(e)})
+
+    def clean_src_incl_db(self):
+        if self.src_host and self.src_incl_db:
+            self._clean_db_set_for_filters(self.src_host, 'src_incl_db')
+
+    def clean_src_skip_db(self):
+        if self.src_skip_db and self.tgt_db_name:
+            raise ValidationError({'src_skip_db': 'Field "Names of databases on Target Host" is not empty. \n'
+                                                  'You can\'t both skip and rename at the same time. \n'
+                                                  'Consider clear this field.'})
+        if self.src_host and self.src_skip_db:
+            self._clean_db_set_for_filters(self.src_host, 'src_skip_db')
+
     def clean_tgt_host(self):
         """
         Clean tgt_host fiels
@@ -158,12 +186,14 @@ class RequestJob(models.Model):
         :raise: ValidationError
         """
         from ensembl.production.core.db_introspects import get_database_set
-        from ensembl.production.dbcopy.lookups import get_excluded_schemas
 
         if self.src_host in self.tgt_host:
+
             hostname, port = self.src_host.split(':')
             try:
-                present_dbs = get_database_set(hostname, port, excluded_schemas=get_excluded_schemas())
+                present_dbs = get_database_set(hostname, port,
+                                               excluded_schemas=Dbs2Exclude.objects.values_list('table_schema',
+                                                                                                flat=True))
             except ValueError as e:
                 raise ValidationError({'src_host': 'Invalid source hostname or port'},
                                       'invalid')
@@ -182,17 +212,6 @@ class RequestJob(models.Model):
             elif src_names:
                 raise ValidationError({'src_incl_db': 'Some source and target databases coincide. '
                                                       'Please add target names or change sources'})
-
-    def clean_src_skip_db(self):
-        """
-        Clean src_skip_db
-        :return: None
-        :raise: ValidationError
-        """
-        if self.src_skip_db and self.tgt_db_name:
-            raise ValidationError({'src_skip_db': 'Field "Names of databases on Target Host" is not empty. \n'
-                                                  'You can\'t both skip and rename at the same time. \n'
-                                                  'Consider clear this field.'})
 
     def clean_tgt_db_name(self):
         """
@@ -278,6 +297,9 @@ class RequestJob(models.Model):
         """ Override default save.
         Enforce clean to be called on every save
         """
+        if not self.email_list and self.username:
+            self.email_list = ','.join([user + "@ebi.ac.uk" for user in self.username.split(',')])
+            print("Email list set automatically")
         self.full_clean()
         super().save(force_insert, force_update, using, update_fields)
 

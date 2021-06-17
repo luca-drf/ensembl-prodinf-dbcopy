@@ -15,8 +15,7 @@ from dal import autocomplete
 from django.core.exceptions import ObjectDoesNotExist
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
-from ensembl.production.dbcopy.models import Dbs2Exclude
-from .models import Host, HostGroup
+from .models import Host, Dbs2Exclude
 from sqlalchemy.exc import DBAPIError
 
 logger = logging.getLogger(__name__)

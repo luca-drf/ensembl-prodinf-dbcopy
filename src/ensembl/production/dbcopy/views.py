@@ -12,14 +12,15 @@
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
+from django.core.exceptions import ValidationError
 import logging
 
 from django.contrib.auth.decorators import login_required
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
+from ensembl.production.dbcopy.filters import get_filter_match
 from ensembl.production.dbcopy.lookups import get_excluded_schemas
-from ensembl.production.dbcopy.models import RequestJob, HostGroup, Host, _text_field_as_set
+from ensembl.production.dbcopy.models import RequestJob
 from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
@@ -35,37 +36,6 @@ def reset_failed_jobs(request, *args, **kwargs):
                   args=[obj.job_id])
     messages.success(request, "All the failed jobs for %s have been successfully reset" % job_id)
     return redirect(url)
-
-
-def group_choice(request, *args, **kwargs):
-    host_id = request.POST.get("host_id")
-    host_id = Host.objects.get(auto_id=host_id)
-    for each_group in request.POST.getlist('group_name'):
-        grp = HostGroup.objects.filter(group_name=[str(each_group)], host_id=request.POST.get("host_id"))
-        if len(grp) > 0:
-            continue
-        new_group = HostGroup()
-        new_group.group_name = each_group
-        new_group.host_id = host_id  # Host.objects.get(auto_id=host_id)
-        new_group.save()
-
-    url = reverse('admin:ensembl_dbcopy_group_changelist')
-    return redirect(url)
-
-
-def get_filter_match(values):
-    exact_match = []
-    named_filters = []
-    for v in values:
-        if '%' in v:
-            # Convert MySQL pattern search to regexp
-            named_filters.append(v.replace('%', '.*'))
-        else:
-            exact_match.append(v)
-    logger.debug("from [%s]", values)
-    logger.debug("filter %s", named_filters)
-    logger.debug("exact %s", exact_match)
-    return "|".join(named_filters), exact_match
 
 
 @login_required
@@ -173,3 +143,21 @@ def requestjob_checks_warning(request):
     return HttpResponse(json.dumps(ajax_vars),
                         status=status_code,
                         content_type='application/json')
+
+
+def group_choice(request, *args, **kwargs):
+    from ensembl.production.dbcopy.models import Host, HostGroup
+
+    host_id = request.POST.get("host_id")
+    host_id = Host.objects.get(auto_id=host_id)
+    for each_group in request.POST.getlist('group_name'):
+        grp = HostGroup.objects.filter(group_name=[str(each_group)], host_id=request.POST.get("host_id"))
+        if len(grp) > 0:
+            continue
+        new_group = HostGroup()
+        new_group.group_name = each_group
+        new_group.host_id = host_id  # Host.objects.get(auto_id=host_id)
+        new_group.save()
+
+    url = reverse('admin:ensembl_dbcopy_group_changelist')
+    return redirect(url)
