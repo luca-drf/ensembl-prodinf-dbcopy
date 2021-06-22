@@ -19,6 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import Count, Q
 from django.utils.html import format_html
 from ensembl.production.core.db_introspects import get_database_set
 from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
@@ -49,12 +50,21 @@ class DebugLog(models.Model):
         app_label = 'ensembl_dbcopy'
 
 
+class RequestJobManager(models.Manager):
+
+    def get_queryset(self):
+        qs = super().get_queryset().annotate(nb_transfers=Count('transfer_logs')).annotate(
+            running_transfers=Count('transfer_logs', filter=Q(end_date__isnull=True)))
+        return qs
+
+
 class RequestJob(models.Model):
     class Meta:
         db_table = 'request_job'
         app_label = 'ensembl_dbcopy'
         verbose_name = "Copy job"
         verbose_name_plural = "Copy jobs"
+        ordering = ('-request_date',)
 
     job_id = models.CharField(primary_key=True, max_length=128, default=uuid.uuid1, editable=False)
     src_host = models.TextField("Source Host", max_length=2048,
@@ -83,6 +93,11 @@ class RequestJob(models.Model):
     username = models.CharField("Submitter", max_length=64, blank=False, null=True, db_column='user')
     status = models.CharField("Status", max_length=20, blank=True, null=True, editable=False)
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
+
+    objects = RequestJobManager()
+
+    running_transfers = 0
+    nb_transfers = 0
 
     def __str__(self):
         tgt_hosts = self.tgt_host.split(',')
@@ -115,26 +130,32 @@ class RequestJob(models.Model):
     def overall_status(self):
         if self.status:
             if (self.end_date and self.status == 'Transfer Ended') or 'Try:' in self.status:
-                if self.transfer_logs.filter(end_date__isnull=True).count() > 0:
+                if self.running_transfers > 0:
                     return 'Failed'
                 else:
                     return 'Complete'
-            elif self.transfer_logs.count() > 0 and self.status == 'Processing Requests':
+            elif self.running_transfers > 0 and self.status == 'Processing Requests':
                 return 'Running'
             elif self.status == 'Processing Requests' or self.status == 'Creating Requests':
                 return 'Scheduled'
         return 'Submitted'
 
     @property
+    def done_transfers(self):
+        return self.nb_transfers - self.running_transfers
+
+    @property
     def detailed_status(self):
-        total_tables = self.transfer_logs.count()
-        table_copied = self.table_copied
+        total_tables = self.nb_transfers
+        # .count()
+        # table_copied = self.table_copied
         progress = 0
         status_msg = 'Submitted'
         if self.status == 'Processing Requests' or self.status == 'Creating Requests':
             status_msg = 'Scheduled'
-        if table_copied and total_tables:
-            progress = format((table_copied / total_tables) * 100, ".1f")
+        # if table_copied and total_tables:
+        # progress = format((table_copied / total_tables) * 100, ".1f")
+        progress = format((self.done_transfers / self.nb_transfers) * 100, ".1f")
         if progress == 100.0 and self.status == 'Transfer Ended':
             status_msg = 'Complete'
         elif total_tables > 0:
@@ -144,14 +165,15 @@ class RequestJob(models.Model):
                 elif self.status == 'Processing Requests':
                     status_msg = 'Running'
         return {'status_msg': status_msg,
-                'table_copied': table_copied,
+                # 'table_copied': table_copied,
+                'table_copied': self.done_transfers,
                 'total_tables': total_tables,
                 'progress': progress}
 
-    @property
-    def table_copied(self):
-        nbr_tables = sum(map(lambda log: 1 if log.end_date else 0, self.transfer_logs.all()))
-        return nbr_tables
+    #    @property
+    #    def table_copied(self):
+    #        nbr_tables = sum(map(lambda log: 1 if log.end_date else 0, self.transfer_logs.all()))
+    #        return nbr_tables
 
     def _clean_db_set_for_filters(self, from_host, field):
         host = from_host.split(':')[0]
