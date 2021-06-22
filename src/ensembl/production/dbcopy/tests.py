@@ -43,12 +43,9 @@ class RequestJobTest(APITestCase):
         las_rq_job = RequestJob.objects.all().order_by('-request_date').first()
         self.assertEqual("mysql-ens-sta-1:4519", las_rq_job.src_host)
         self.assertEqual("mysql-ens-general-dev-1:4484", las_rq_job.tgt_host)
-        self.assertEqual("testuser@ebi.ac.uk", las_rq_job.email_list)
+        # Test user email set default
+        self.assertEqual("testuser@ensembl.org", las_rq_job.email_list)
         self.assertEqual("testuser", las_rq_job.user.username)
-
-        # Test user email
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(response_dict['email_list'], 'testuser@ebi.ac.uk')
         # Test bad post (no user and src_host)
         response = self.client.post(reverse('dbcopy_api:requestjob-list'),
                                     {'src_host': '', 'src_incl_db': 'homo_sapiens_core_99_38',

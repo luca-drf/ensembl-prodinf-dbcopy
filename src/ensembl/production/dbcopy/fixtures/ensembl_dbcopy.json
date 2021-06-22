@@ -25,7 +25,7 @@
       "username": "testuser",
       "first_name": "",
       "last_name": "",
-      "email": "testuser@ebi.ac.uk",
+      "email": "testuser@ensembl.org",
       "is_staff": true,
       "is_active": true,
       "date_joined": "2019-03-26T11:23:02.067Z",

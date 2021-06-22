@@ -28,6 +28,7 @@ from ensembl.production.djcore.models import NullTextField
 from ensembl.production.dbcopy.filters import get_filter_match
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class Dbs2Exclude(models.Model):
@@ -109,7 +110,6 @@ class RequestJob(models.Model):
         Assuming username is unique (in case of an overriden default user model)
         :return: User or AnonymousUser
         """
-        User = get_user_model()
         try:
             return User.objects.get(username=self.username)
         except ObjectDoesNotExist:
@@ -320,8 +320,10 @@ class RequestJob(models.Model):
         """ Override default save.
         Enforce clean to be called on every save
         """
+
         if not self.email_list and self.username:
-            self.email_list = ','.join([user + "@ebi.ac.uk" for user in self.username.split(',')])
+            self.email_list = ','.join(
+                [user.email for user in User.objects.filter(username__in=self.username.split(','))])
         self.full_clean()
         super().save(force_insert, force_update, using, update_fields)
 
