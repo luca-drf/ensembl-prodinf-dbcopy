@@ -11,6 +11,7 @@
 #   limitations under the License.
 
 from pathlib import Path
+import sys
 
 DEBUG = True
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -78,6 +79,19 @@ DATABASES = {
         'PORT': 3306,
     }
 }
+
+if 'test' in sys.argv:
+    DATABASES.update({
+        'homo_sapiens': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'homo_sapiens',
+            'USER': 'ensembl',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': 3306,
+        }
+    })
+    INSTALLED_APPS += ['ensembl.production.dbcopy.tests']
 
 LANGUAGE_CODE = 'en-gb'
 

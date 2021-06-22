@@ -10,6 +10,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.core.exceptions import ValidationError
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 @require_http_methods(["GET", "POST"])
+@staff_member_required
 def reset_failed_jobs(request, *args, **kwargs):
     job_id = kwargs['job_id']
     request_job = RequestJob.objects.filter(job_id=job_id)
@@ -38,7 +40,7 @@ def reset_failed_jobs(request, *args, **kwargs):
     return redirect(url)
 
 
-@login_required
+@staff_member_required
 @require_http_methods(['POST'])
 def requestjob_checks_warning(request):
     import json
@@ -160,6 +162,7 @@ def requestjob_checks_warning(request):
                         content_type='application/json')
 
 
+@staff_member_required
 def group_choice(request, *args, **kwargs):
     from ensembl.production.dbcopy.models import Host, HostGroup
 

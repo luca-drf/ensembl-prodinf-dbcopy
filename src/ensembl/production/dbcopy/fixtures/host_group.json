@@ -1,0 +1,2098 @@
+[
+  {
+    "model": "auth.group",
+    "pk": 80,
+    "fields": {
+      "name": "Production",
+      "permissions": []
+    }
+  },
+  {
+    "model": "auth.group",
+    "pk": 81,
+    "fields": {
+      "name": "Compara",
+      "permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 100,
+    "fields": {
+      "password": "pbkdf2_sha256$120000$Lv1h0YuCzznU$j3Z/jpv84BdjQuH+UZvFrHBx+2uC2mkb4DutcGlEDcs=",
+      "last_login": "2019-06-20T15:30:33.998Z",
+      "is_superuser": true,
+      "username": "testusergroup",
+      "first_name": "",
+      "last_name": "",
+      "email": "testuser@ensembl.org",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2019-03-26T11:23:02.067Z",
+      "groups": [80],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$120000$NEVUH96SuBQv$UpCW2v4S0R6j6+LBvD5AAO3tkAWNynezgd0DF+lXmbI=",
+      "last_login": "2019-06-20T15:30:33.998Z",
+      "is_superuser": true,
+      "username": "testusergroup2",
+      "first_name": "",
+      "last_name": "",
+      "email": "testuser2@ebi.ac.uk",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2019-03-26T11:23:02.067Z",
+      "groups": [81],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 128,
+    "fields": {
+      "name": "mysql-eg-pan-prod",
+      "port": 4276,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-050.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 129,
+    "fields": {
+      "name": "mysql-eg-publicsql-hh",
+      "port": 4157,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm-003.ebi.ac.uk",
+      "mysqld_file_owner": "sysmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 131,
+    "fields": {
+      "name": "mysql-ens-compara-prod-1",
+      "port": 4485,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-072.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 132,
+    "fields": {
+      "name": "mysql-ens-compara-prod-10",
+      "port": 4648,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-081.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 133,
+    "fields": {
+      "name": "mysql-ens-compara-prod-2",
+      "port": 4522,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-073.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 134,
+    "fields": {
+      "name": "mysql-ens-compara-prod-3",
+      "port": 4523,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-074.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 135,
+    "fields": {
+      "name": "mysql-ens-compara-prod-4",
+      "port": 4401,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-075.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 136,
+    "fields": {
+      "name": "mysql-ens-compara-prod-5",
+      "port": 4615,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-076.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 137,
+    "fields": {
+      "name": "mysql-ens-compara-prod-6",
+      "port": 4616,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-077.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 138,
+    "fields": {
+      "name": "mysql-ens-compara-prod-7",
+      "port": 4617,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-078.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 139,
+    "fields": {
+      "name": "mysql-ens-compara-prod-8",
+      "port": 4618,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-079.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 140,
+    "fields": {
+      "name": "mysql-ens-compara-prod-9",
+      "port": 4647,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-080.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 141,
+    "fields": {
+      "name": "mysql-ens-core-prod-1",
+      "port": 4524,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-083.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 142,
+    "fields": {
+      "name": "mysql-ens-genebuild-prod-1",
+      "port": 4527,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm7-011.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 143,
+    "fields": {
+      "name": "mysql-ens-genebuild-prod-2",
+      "port": 4528,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-036.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 144,
+    "fields": {
+      "name": "mysql-ens-genebuild-prod-3",
+      "port": 4529,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-037.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 145,
+    "fields": {
+      "name": "mysql-ens-genebuild-prod-4",
+      "port": 4530,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-038.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 146,
+    "fields": {
+      "name": "mysql-ens-genebuild-prod-5",
+      "port": 4531,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm7-015.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 147,
+    "fields": {
+      "name": "mysql-ens-genebuild-prod-6",
+      "port": 4532,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm7-016.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 148,
+    "fields": {
+      "name": "mysql-ens-genebuild-prod-7",
+      "port": 4533,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm7-017.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 149,
+    "fields": {
+      "name": "mysql-ens-general-dev-1",
+      "port": 4484,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-016.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 150,
+    "fields": {
+      "name": "mysql-ens-general-dev-2",
+      "port": 4586,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-021.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 151,
+    "fields": {
+      "name": "mysql-ens-general-dev-3",
+      "port": 4587,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-022.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 152,
+    "fields": {
+      "name": "mysql-ens-general-prod-1",
+      "port": 4525,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-012.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 153,
+    "fields": {
+      "name": "mysql-ens-general-prod-3",
+      "port": 4688,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-013.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 154,
+    "fields": {
+      "name": "mysql-ens-general-prod-4",
+      "port": 4689,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-014.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 155,
+    "fields": {
+      "name": "mysql-ens-hive-prod-1",
+      "port": 4575,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-029.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 156,
+    "fields": {
+      "name": "mysql-ens-hive-prod-2",
+      "port": 4692,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-030.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 157,
+    "fields": {
+      "name": "mysql-ens-meta-prod-1",
+      "port": 4483,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-015.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 158,
+    "fields": {
+      "name": "mysql-ens-metazoa-prod-1",
+      "port": 4238,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-045.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 159,
+    "fields": {
+      "name": "mysql-ens-metazoa-prod-2",
+      "port": 4126,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-046.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 160,
+    "fields": {
+      "name": "mysql-ens-microbes-prod-1",
+      "port": 4239,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-051.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 161,
+    "fields": {
+      "name": "mysql-ens-microbes-prod-2",
+      "port": 4346,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-052.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 162,
+    "fields": {
+      "name": "mysql-ens-microbes-prod-3",
+      "port": 4207,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-053.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 163,
+    "fields": {
+      "name": "mysql-ens-mirror-1",
+      "port": 4240,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-023.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 164,
+    "fields": {
+      "name": "mysql-ens-mirror-2",
+      "port": 4603,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-024.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 165,
+    "fields": {
+      "name": "mysql-ens-mirror-3",
+      "port": 4275,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-025.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 166,
+    "fields": {
+      "name": "mysql-ens-mirror-4",
+      "port": 4495,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-026.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 167,
+    "fields": {
+      "name": "mysql-ens-mirror-mart-1",
+      "port": 4241,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-028.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 168,
+    "fields": {
+      "name": "mysql-ens-plants-prod-1",
+      "port": 4243,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-054.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 169,
+    "fields": {
+      "name": "mysql-ens-plants-prod-2",
+      "port": 4208,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-055.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 170,
+    "fields": {
+      "name": "mysql-ens-reg-prod-1",
+      "port": 4526,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-063.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 171,
+    "fields": {
+      "name": "mysql-ens-reg-prod-2",
+      "port": 4545,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-064.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 172,
+    "fields": {
+      "name": "mysql-ens-reg-prod-3",
+      "port": 4611,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-065.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 173,
+    "fields": {
+      "name": "mysql-ens-reg-prod-4",
+      "port": 4612,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-066.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 174,
+    "fields": {
+      "name": "mysql-ens-search-nv-prod",
+      "port": 4637,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-031.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 175,
+    "fields": {
+      "name": "mysql-ens-search-vert-prod",
+      "port": 4636,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-032.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 176,
+    "fields": {
+      "name": "mysql-ens-sta-1",
+      "port": 4519,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-004.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 177,
+    "fields": {
+      "name": "mysql-ens-sta-2",
+      "port": 4520,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-005.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 178,
+    "fields": {
+      "name": "mysql-ens-sta-3",
+      "port": 4160,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-006.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 179,
+    "fields": {
+      "name": "mysql-ens-sta-4",
+      "port": 4494,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-007.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 180,
+    "fields": {
+      "name": "mysql-ens-tark-dev-1",
+      "port": 4503,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-084.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 181,
+    "fields": {
+      "name": "mysql-ens-test-1",
+      "port": 4508,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-033.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 182,
+    "fields": {
+      "name": "mysql-ens-test-2",
+      "port": 4509,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-vm-090.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 183,
+    "fields": {
+      "name": "mysql-ens-var-prod-1",
+      "port": 4449,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-067.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 184,
+    "fields": {
+      "name": "mysql-ens-var-prod-2",
+      "port": 4521,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-068.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 185,
+    "fields": {
+      "name": "mysql-ens-var-prod-3",
+      "port": 4606,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-069.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 186,
+    "fields": {
+      "name": "mysql-ens-var-prod-4",
+      "port": 4694,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-069.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 187,
+    "fields": {
+      "name": "mysql-ens-vertannot-staging",
+      "port": 4573,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-044.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 191,
+    "fields": {
+      "name": "mysql-gti-xref-prod",
+      "port": 4481,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-085.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 193,
+    "fields": {
+      "name": "mysql-treefam-public",
+      "port": 4418,
+      "mysql_user": "treefam_ro",
+      "virtual_machine": "mysql-vm-008.ebi.ac.uk",
+      "mysqld_file_owner": "sysmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 194,
+    "fields": {
+      "name": "mysql-treefam-rel",
+      "port": 4402,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-vm-080.ebi.ac.uk",
+      "mysqld_file_owner": "sysmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 196,
+    "fields": {
+      "name": "fb1-mysql-ens-grch37-pub",
+      "port": 3337,
+      "mysql_user": "anonymous",
+      "virtual_machine": "mysql-fbvm7-007.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 197,
+    "fields": {
+      "name": "ensembldb.ensembl.org",
+      "port": 4306,
+      "mysql_user": "anonymous",
+      "virtual_machine": null,
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 198,
+    "fields": {
+      "name": "martdb.ensembl.org",
+      "port": 5316,
+      "mysql_user": "anonymous",
+      "virtual_machine": null,
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 199,
+    "fields": {
+      "name": "martdb.ensembl.org",
+      "port": 3306,
+      "mysql_user": "anonymous",
+      "virtual_machine": null,
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 200,
+    "fields": {
+      "name": "fb1-mysql-ens-grch37mart-web-2",
+      "port": 4670,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm-056.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 201,
+    "fields": {
+      "name": "hh-mysql-ens-grch37mart-web-2",
+      "port": 4670,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm-015.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 202,
+    "fields": {
+      "name": "mysql-eg-publicsql-hx",
+      "port": 4157,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm-053.ebi.ac.uk",
+      "mysqld_file_owner": "sysmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 203,
+    "fields": {
+      "name": "fb1-mysql-ens-species-web-2",
+      "port": 4553,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-fbvm7-030.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 204,
+    "fields": {
+      "name": "mysql-ens-cov19-web-1-hh",
+      "port": 4674,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm-018.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 205,
+    "fields": {
+      "name": "mysql-ens-cov19-web-1-hx",
+      "port": 4674,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm-061.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 206,
+    "fields": {
+      "name": "mysql-ens-rr-web-1-hh",
+      "port": 4673,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm-016.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 207,
+    "fields": {
+      "name": "mysql-ens-rr-web-2-hh",
+      "port": 4673,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm-017.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 208,
+    "fields": {
+      "name": "mysql-ens-rr-web-1-hx",
+      "port": 4673,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm-059.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 209,
+    "fields": {
+      "name": "mysql-ens-rr-web-2-hx",
+      "port": 4673,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm-060.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 210,
+    "fields": {
+      "name": "mysql-ens-sta-5",
+      "port": 4684,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-008.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 212,
+    "fields": {
+      "name": "mysql-ens-web-dev-01",
+      "port": 4536,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm7-019.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 214,
+    "fields": {
+      "name": "mysql-eg-web-master",
+      "port": 4620,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm7-041.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 215,
+    "fields": {
+      "name": "hh-mysql-ens-grch37mart-web",
+      "port": 4560,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm7-035.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 216,
+    "fields": {
+      "name": "fb1-mysql-ens-grch37mart-web",
+      "port": 4561,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-fbvm7-034.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 217,
+    "fields": {
+      "name": "hh-mysql-ens-grch37-web",
+      "port": 4558,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm7-034.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 218,
+    "fields": {
+      "name": "mysql-ens-archive-grch37-hh",
+      "port": 4676,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm-019.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 219,
+    "fields": {
+      "name": "mysql-ens-archive-mart-grch37-hh",
+      "port": 4677,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm-020.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 220,
+    "fields": {
+      "name": "mysql-ens-web-grch37-master",
+      "port": 4577,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm7-041.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 221,
+    "fields": {
+      "name": "mysql-ens-web-master",
+      "port": 4574,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm7-041.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 223,
+    "fields": {
+      "name": "mysql-ens-havana-prod-1",
+      "port": 4581,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-042.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 224,
+    "fields": {
+      "name": "mysql-ens-havana-prod-2",
+      "port": 4682,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-043.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 225,
+    "fields": {
+      "name": "mysql-ens-sta-1-b",
+      "port": 4685,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-009.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 226,
+    "fields": {
+      "name": "mysql-ens-sta-3-b",
+      "port": 4686,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-010.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 227,
+    "fields": {
+      "name": "mysql-ens-sta-4-b",
+      "port": 4687,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-011.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 228,
+    "fields": {
+      "name": "mysql-dba-test",
+      "port": 4899,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-vm-048.ebi.ac.uk",
+      "mysqld_file_owner": "sysmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 229,
+    "fields": {
+      "name": "hh-mysql-ens-web-tools-1",
+      "port": 4548,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm7-028.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 230,
+    "fields": {
+      "name": "mysql-ens-mirror-5",
+      "port": 4692,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-027.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 231,
+    "fields": {
+      "name": "mysql-eg-vectorbase-dev",
+      "port": 4693,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-048.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 232,
+    "fields": {
+      "name": "mysql-eg-vectorbase-prod",
+      "port": 4440,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-049.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 233,
+    "fields": {
+      "name": "hh-mysql-ens-sql5-pub",
+      "port": 5306,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm7-025.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 234,
+    "fields": {
+      "name": "fb1-mysql-ens-sql5-pub",
+      "port": 5306,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-fbvm7-025.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 235,
+    "fields": {
+      "name": "fb1-mysql-ens-mart5-pub",
+      "port": 5316,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-fbvm7-005.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 236,
+    "fields": {
+      "name": "hh-mysql-ens-mart5-pub",
+      "port": 5316,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm7-005.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 238,
+    "fields": {
+      "name": "hh-mysql-ens-grch37-pub",
+      "port": 3337,
+      "mysql_user": "anonymous",
+      "virtual_machine": "mysql-hhvm7-007.ebi.ac.uk",
+      "mysqld_file_owner": "ensmysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 239,
+    "fields": {
+      "name": "mysql-tark-hx-prod",
+      "port": 4650,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hxvm-033.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 240,
+    "fields": {
+      "name": "mysql-tark-hh-prod",
+      "port": 4650,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hhvm-009.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 241,
+    "fields": {
+      "name": "mysql-ens-sta-6",
+      "port": 4695,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-091.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 243,
+    "fields": {
+      "name": "mysql-eg-vectorbase-archive",
+      "port": 4367,
+      "mysql_user": "ensro",
+      "virtual_machine": "mysql-hlvm-047.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 201,
+    "fields": {
+      "host_id": 131,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 202,
+    "fields": {
+      "host_id": 132,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 203,
+    "fields": {
+      "host_id": 133,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 204,
+    "fields": {
+      "host_id": 134,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 205,
+    "fields": {
+      "host_id": 135,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 206,
+    "fields": {
+      "host_id": 136,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 207,
+    "fields": {
+      "host_id": 137,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 208,
+    "fields": {
+      "host_id": 138,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 209,
+    "fields": {
+      "host_id": 139,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 210,
+    "fields": {
+      "host_id": 140,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 211,
+    "fields": {
+      "host_id": 141,
+      "group_name": "Applications"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 212,
+    "fields": {
+      "host_id": 141,
+      "group_name": "Infrastructure"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 213,
+    "fields": {
+      "host_id": 142,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 214,
+    "fields": {
+      "host_id": 143,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 215,
+    "fields": {
+      "host_id": 144,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 216,
+    "fields": {
+      "host_id": 145,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 217,
+    "fields": {
+      "host_id": 146,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 218,
+    "fields": {
+      "host_id": 147,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 219,
+    "fields": {
+      "host_id": 148,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 220,
+    "fields": {
+      "host_id": 152,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 221,
+    "fields": {
+      "host_id": 153,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 222,
+    "fields": {
+      "host_id": 154,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 223,
+    "fields": {
+      "host_id": 157,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 224,
+    "fields": {
+      "host_id": 158,
+      "group_name": "Metazoa"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 225,
+    "fields": {
+      "host_id": 159,
+      "group_name": "Metazoa"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 226,
+    "fields": {
+      "host_id": 160,
+      "group_name": "Microbes"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 227,
+    "fields": {
+      "host_id": 161,
+      "group_name": "Microbes"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 228,
+    "fields": {
+      "host_id": 162,
+      "group_name": "Microbes"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 229,
+    "fields": {
+      "host_id": 163,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 230,
+    "fields": {
+      "host_id": 164,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 231,
+    "fields": {
+      "host_id": 165,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 232,
+    "fields": {
+      "host_id": 166,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 233,
+    "fields": {
+      "host_id": 167,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 234,
+    "fields": {
+      "host_id": 168,
+      "group_name": "Plants"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 235,
+    "fields": {
+      "host_id": 169,
+      "group_name": "Plants"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 236,
+    "fields": {
+      "host_id": 170,
+      "group_name": "Regulation"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 237,
+    "fields": {
+      "host_id": 171,
+      "group_name": "Regulation"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 238,
+    "fields": {
+      "host_id": 172,
+      "group_name": "Regulation"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 239,
+    "fields": {
+      "host_id": 173,
+      "group_name": "Regulation"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 240,
+    "fields": {
+      "host_id": 174,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 241,
+    "fields": {
+      "host_id": 175,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 242,
+    "fields": {
+      "host_id": 176,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 243,
+    "fields": {
+      "host_id": 177,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 244,
+    "fields": {
+      "host_id": 178,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 245,
+    "fields": {
+      "host_id": 179,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 246,
+    "fields": {
+      "host_id": 180,
+      "group_name": "Infrastructure"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 247,
+    "fields": {
+      "host_id": 183,
+      "group_name": "Variation"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 248,
+    "fields": {
+      "host_id": 184,
+      "group_name": "Variation"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 249,
+    "fields": {
+      "host_id": 185,
+      "group_name": "Variation"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 250,
+    "fields": {
+      "host_id": 186,
+      "group_name": "Variation"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 251,
+    "fields": {
+      "host_id": 187,
+      "group_name": "Compara"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 252,
+    "fields": {
+      "host_id": 187,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 253,
+    "fields": {
+      "host_id": 209,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 254,
+    "fields": {
+      "host_id": 208,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 255,
+    "fields": {
+      "host_id": 207,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 256,
+    "fields": {
+      "host_id": 206,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 257,
+    "fields": {
+      "host_id": 205,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 258,
+    "fields": {
+      "host_id": 204,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 259,
+    "fields": {
+      "host_id": 203,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 260,
+    "fields": {
+      "host_id": 201,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 261,
+    "fields": {
+      "host_id": 200,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 262,
+    "fields": {
+      "host_id": 210,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 263,
+    "fields": {
+      "host_id": 205,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 264,
+    "fields": {
+      "host_id": 204,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 269,
+    "fields": {
+      "host_id": 128,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 270,
+    "fields": {
+      "host_id": 208,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 271,
+    "fields": {
+      "host_id": 209,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 272,
+    "fields": {
+      "host_id": 207,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 273,
+    "fields": {
+      "host_id": 206,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 274,
+    "fields": {
+      "host_id": 214,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 275,
+    "fields": {
+      "host_id": 215,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 276,
+    "fields": {
+      "host_id": 216,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 277,
+    "fields": {
+      "host_id": 221,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 278,
+    "fields": {
+      "host_id": 221,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 279,
+    "fields": {
+      "host_id": 220,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 280,
+    "fields": {
+      "host_id": 220,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 281,
+    "fields": {
+      "host_id": 218,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 282,
+    "fields": {
+      "host_id": 218,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 283,
+    "fields": {
+      "host_id": 224,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 284,
+    "fields": {
+      "host_id": 223,
+      "group_name": "Genebuild"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 285,
+    "fields": {
+      "host_id": 225,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 286,
+    "fields": {
+      "host_id": 226,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 287,
+    "fields": {
+      "host_id": 227,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 288,
+    "fields": {
+      "host_id": 183,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 289,
+    "fields": {
+      "host_id": 186,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 290,
+    "fields": {
+      "host_id": 185,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 291,
+    "fields": {
+      "host_id": 184,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 292,
+    "fields": {
+      "host_id": 224,
+      "group_name": "Gencode"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 293,
+    "fields": {
+      "host_id": 223,
+      "group_name": "Gencode"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 294,
+    "fields": {
+      "host_id": 223,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 295,
+    "fields": {
+      "host_id": 214,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 296,
+    "fields": {
+      "host_id": 232,
+      "group_name": "VectorBase"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 297,
+    "fields": {
+      "host_id": 232,
+      "group_name": "Metazoa"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 298,
+    "fields": {
+      "host_id": 231,
+      "group_name": "Metazoa"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 299,
+    "fields": {
+      "host_id": 231,
+      "group_name": "VectorBase"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 300,
+    "fields": {
+      "host_id": 230,
+      "group_name": "Production"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 301,
+    "fields": {
+      "host_id": 229,
+      "group_name": "Web"
+    }
+  },
+  {
+    "model": "ensembl_dbcopy.hostgroup",
+    "pk": 302,
+    "fields": {
+      "host_id": 187,
+      "group_name": "Production"
+    }
+  }
+]

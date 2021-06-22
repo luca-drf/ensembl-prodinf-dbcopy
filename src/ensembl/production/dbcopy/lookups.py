@@ -14,7 +14,6 @@ import logging
 from dal import autocomplete
 from django.core.exceptions import ObjectDoesNotExist
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
-
 from .models import Host, Dbs2Exclude
 from sqlalchemy.exc import DBAPIError
 
@@ -37,6 +36,7 @@ get_excluded_schemas = make_excluded_schemas()
 
 class SrcHostLookup(autocomplete.Select2QuerySetView):
     model = Host
+    paginate_by = 10
 
     def get_queryset(self):
         return Host.objects.qs_src_host(self.q or None)
@@ -50,6 +50,7 @@ class SrcHostLookup(autocomplete.Select2QuerySetView):
 
 class TgtHostLookup(autocomplete.Select2QuerySetView):
     model = Host
+    paginate_by = 10
 
     def get_queryset(self):
         return Host.objects.qs_tgt_host_for_user(self.q or None, self.request.user)
