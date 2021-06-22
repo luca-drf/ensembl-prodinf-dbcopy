@@ -322,7 +322,6 @@ class RequestJob(models.Model):
         """
         if not self.email_list and self.username:
             self.email_list = ','.join([user + "@ebi.ac.uk" for user in self.username.split(',')])
-            print("Email list set automatically")
         self.full_clean()
         super().save(force_insert, force_update, using, update_fields)
 
