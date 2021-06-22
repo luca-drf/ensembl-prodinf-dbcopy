@@ -29,7 +29,7 @@ class RequestJobTest(APITestCase):
     fixtures = ['ensembl_dbcopy']
 
     # Test requestjob endpoint
-    def testRequestJob(self):
+    def testCreateRequestJob(self):
         # Check get all
         response = self.client.get(reverse('dbcopy_api:requestjob-list'))
 
@@ -57,6 +57,25 @@ class RequestJobTest(APITestCase):
         self.assertEqual('blank', response.data['src_host'][0].code)
         self.assertEqual('required', response.data['user'][0].code)
 
+        response = self.client.post(reverse('dbcopy_api:requestjob-list'),
+                                    {'src_host': 'mysql-ens-sta-1:4519', 'src_incl_db': 'homo_sapiens_core_99_38',
+                                     'tgt_host': 'mysql-ens-general-dev-1:4484', 'user': 'testuser'})
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        las_rq_job = RequestJob.objects.all().order_by('-request_date').first()
+        self.assertEqual("testuser", las_rq_job.user.username)
+        # Test wrong user
+        response = self.client.post(reverse('dbcopy_api:requestjob-list'),
+                                    {'src_host': 'mysql-ens-sta-1:4519', 'src_incl_db': 'homo_sapiens_core_99_38',
+                                     'tgt_host': 'mysql-ens-general-dev-1:4484', 'user': 'inexistantuser'})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual('invalid', response.data['user'][0].code)
+
+
+
+
+    def testGetRequestJob(self):
         # Test get
         response = self.client.get(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': '8f084180-07ae-11ea-ace0-9801a79243a5'}))
@@ -70,6 +89,8 @@ class RequestJobTest(APITestCase):
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': 'ddbdc15a-07af-11ea-bdcd-9801a79243a5'}))
         response_dict = json.loads(response.content.decode('utf-8'))
         self.assertEqual(len(response_dict['transfer_log']), 2)
+
+    def testPutRequestJob(self):
         # Test put
         response = self.client.put(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': '8f084180-07ae-11ea-ace0-9801a79243a5'}),
@@ -89,6 +110,8 @@ class RequestJobTest(APITestCase):
         # jab has actually be deleted from DB
         self.assertEqual(0, job)
         # Test delete non existant
+
+    def testDeleteRequestJob(self):
         response = self.client.delete(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': '673f3b10-09e6-11ea-9206-9801a79243a5'}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -98,6 +121,7 @@ class RequestJobTest(APITestCase):
         response = self.client.delete(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': 'ddbdc15a-07af-11ea-bdcd-9801a79243a5'}))
         self.assertEqual(response.status_code, status.HTTP_406_NOT_ACCEPTABLE)
+        # TODO Add successful delete
 
     # Test Source host endpoint
     def testSourceHost(self):

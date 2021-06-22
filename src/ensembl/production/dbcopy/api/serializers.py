@@ -24,11 +24,11 @@ class BaseUserTimestampSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True, source='user')
 
     def validate(self, data):
-        if "user" in data:
+        if "username" in data:
             try:
-                User.objects.get(username=data.pop('username', ''))
+                User.objects.get(username=data['username'])
             except ObjectDoesNotExist:
-                exc = APIException(code='error', detail="User not found")
+                exc = APIException(code='invalid', detail={"user": ["Unknown user " + data['username']]})
                 # hack to update status code. :-(
                 exc.status_code = status.HTTP_400_BAD_REQUEST
                 raise exc
@@ -81,10 +81,6 @@ class RequestJobListSerializer(serializers.HyperlinkedModelSerializer):
         }
 
     user = serializers.CharField(required=True, source='username')
-
-    def create(self, validated_data):
-        print("in create")
-        return super().create(validated_data)
 
 
 class RequestJobDetailSerializer(BaseUserTimestampSerializer):
