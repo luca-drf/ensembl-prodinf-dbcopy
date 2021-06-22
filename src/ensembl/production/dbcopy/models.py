@@ -145,19 +145,20 @@ class RequestJob(models.Model):
         return self.nb_transfers - self.running_transfers
 
     @property
+    def progress(self):
+        if self.nb_transfers > 0:
+            return format((self.done_transfers / self.nb_transfers) * 100, ".1f")
+        return 0.0
+
+    @property
     def detailed_status(self):
         total_tables = self.nb_transfers
         # .count()
         # table_copied = self.table_copied
-        progress = 0.0
         status_msg = 'Submitted'
         if self.status == 'Processing Requests' or self.status == 'Creating Requests':
             status_msg = 'Scheduled'
-        # if table_copied and total_tables:
-        # progress = format((table_copied / total_tables) * 100, ".1f")
-        if self.nb_transfers > 0:
-            progress = format((self.done_transfers / self.nb_transfers) * 100, ".1f")
-        if progress == 100.0 and self.status == 'Transfer Ended':
+        if self.progress == 100.0 and self.status == 'Transfer Ended':
             status_msg = 'Complete'
         elif total_tables > 0:
             if self.status:
@@ -169,7 +170,7 @@ class RequestJob(models.Model):
                 # 'table_copied': table_copied,
                 'table_copied': self.done_transfers,
                 'total_tables': total_tables,
-                'progress': progress}
+                'progress': self.progress}
 
     #    @property
     #    def table_copied(self):
@@ -326,14 +327,14 @@ class RequestJob(models.Model):
         self.full_clean()
         super().save(force_insert, force_update, using, update_fields)
 
+    @property
     def completion(self):
-        progress = self.detailed_status['progress']
         return format_html(
             '''
             <progress value="{0}" max="100"></progress>
             <span style="font-weight:bold">{0}%</span>
             ''',
-            progress
+            self.progress
         )
 
 
