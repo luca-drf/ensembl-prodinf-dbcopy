@@ -149,13 +149,14 @@ class RequestJob(models.Model):
         total_tables = self.nb_transfers
         # .count()
         # table_copied = self.table_copied
-        progress = 0
+        progress = 0.0
         status_msg = 'Submitted'
         if self.status == 'Processing Requests' or self.status == 'Creating Requests':
             status_msg = 'Scheduled'
         # if table_copied and total_tables:
         # progress = format((table_copied / total_tables) * 100, ".1f")
-        progress = format((self.done_transfers / self.nb_transfers) * 100, ".1f")
+        if self.nb_transfers > 0:
+            progress = format((self.done_transfers / self.nb_transfers) * 100, ".1f")
         if progress == 100.0 and self.status == 'Transfer Ended':
             status_msg = 'Complete'
         elif total_tables > 0:
