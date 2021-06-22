@@ -53,9 +53,8 @@ class DebugLog(models.Model):
 class RequestJobManager(models.Manager):
 
     def get_queryset(self):
-        qs = super().get_queryset().annotate(nb_transfers=Count('transfer_logs')).annotate(
+        return super().get_queryset().annotate(nb_transfers=Count('transfer_logs')).annotate(
             running_transfers=Count('transfer_logs', filter=Q(end_date__isnull=True)))
-        return qs
 
 
 class RequestJob(models.Model):

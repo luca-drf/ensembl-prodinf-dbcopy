@@ -92,8 +92,8 @@ class RequestJobAdmin(admin.ModelAdmin):
     list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'username',
                     'request_date', 'completion', 'overall_status')
     list_per_page = 15
-    search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'username', 'request_date')
-    list_filter = (DBCopyUserFilter, OverallStatusFilter, 'src_host', 'tgt_host')
+    search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host')  # , 'username', 'request_date')
+    list_filter = (DBCopyUserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
     fields = ['overall_status', 'src_host', 'tgt_host', 'email_list', 'username',
               'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name']
