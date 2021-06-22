@@ -100,8 +100,7 @@ class RequestJob(models.Model):
     nb_transfers = 0
 
     def __str__(self):
-        tgt_hosts = self.tgt_host.split(',')
-        return "%s[%s]:%s -> %s" % (self.username, self.job_id, self.src_host, tgt_hosts[0])
+        return "[%s]:%s" % (self.job_id, self.src_host)
 
     @property
     def user(self):

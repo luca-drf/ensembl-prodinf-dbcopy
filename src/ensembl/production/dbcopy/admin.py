@@ -109,14 +109,16 @@ class RequestJobAdmin(admin.ModelAdmin):
     def has_module_permission(self, request):
         return request.user.is_staff
 
+    def has_add_permission(self, request):
+        return request.user.is_staff
+
     def has_delete_permission(self, request, obj=None):
         # Allow delete only for superusers and obj owners when status avail deletion.
-        return request.user.is_superuser or \
-               (obj is not None and obj.overall_status in ('Submitted', 'Failed')
-                and request.user.username == obj.username)
+        return request.user.is_superuser or (
+                    obj is not None and self._is_deletable(obj) and request.user.username == obj.username)
 
     def get_fields(self, request, obj=None):
-        if obj is None and 'overall_status' in self.fields:
+        if (obj is None or obj.pk is None) and 'overall_status' in self.fields:
             self.fields.remove('overall_status')
         return super().get_fields(request, obj)
 
@@ -170,22 +172,23 @@ class RequestJobAdmin(admin.ModelAdmin):
     resubmit_jobs.short_description = 'Resubmit Jobs'
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        context = extra_context or {}
-        search_query = request.GET.get('search_box')
-        if self.get_object(request, object_id):
-            if search_query:
-                transfers_logs = self.get_object(request, object_id).transfer_logs.filter(
-                    Q(table_name__contains=search_query) | Q(table_schema__contains=search_query) | Q(
-                        tgt_host__contains=search_query) | Q(renamed_table_schema__contains=search_query))
-            else:
-                transfers_logs = self.get_object(request, object_id).transfer_logs
-            if transfers_logs.filter(end_date__isnull=True):
-                context["running_copy"] = transfers_logs.filter(end_date__isnull=True).order_by(
-                    F('end_date').desc(nulls_first=True)).earliest('auto_id')
+        extra_context = extra_context or {}
         if 'completion' not in self.fields:
             index = 1 if 'overall_status' in self.fields else 0
             self.fields.insert(index, 'completion')
-        return super().change_view(request, object_id, form_url, context)
+        if not request.user.is_superuser:
+            extra_context['readonly'] = True
+        extra_context['show_save_as_new'] = False
+        extra_context['show_delete_link'] = request.user.is_superuser
+        extra_context['show_save'] = False
+        extra_context['show_save_and_add_another'] = False
+        extra_context['show_save_and_continue'] = False
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def add_view(self, request, form_url='', extra_context=None):
+        if 'completion' in self.fields:
+            self.fields.remove('completion')
+        return super().add_view(request, form_url, extra_context)
 
     def _is_deletable(self, obj):
         return obj.status not in ('Creating Requests', 'Processing Requests')

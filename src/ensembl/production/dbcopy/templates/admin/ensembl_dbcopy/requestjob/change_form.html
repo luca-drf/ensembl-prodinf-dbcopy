@@ -3,19 +3,19 @@
 {% block content %}
     {{ block.super }}
     <div id="blockingAlert" style="display: none">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show card" role="alert">
             <strong>Something is wrong with current parameters:</strong>
             <ul class="dbcopy-messagelist"></ul>
         </div>
     </div>
     <div id="dbnamesAlert" style="display: none">
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <div class="alert alert-warning alert-dismissible fade show card" role="alert">
         <strong>Warning! Database(s) would be overwritten with these parameters:</strong>
             <ul class="dbcopy-messagelist"></ul>
         </div>
     </div>
     <div id="dbtablesAlert" style="display: none">
-        <div  class="alert alert-warning alert-dismissible fade show" role="alert">
+        <div  class="alert alert-warning alert-dismissible fade show card" role="alert">
             <strong>Warning! Table(s) would be overwritten with these parameters:</strong>
             <ul class="dbcopy-messagelist"></ul>
         </div>

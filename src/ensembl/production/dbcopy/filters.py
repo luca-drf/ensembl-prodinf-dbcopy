@@ -106,11 +106,9 @@ def get_filter_match(values):
     exact_match = []
     named_filters = []
     for v in values:
-        if '%' in v:
-            # Convert MySQL pattern search to regexp
-            named_filters.append(v.replace('%', '.*'))
-        else:
-            exact_match.append(v)
+        if v != '':
+            named_filters.append(v.replace('%', '.*')) if '%' in v else exact_match.append(v)
+
     logger.debug("from [%s]", values)
     logger.debug("filter %s", named_filters)
     logger.debug("exact %s", exact_match)

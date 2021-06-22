@@ -28,6 +28,7 @@ def make_excluded_schemas():
         if not schemas:
             schemas.update(Dbs2Exclude.objects.values_list('table_schema', flat=True))
         return schemas
+
     return closure
 
 
@@ -86,9 +87,10 @@ class DbLookup(autocomplete.Select2ListView):
 class TableLookup(autocomplete.Select2ListView):
     def get_list(self):
         result = []
-        if len(self.forwarded.get('src_incl_db')) > 1 or  '%' in self.forwarded.get('src_incl_db')[0]:
+        included_dbs = self.forwarded.get('src_incl_db', [])
+        if len(included_dbs) > 1 or any('%' in incl_db for incl_db in included_dbs):
             return ['Cannot filter on table name on multiple/patterned dbs!!']
-        if self.q and len(self.q) >= 2:
+        if len(included_dbs) > 0 and self.q and len(self.q) >= 2:
             try:
                 host = self.forwarded.get('db_host').split(':')[0]
                 port = self.forwarded.get('db_host').split(':')[1]
@@ -103,5 +105,3 @@ class TableLookup(autocomplete.Select2ListView):
             except DBAPIError as e:
                 logger.error("TableLookup query error: %s ", str(e.orig))
         return result
-
-

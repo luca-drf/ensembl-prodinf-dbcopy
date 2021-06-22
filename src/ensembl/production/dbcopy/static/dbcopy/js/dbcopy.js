@@ -26,20 +26,14 @@
         tds.has("div.Submitted").addClass('Submitted');
         tds.has("div.Scheduled").addClass('Scheduled');
         tds.has("div.Failed").addClass('Failed');
-        let srcHostElem = $("#id_src_host");
-        let tgtHostElem = $("#id_tgt_host");
 
-        /*if (srcHostElem.val() && tgtHostElem.val()) {
-            SrcHostDetails = hostStringToDetails(srcHostElem.val());
-            TgtHostsDetails = getHostsDetails(tgtHostElem.val());
-            updateAlerts();
-        }*/
        // $("#id_src_host").dispatchEvent(change);
-        $("#requestjob_form").find(':input').each(function(){
+        $("#requestjob_form").find(':input[type!=submit]').each(function(){
             $(this).on('change', function(){
                 checkHostsTargets();
             });
         });
+        /* TODO add last validation before submitting */
         $('#requestjob_form .nav-tabs a[href="#transferlogs-tab"]').on('shown.bs.tab', function(e) {
             $('#transferlogs-tab .paginator a.page-link').each(function (index) {
                 $(this).attr('href', $(this).attr('href') + "#transferlogs-tab");
@@ -70,13 +64,15 @@
     }
 
     function displayAlert(object, error=false){
-        $(object.html()).insertBefore($('div.submit-row')).attr('id', object.attr('id') + "Box");
+        $(object.html()).insertBefore($('#requestjob_form')).attr('id', object.attr('id') + "Box");
         if (error) {
-            $('div.submit-row').find(':input').each(function(){
+            $('#requestjob_form').find(':input[type=submit]').each(function(){
                 $(this).prop('disabled', true);
             });
         }
     }
+
+
 
     function checkHostsTargets() {
         var formData = $("#requestjob_form").serializeArray();
@@ -88,7 +84,7 @@
                 $('#dbnamesAlertBox').remove();
                 $('#dbtableAlertBox').remove();
                 $('#blockingAlertBox').remove();
-                $('div.submit-row').find(':input').each(function(){
+                $('#requestjob_form').find(':input[type=submit]').each(function(){
                     $(this).removeAttr('disabled');
                 });
             },
@@ -99,7 +95,6 @@
                 $('div.submit-row').find(':input').each(function(){
                     $(this).removeAttr('disabled');
                 });
-                console.log('error', Object.keys(xhr.responseJSON.dberrors).length);
                 if (Object.keys(xhr.responseJSON.dberrors).length > 0){
                     $('#blockingAlert div ul').html(mapMessages(xhr.responseJSON.dberrors, 'Host'));
                     displayAlert($('#blockingAlert'), true);
