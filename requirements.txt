@@ -4,5 +4,5 @@ djangorestframework~=3.12.2
 drf-nested-routers~=0.93.3
 drf-yasg~=1.20.0
 django-autocomplete-light~=3.8.2
-ensembl-prodinf-djcore@git+https://github.com/Ensembl/ensembl-prodinf-djcore.git@1.0#egg=ensembl-prodinf-djcore
+ensembl-prodinf-djcore@git+https://github.com/Ensembl/ensembl-prodinf-djcore.git@1.1#egg=ensembl-prodinf-djcore
 ensembl-prodinf-core@git+https://github.com/Ensembl/ensembl-prodinf-core.git@1.1#egg=ensembl-prodinf-core
