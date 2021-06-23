@@ -2,8 +2,22 @@
 {% load i18n admin_urls static admin_modify %}
 {% block content %}
     {{ block.super }}
-    <script type="text/html" id="bootstrapAlert" class="errorlist" xmlns="http://www.w3.org/1999/html">
-        <p class="errornote alert alert-warning alert-dismissible fade show" role="alert">
-        </p>
-    </script>
+    <div id="blockingAlert" style="display: none">
+        <div class="alert alert-danger alert-dismissible fade show card" role="alert">
+            <strong>Something is wrong with current parameters:</strong>
+            <ul class="dbcopy-messagelist"></ul>
+        </div>
+    </div>
+    <div id="dbnamesAlert" style="display: none">
+        <div class="alert alert-warning alert-dismissible fade show card" role="alert">
+        <strong>Warning! Database(s) would be overwritten with these parameters:</strong>
+            <ul class="dbcopy-messagelist"></ul>
+        </div>
+    </div>
+    <div id="dbtablesAlert" style="display: none">
+        <div  class="alert alert-warning alert-dismissible fade show card" role="alert">
+            <strong>Warning! Table(s) would be overwritten with these parameters:</strong>
+            <ul class="dbcopy-messagelist"></ul>
+        </div>
+    </div>
 {% endblock %}

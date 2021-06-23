@@ -1,51 +1,14 @@
-/* .tablekey {
-  background-color: lightgray;
-  text-align : right;
-  font-weight: bold;
-  padding: 5px 5px 5px 5px;
-  height: 100%;
-}
-.tablevalue {
-  text-align : left;
-  padding: 5px 5px 5px 5px;
-  border-radius: 4px;
-}
 
-.table{
-  table-layout:fixed;
-}
-.table-break-all, .field-src_incl_db, .field-src_skip_db, .field-tgt_host,  .field-tgt_db_name
-{
-  word-break: break-all;
-}
-
-.col-sm-2.tablekey {
-  background-color: lightgray;
-}
-.field-src_incl_db, .field-src_skip_db, .field-tgt_host, .field-tgt_db_name, .field-src_host
-{
-  max-width: available;
-}
-.row1, .row2 {
-  vertical-align: top;
-}
-.action-checkbox {
-  vertical-align: auto;
-}
-.tabular.inline-related .form-row {
-  display:table-row;
-}
-.tabular.inline-related .empty-form {
-  display: none;
-}*/
 /* Table lists */
 .tabular-pagination {
     padding-top: 2rem;
 }
-#result_list .field-src_incl_db, #result_list .field-src_skip_db, #result_list .field-tgt_host,
-#result_list .field-tgt_db_name, #result_list .field-src_host {
-    max-width: available;
+
+#result_list td.field-src_incl_db, #result_list td.field-src_skip_db, #result_list td.field-tgt_host,
+#result_list td.field-tgt_db_name, #result_list td.field-src_host {
+    max-width: 250px;
     overflow-wrap: anywhere;
+    word-break: break-all;
 }
 
 div#changelist-filter ul {
@@ -67,47 +30,48 @@ div#changelist-filter ul {
 }
 
 .Complete {
-    background-color: lightgreen;
-    background-clip:content-box;
+    background-color: lightgreen !important;
 }
 
+tr.Complete {
+    background-color: rgba(144, 238, 144, 0.5) !important;
+}
+
+
 .Incomplete {
-    background-color: lightblue;
-    background-clip:content-box;
+    background-color: skyblue;
+}
+
+tr.Incomplete {
+    background-color: rgba(135, 206, 235, 0.5) !important;
 }
 
 .Submitted, .Scheduled {
     background-color: lightblue;
-    background-clip:content-box;
+}
+
+tr.Submitted, tr.Scheduled {
+    background-color: rgba(173, 216, 230, 0.5) !important;
 }
 
 .Running {
     background-color: gold;
-    background-clip:content-box;
+}
+
+tr.Running {
+    background-color: rgba(255, 215, 0, 0.5) !important;
 }
 
 .Failed {
-    background-color: lightpink;
-    background-clip:content-box;
+    background-color: crimson;
 }
 
-.progress {
-    background-color: #bdd3fb;
-    border-radius: 0;
-    box-shadow: none;
-    height: 29px;
-    margin-bottom: 0;
-    overflow: hidden;
-    padding: 0 !important;
-    margin-top: 1px;
+tr.Failed {
+    background-color: rgba(220, 20, 60, 0.5) !important;
 }
 
-.progress-bar > .job-completed {
-    font-size: 1.0rem;
-    left: 8px;
-    position: absolute;
-    top: 3px;
-    white-space: nowrap;
+td.Complete, td.Incomplete, td.Running, td.Submitted, td.Scheduled. td.Failed {
+    background-clip: content-box;
 }
 
 /* DAL CSS */
@@ -121,4 +85,83 @@ div#changelist-filter ul {
 }
 
 .closelink {
+}
+
+/* Progress bars */
+progress[value] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px;
+}
+/* Lists */
+table#result_list progress[value] {
+    max-width: 100px;
+}
+
+progress[value]::-moz-progress-bar {
+    background: cornflowerblue;
+}
+
+progress::-webkit-progress-value {
+    background: cornflowerblue;
+}
+
+progress {
+    background: lightgrey;
+    color: cornflowerblue;
+}
+/* Details */
+#requestjob_form progress[value] {
+    width: 90%;
+}
+
+#requestjob_form div.field-overall_status div.overall_status {
+    min-width: 200px;
+}
+
+progress[value]::-webkit-progress-bar {
+    background-color: lightgrey;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+}
+
+/* Errors */
+ul.dbcopy-messagelist {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#dbnamesAlertBox ul, #dbtablesAlertBox ul, #blockingAlertBox ul {
+    margin-left: 1.5em;
+}
+#dbnamesAlertBox ul li ul li, #dbtablesAlertBox ul li ul li, #blockingAlertBox ul li ul li{
+    list-style: square;
+    background: unset;
+    padding-left: 1rem;
+}
+
+/* Bootstrap like alerts */
+.alert {
+    position: relative;
+    padding: .75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+}
+.alert-warning {
+    background-image: url('/static/admin/img/icon-alert.svg') 40px 14px no-repeat;
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+.alert-danger {
+    background-image: url('/static/admin/img/icon-no.svg') 40px 12px no-repeat;;
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice, .select2-results {
+    color: brown;
 }

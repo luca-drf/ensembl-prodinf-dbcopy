@@ -1,0 +1,23 @@
+[
+  {
+    "model": "dbcopy_test.Assembly",
+    "pk": 1,
+    "fields": {
+
+    }
+  },
+  {
+    "model": "dbcopy_test.AssemblyException",
+    "pk": 1,
+    "fields": {
+
+    }
+  },
+  {
+    "model": "dbcopy_test.CoordSystem",
+    "pk": 1,
+    "fields": {
+
+    }
+  }
+]

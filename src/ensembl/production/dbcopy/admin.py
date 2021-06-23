@@ -19,16 +19,16 @@ from ensembl.production.djcore.admin import SuperUserAdmin
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
 
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
-from ensembl.production.dbcopy.models import Host, RequestJob, Group, TargetHostGroup, TransferLog
+from ensembl.production.dbcopy.models import Host, RequestJob, HostGroup, TargetHostGroup, TransferLog
 
 
 class GroupInline(admin.TabularInline):
-    model = Group
+    model = HostGroup
     extra = 1
     form = GroupInlineForm
     fields = ('group_name',)
-    verbose_name = "Group restriction"
-    verbose_name_plural = "Group restrictions"
+    verbose_name = "HostGroup restriction"
+    verbose_name_plural = "HostGroup restrictions"
 
 
 @admin.register(TargetHostGroup)
@@ -69,7 +69,7 @@ class HostItemAdmin(admin.ModelAdmin, SuperUserAdmin):
 class TransferLogInline(TabularInlinePaginated):
     model = TransferLog
     template = "admin/ensembl_dbcopy/edit_inline/tabular_paginated.html"
-    per_page = 30
+    per_page = 15
     fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'table_status')
     readonly_fields = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'table_status')
     can_delete = False
@@ -89,46 +89,81 @@ class RequestJobAdmin(admin.ModelAdmin):
     actions = ['resubmit_jobs', ]
     inlines = (TransferLogInline,)
     form = RequestJobForm
-    list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'username',
-                    'request_date', 'overall_status')
-    search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'tgt_db_name', 'username',
-                     'start_date', 'end_date', 'request_date')
-    list_filter = (DBCopyUserFilter, OverallStatusFilter, 'src_host', 'tgt_host')
+    list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'username',
+                    'request_date', 'completion', 'overall_status')
+    list_per_page = 15
+    search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host')  # , 'username', 'request_date')
+    list_filter = (DBCopyUserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
     fields = ['overall_status', 'src_host', 'tgt_host', 'email_list', 'username',
               'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name']
     # TODO re-add when available 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
-    readonly_fields = ('overall_status', 'request_date', 'start_date', 'end_date')
+    readonly_fields = ('overall_status', 'request_date', 'start_date', 'end_date', 'completion')
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff
 
     def has_change_permission(self, request, obj=None):
-        return False
+        return request.user.is_staff
 
     def has_module_permission(self, request):
         return request.user.is_staff
 
+    def has_add_permission(self, request):
+        return request.user.is_staff
+
     def has_delete_permission(self, request, obj=None):
         # Allow delete only for superusers and obj owners when status avail deletion.
-        return request.user.is_superuser or \
-               (obj is not None and obj.overall_status in (
-               'Submitted', 'Failed') and request.user.username == obj.username)
+        return request.user.is_superuser or (
+                    obj is not None and self._is_deletable(obj) and request.user.username == obj.username)
+
+    def get_fields(self, request, obj=None):
+        if (obj is None or obj.pk is None) and 'overall_status' in self.fields:
+            self.fields.remove('overall_status')
+        return super().get_fields(request, obj)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)
-        if obj is None:
-            self.fields.remove('overall_status') if 'overall_status' in self.fields else None
-            pass
         form.user = request.user
-        form.username = request.user.username
-        form.email_list = request.user.email
         return form
 
+    def response_add(self, request, obj, post_url_continue=None):
+        return super().response_add(request, obj, post_url_continue)
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        initial['email_list'] = request.user.email
+        initial['username'] = request.user.username
+        if 'from_request_job' in request.GET:
+            obj = RequestJob.objects.get(pk=request.GET['from_request_job'])
+            initial['src_host'] = obj.src_host
+            initial['tgt_host'] = obj.tgt_host
+            initial['src_incl_db'] = obj.src_incl_db
+            initial['src_skip_db'] = obj.src_skip_db
+            initial['src_incl_tables'] = obj.src_incl_tables
+            initial['src_skip_tables'] = obj.src_skip_tables
+            initial['tgt_db_name'] = obj.tgt_db_name
+        return initial
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj is None:
+            return super().get_readonly_fields(request, obj)
+        else:
+            return self.fields
+
     def resubmit_jobs(self, request, queryset):
+        """
+        Bulk resubmit jobs as they were initially.
+        :return: None
+        # TODO add current user email to the list if not already present.#
+        """
         for query in queryset:
             new_job = RequestJob.objects.get(pk=query.pk)
             new_job.pk = None
             new_job.request_date = None
             new_job.start_date = None
             new_job.end_date = None
+            new_job.username = request.user.username
             new_job.status = None
             new_job.save()
             message = 'Job {} resubmitted [new job_id {}]'.format(query.pk, new_job.pk)
@@ -137,18 +172,23 @@ class RequestJobAdmin(admin.ModelAdmin):
     resubmit_jobs.short_description = 'Resubmit Jobs'
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        context = extra_context or {}
-        search_query = request.GET.get('search_box')
-        if search_query:
-            transfers_logs = self.get_object(request, object_id).transfer_logs.filter(
-                Q(table_name__contains=search_query) | Q(table_schema__contains=search_query) | Q(
-                    tgt_host__contains=search_query) | Q(renamed_table_schema__contains=search_query))
-        else:
-            transfers_logs = self.get_object(request, object_id).transfer_logs
-        if transfers_logs.filter(end_date__isnull=True):
-            context["running_copy"] = transfers_logs.filter(end_date__isnull=True).order_by(
-                F('end_date').desc(nulls_first=True)).earliest('auto_id')
-        return super().change_view(request, object_id, form_url, context)
+        extra_context = extra_context or {}
+        if 'completion' not in self.fields:
+            index = 1 if 'overall_status' in self.fields else 0
+            self.fields.insert(index, 'completion')
+        if not request.user.is_superuser:
+            extra_context['readonly'] = True
+        extra_context['show_save_as_new'] = False
+        extra_context['show_delete_link'] = request.user.is_superuser
+        extra_context['show_save'] = False
+        extra_context['show_save_and_add_another'] = False
+        extra_context['show_save_and_continue'] = False
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def add_view(self, request, form_url='', extra_context=None):
+        if 'completion' in self.fields:
+            self.fields.remove('completion')
+        return super().add_view(request, form_url, extra_context)
 
     def _is_deletable(self, obj):
         return obj.status not in ('Creating Requests', 'Processing Requests')

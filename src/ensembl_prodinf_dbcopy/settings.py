@@ -11,6 +11,7 @@
 #   limitations under the License.
 
 from pathlib import Path
+import sys
 
 DEBUG = True
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -32,7 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ensembl.production.dbcopy',
     'rest_framework',
-    'django_admin_inline_paginator',
+    'django_admin_inline_paginator'
 ]
 
 MIDDLEWARE = [
@@ -79,9 +80,22 @@ DATABASES = {
     }
 }
 
+if 'test' in sys.argv:
+    DATABASES.update({
+        'homo_sapiens': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'homo_sapiens',
+            'USER': 'ensembl',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': 3306,
+        }
+    })
+    INSTALLED_APPS += ['ensembl.production.dbcopy.tests']
+
 LANGUAGE_CODE = 'en-gb'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/London'
 
 USE_I18N = True
 USE_L10N = True
@@ -89,3 +103,34 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} - {process:d} ({thread:d}) - {module} --: {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} - {module} --: {message}',
+            'style': '{',
+        },
+    },
+    'loggers': {
+        'asyncio': {
+            'level': 'WARNING',
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose' if DEBUG else 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG' if DEBUG else 'WARNING',
+    }
+
+}

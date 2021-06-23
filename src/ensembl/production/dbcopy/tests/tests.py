@@ -13,7 +13,6 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.db import connections, connection
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -28,25 +27,50 @@ class RequestJobTest(APITestCase):
     fixtures = ['ensembl_dbcopy']
 
     # Test requestjob endpoint
-    def testRequestJob(self):
+    def testCreateRequestJob(self):
         # Check get all
         response = self.client.get(reverse('dbcopy_api:requestjob-list'))
-        print(response.data)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Test post
         response = self.client.post(reverse('dbcopy_api:requestjob-list'),
-                                    {'src_host': 'mysql-ens-sta-1', 'src_incl_db': 'homo_sapiens_core_99_38',
-                                     'tgt_host': 'mysql-ens-general-dev-1', 'user': 'testuser'})
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+                                    {'src_host': 'mysql-ens-sta-1:4519', 'src_incl_db': 'homo_sapiens_core_99_38',
+                                     'tgt_host': 'mysql-ens-general-dev-1:4484', 'user': 'testuser'})
 
-        # Test user email
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(response_dict['email_list'], 'testuser@ebi.ac.uk')
-        # Test bad post
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        las_rq_job = RequestJob.objects.all().order_by('-request_date').first()
+        self.assertEqual("mysql-ens-sta-1:4519", las_rq_job.src_host)
+        self.assertEqual("mysql-ens-general-dev-1:4484", las_rq_job.tgt_host)
+        # Test user email set default
+        self.assertEqual("testuser@ensembl.org", las_rq_job.email_list)
+        self.assertEqual("testuser", las_rq_job.user.username)
+        # Test bad post (no user and src_host)
         response = self.client.post(reverse('dbcopy_api:requestjob-list'),
                                     {'src_host': '', 'src_incl_db': 'homo_sapiens_core_99_38',
-                                     'tgt_host': 'mysql-ens-general-dev-1'})
+                                     'tgt_host': 'mysql-ens-general-dev-1:3306'})
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('src_host', response.data)
+        self.assertIn('user', response.data)
+        self.assertEqual('blank', response.data['src_host'][0].code)
+        self.assertEqual('required', response.data['user'][0].code)
+
+        response = self.client.post(reverse('dbcopy_api:requestjob-list'),
+                                    {'src_host': 'mysql-ens-sta-1:4519', 'src_incl_db': 'homo_sapiens_core_99_38',
+                                     'tgt_host': 'mysql-ens-general-dev-1:4484', 'user': 'testuser'})
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        las_rq_job = RequestJob.objects.all().order_by('-request_date').first()
+        self.assertEqual("testuser", las_rq_job.user.username)
+        # Test wrong user
+        response = self.client.post(reverse('dbcopy_api:requestjob-list'),
+                                    {'src_host': 'mysql-ens-sta-1:4519', 'src_incl_db': 'homo_sapiens_core_99_38',
+                                     'tgt_host': 'mysql-ens-general-dev-1:4484', 'user': 'inexistantuser'})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual('invalid', response.data['user'][0].code)
+
+    def testGetRequestJob(self):
         # Test get
         response = self.client.get(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': '8f084180-07ae-11ea-ace0-9801a79243a5'}))
@@ -60,11 +84,13 @@ class RequestJobTest(APITestCase):
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': 'ddbdc15a-07af-11ea-bdcd-9801a79243a5'}))
         response_dict = json.loads(response.content.decode('utf-8'))
         self.assertEqual(len(response_dict['transfer_log']), 2)
+
+    def testPutRequestJob(self):
         # Test put
         response = self.client.put(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': '8f084180-07ae-11ea-ace0-9801a79243a5'}),
-            {'src_host': 'mysql-ens-sta-1', 'src_incl_db': 'homo_sapiens_core_99_38',
-             'tgt_host': 'mysql-ens-general-dev-2', 'user': 'testuser'})
+            {'src_host': 'mysql-ens-sta-1:4519', 'src_incl_db': 'homo_sapiens_core_99_38',
+             'tgt_host': 'mysql-ens-general-dev-2:4586,mysql-ens-general-dev-1:4484,', 'user': 'testuser'})
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         # Test patch
         response = self.client.patch(
@@ -79,6 +105,8 @@ class RequestJobTest(APITestCase):
         # jab has actually be deleted from DB
         self.assertEqual(0, job)
         # Test delete non existant
+
+    def testDeleteRequestJob(self):
         response = self.client.delete(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': '673f3b10-09e6-11ea-9206-9801a79243a5'}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -88,6 +116,7 @@ class RequestJobTest(APITestCase):
         response = self.client.delete(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': 'ddbdc15a-07af-11ea-bdcd-9801a79243a5'}))
         self.assertEqual(response.status_code, status.HTTP_406_NOT_ACCEPTABLE)
+        # TODO Add successful delete
 
     # Test Source host endpoint
     def testSourceHost(self):
@@ -99,100 +128,111 @@ class RequestJobTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         # Test getting 2 mysql-ens-sta-2 servers
         response = self.client.get(reverse('dbcopy_api:srchost-list'), {'name': 'mysql-ens-sta'})
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response.data), 2)
         # Test getting mysql-ens-general-dev-1 server
         response = self.client.get(reverse('dbcopy_api:srchost-list'), {'name': 'mysql-ens-general'})
         response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response.data), 2)
 
     # Test Target host endpoint
     def testTargetHost(self):
         # Test get
+        logged = self.client.login(username='testuser', password='testgroup123')
+        self.assertTrue(logged)
         response = self.client.get(reverse('dbcopy_api:tgthost-detail', kwargs={'name': 'mysql-ens-sta-1'}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Test bad get
         response = self.client.get(reverse('dbcopy_api:tgthost-detail', kwargs={'name': 'mysql-ens-compara-2'}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         # Test getting 2 mysql-ens-sta servers with allowed user
-        User.objects.get(username='testuser')
-        self.client.login(username='testuser', password='testgroup123')
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-sta'})
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response.data), 2)
         # Test getting 2 mysql-ens-sta servers with non-allowed user
         User.objects.get(username='testuser2')
         self.client.login(username='testuser2', password='testgroup1234')
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-sta'})
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 1)
+        self.assertEqual(len(response.data), 1)
         # Test getting mysql-ens-general-dev-1 server
         response = self.client.get(reverse('dbcopy_api:tgthost-list'), {'name': 'mysql-ens-general'})
-        response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict), 2)
+        self.assertEqual(len(response.data), 2)
 
     def testRequestModelClean(self):
         from django.core.exceptions import ValidationError
         with self.assertRaises(ValidationError):
             # test db_name repeated on same target
-            job = RequestJob.objects.create(src_host="host1",
-                                            tgt_host="host4,host1",
-                                            src_incl_db="db1,db4",
-                                            tgt_db_name="db5,db1")
+            RequestJob.objects.create(src_host="host1:3306",
+                                      tgt_host="host4:3306,host1:3306",
+                                      src_incl_db="db1,db4",
+                                      tgt_db_name="db5,db1",
+                                      username='testuser')
         with self.assertRaises(ValidationError):
             # test target db name not set at all 9same target dn names
-            job = RequestJob.objects.create(src_host="host1",
-                                            tgt_host="host1,host3",
-                                            src_incl_db="db1")
+            RequestJob.objects.create(src_host="host1:3306",
+                                      tgt_host="host1:3306,host3:3306",
+                                      src_incl_db="db1",
+                                      username='testuser')
         with self.assertRaises(ValidationError):
             # test target host contains src host and all db selected
-            job = RequestJob.objects.create(src_host="host1",
-                                            tgt_host="host2,host1")
+            RequestJob.objects.create(src_host="host1:3306",
+                                      tgt_host="host2:3306,host1:3306",
+                                      username='testuser')
         # Test a normal job would pass.
-        job = RequestJob.objects.create(src_host="host2",
-                                        tgt_host="host4,host3",
+        job = RequestJob.objects.create(src_host="host2:3306",
+                                        tgt_host="host4:3306,host3:3306",
                                         src_incl_db="db1,db4",
-                                        tgt_db_name="db5,db1")
+                                        tgt_db_name="db5,db1",
+                                        username='testuser')
         self.assertIsNotNone(job)
 
         # test a job with same target but different db name would pass
-        job = RequestJob.objects.create(src_host="host2",
-                                        tgt_host="host2",
+        job = RequestJob.objects.create(src_host="host2:3306",
+                                        tgt_host="host2:3306",
                                         src_incl_db="db1",
-                                        tgt_db_name="db5")
+                                        tgt_db_name="db5",
+                                        username='testuser')
         self.assertIsNotNone(job)
 
 
+class LookupsTest(APITestCase):
+    fixtures = ('host_group',)
+
+    def testHostLookup(self):
+        response = self.client.get(reverse('ensembl_dbcopy:src-host-autocomplete'))
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+
+        self.client.login(username='testusergroup', password='testgroup123')
+        response = self.client.get(reverse('ensembl_dbcopy:src-host-autocomplete'))
+        # retrieve all
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 10)
+        # filter query
+        response = self.client.get(reverse('ensembl_dbcopy:src-host-autocomplete') + '?q=sta-3')
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 2)
+
+        self.client.login(username='testusergroup2', password='testgroup1234')
+        response = self.client.get(reverse('ensembl_dbcopy:tgt-host-autocomplete'))
+        # retrieve all
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 10)
+        # filter query permission should not allow sta as target
+        response = self.client.get(reverse('ensembl_dbcopy:tgt-host-autocomplete') + '?q=sta-3')
+        data = json.loads(response.content)
+        self.assertEqual(len(data['results']), 0)
+
+
 class DBIntrospectTest(APITestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        with connection.cursor() as cursor:
-            cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
-            cursor.execute("CREATE DATABASE `test_homo_sapiens`")
-            cursor.execute("CREATE TABLE test_homo_sapiens.`assembly` (`id` INT(10))")
-            cursor.execute("CREATE TABLE test_homo_sapiens.`assembly_exception` (`id` INT(10))")
-            cursor.execute("CREATE TABLE test_homo_sapiens.`coord_system` (`id` INT(10))")
-        cls.host = connections.databases['default'].get('HOST', 'localhost')
-        cls.port = connections.databases['default'].get('PORT', 3306)
-        cls.database = 'test_homo_sapiens'
-
-    @classmethod
-    def tearDownClass(cls):
-        with connection.cursor() as cursor:
-            cursor.execute("DROP DATABASE IF EXISTS `test_homo_sapiens`")
+    databases = {'default', 'homo_sapiens'}
+    fixtures = ('introspect.homo_sapiens.json',)
 
     def testDatabaseList(self):
         # Test getting test Production dbs
-        args = {'host': self.host, 'port': self.port}
-        print(reverse('dbcopy_api:databaselist', kwargs=args))
+        args = {'host': 'localhost', 'port': 3306}
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'test_homo'})
-        print("content", response.content)
-        response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response_list), 1)
-        self.assertEqual(response_list[0], 'test_homo_sapiens')
+        self.assertGreaterEqual(len(response.data), 1)
+        self.assertEqual(response.data[0], 'test_homo_sapiens')
         response = self.client.get(reverse('dbcopy_api:databaselist',
                                            kwargs={**args, 'host': 'bad-host'}),
                                    {'search': 'test_production_services'})
@@ -200,24 +240,21 @@ class DBIntrospectTest(APITestCase):
 
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'search': 'no_result_search'})
-        response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_list), 0)
+        self.assertEqual(len(response.data), 0)
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'matches[]': ['test_homo_sapiens']})
-        response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_list), 1)
+        self.assertEqual(len(response.data), 1)
         response = self.client.get(reverse('dbcopy_api:databaselist', kwargs=args),
                                    {'matches[]': ['no_match']})
-        response_list = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_list), 0)
+        self.assertEqual(len(response.data), 0)
 
     def testTableList(self):
-        args = {'host': self.host,
-                'port': self.port,
-                'database': self.database}
+        args = {'host': 'localhost',
+                'port': 3306,
+                'database': 'test_homo_sapiens'}
         # Test getting meta_key table for Production dbs
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'ass'})
@@ -228,7 +265,7 @@ class DBIntrospectTest(APITestCase):
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'meta'})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        args['host'] = self.host
+        args['host'] = 'localhost'
         response = self.client.get(reverse('dbcopy_api:tablelist', kwargs=args),
                                    {'search': 'unknown'})
         response_list = json.loads(response.content.decode('utf-8'))

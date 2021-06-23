@@ -12,7 +12,7 @@
 from rest_framework import viewsets, mixins, response, status
 
 from ensembl.production.dbcopy.api.serializers import RequestJobDetailSerializer, RequestJobListSerializer, HostSerializer
-from ensembl.production.dbcopy.models import RequestJob, Host, Group
+from ensembl.production.dbcopy.models import RequestJob, Host, HostGroup
 
 
 class RequestJobViewSet(mixins.CreateModelMixin,
@@ -55,12 +55,7 @@ class SourceHostViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Return a list of hosts according to a keyword
         """
-        queryset = Host.objects.all()
-        host = self.request.query_params.get('name', None)
-        if host is not None:
-            host_name = host.split(':')[0]
-            queryset = queryset.filter(name__contains=host_name)
-        return queryset
+        return Host.objects.qs_src_host(self.request.GET.get('name', self.kwargs.get('name', None)), active=False)
 
 
 class TargetHostViewSet(viewsets.ReadOnlyModelViewSet):
@@ -68,25 +63,7 @@ class TargetHostViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'name'
 
     def get_queryset(self):
-        """
-        Return a list of hosts according to a keyword
-
-        """
-        host_queryset = Host.objects.all()
-        group_queryset = Group.objects.all()
-        host_name = self.request.query_params.get('name', None)
-        host_queryset_final = host_queryset
-        # Checking that user is allowed to copy to the matching server
-        # If he is not allowed, the server will be removed from the autocomplete
-        if host_name is not None:
-            host_queryset = host_queryset.filter(name__contains=host_name)
-            host_queryset_final = host_queryset
-            for host in host_queryset:
-                group = group_queryset.filter(host_id=host.auto_id)
-                if group:
-                    host_groups = group.values_list('group_name', flat=True)
-                    user_groups = self.request.user.groups.values_list('name', flat=True)
-                    common_groups = set(host_groups).intersection(set(user_groups))
-                    if not common_groups:
-                        host_queryset_final = host_queryset.exclude(name=host.name)
-        return host_queryset_final
+        # WARNING request now need a user to perform the listing. But no use case found outside of Django admin so far.
+        return Host.objects.qs_tgt_host_for_user(self.request.GET.get('name', self.kwargs.get('name', None)),
+                                                 self.request.user,
+                                                 active=False)

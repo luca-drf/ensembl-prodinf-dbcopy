@@ -14,9 +14,7 @@ import logging
 from dal import autocomplete
 from django.core.exceptions import ObjectDoesNotExist
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
-
-from ensembl.production.dbcopy.models import Dbs2Exclude
-from .models import Host, Group
+from .models import Host, Dbs2Exclude
 from sqlalchemy.exc import DBAPIError
 
 logger = logging.getLogger(__name__)
@@ -29,6 +27,7 @@ def make_excluded_schemas():
         if not schemas:
             schemas.update(Dbs2Exclude.objects.values_list('table_schema', flat=True))
         return schemas
+
     return closure
 
 
@@ -37,12 +36,10 @@ get_excluded_schemas = make_excluded_schemas()
 
 class SrcHostLookup(autocomplete.Select2QuerySetView):
     model = Host
+    paginate_by = 10
 
     def get_queryset(self):
-        qs = Host.objects.all()
-        if self.q:
-            qs = qs.filter(name__icontains=self.q).order_by('name')[:50]
-        return qs
+        return Host.objects.qs_src_host(self.q or None)
 
     def get_selected_result_label(self, result):
         return '%s:%s' % (result.name, result.port)
@@ -53,24 +50,10 @@ class SrcHostLookup(autocomplete.Select2QuerySetView):
 
 class TgtHostLookup(autocomplete.Select2QuerySetView):
     model = Host
+    paginate_by = 10
 
     def get_queryset(self):
-        host_queryset = Host.objects.all()
-        group_queryset = Group.objects.all()
-        host_queryset_final = host_queryset
-        # Checking that user is allowed to copy to the matching server
-        # If he is not allowed, the server will be removed from the autocomplete
-        if self.q:
-            host_queryset = host_queryset.filter(name__icontains=self.q, active=True)
-            for host in host_queryset:
-                group = group_queryset.filter(host_id=host.auto_id)
-                if group:
-                    host_groups = group.values_list('group_name', flat=True)
-                    user_groups = self.request.user.groups.values_list('name', flat=True)
-                    common_groups = set(host_groups).intersection(set(user_groups))
-                    if not common_groups:
-                        host_queryset_final = host_queryset.exclude(name=host.name)
-        return host_queryset_final
+        return Host.objects.qs_tgt_host_for_user(self.q or None, self.request.user)
 
     def get_selected_result_label(self, result):
         return '%s:%s' % (result.name, result.port)
@@ -105,19 +88,21 @@ class DbLookup(autocomplete.Select2ListView):
 class TableLookup(autocomplete.Select2ListView):
     def get_list(self):
         result = []
-        if len(self.forwarded.get('src_incl_db')) > 1:
-            return ['Cannot filter on table name on multiple dbs!!']
-        if self.q and len(self.q) >= 2:
+        included_dbs = self.forwarded.get('src_incl_db', [])
+        if len(included_dbs) > 1 or any('%' in incl_db for incl_db in included_dbs):
+            return ['Cannot filter on table name on multiple/patterned dbs!!']
+        if len(included_dbs) > 0 and self.q and len(self.q) >= 2:
             try:
                 host = self.forwarded.get('db_host').split(':')[0]
                 port = self.forwarded.get('db_host').split(':')[1]
                 database = self.forwarded.get('src_incl_db')[0]
-                # See if we could managed a set of default excluded tables
-                result = get_table_set(host, port, database, self.q)
+                # TODO See if we could managed a set of default excluded tables
+                logger.debug("Inspecting %s:%s/%s w/ %s", host, port, database, self.q)
+                result = get_table_set(host, port, database, name_filter='.*' + self.q.replace('%', '.*') + '.*')
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
-                logger.error("Db Table Lookup query error: ", str(e))
+                logger.error("Db Table Lookup query error: %s ", str(e))
                 pass
             except DBAPIError as e:
-                logger.error("TableLookup query error: ", str(e.orig))
+                logger.error("TableLookup query error: %s ", str(e.orig))
         return result

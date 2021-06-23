@@ -18,4 +18,4 @@ before_script:
 install:
   - pip install -r requirements-dev.txt
 script:
-  - coverage run --source='.' ./src/manage.py test ensembl.production.dbcopy.tests
+  - coverage run --source='.' ./src/manage.py test ensembl.production.dbcopy.tests.tests
