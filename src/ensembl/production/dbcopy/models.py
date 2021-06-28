@@ -311,7 +311,7 @@ class RequestJob(models.Model):
         one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
         if self.src_host in targets and one_src_db_targets:
             raise ValidationError({'tgt_host': "You can't set a copy with identical source/target host/db pair.\n"
-                                               "Please rename target or change target host"},
+                                               "Please rename target(s) or change target host"},
                                   'forbidden')
         super().clean()
 

@@ -57,7 +57,8 @@ def requestjob_checks_warning(request):
         posted.pop('csrfmiddlewaretoken')
         request_job = RequestJob(**posted)
         try:
-            request_job.full_clean()
+            exclude = 'tgt_host' if not tgt_hosts else None
+            request_job.full_clean(exclude=[exclude], validate_unique=False)
         except ValidationError as e:
             ajax_vars['dberrors'].update(e)
             return HttpResponse(json.dumps(ajax_vars),
@@ -67,16 +68,15 @@ def requestjob_checks_warning(request):
     #   All dbnames which match src_incl_db and retire all matching src_skip_dbs
     src_name_filter, src_name_match = get_filter_match(request.POST.getlist('src_incl_db', []))
     src_excl_filter, src_excl_match = get_filter_match(request.POST.getlist('src_skip_db', []))
-
     try:
         src_db_set_filter = get_database_set(hostname=hostname, port=port,
                                              name_filter=src_name_filter,
-                                             excluded_schemas=get_excluded_schemas()) if src_name_filter else set()
+                                             excluded_schemas=get_excluded_schemas())
 
         src_db_set_match = get_database_set(hostname=hostname, port=port,
                                             name_matches=src_name_match,
                                             excluded_schemas=get_excluded_schemas()) if src_name_match else set()
-        src_db_set = src_db_set_match.union(src_db_set_filter)
+        src_db_set = src_db_set_filter.union(src_db_set_match)
         logger.info("initial src_db_set %s", src_db_set)
         excl_db_set_filter = get_database_set(hostname=hostname, port=port,
                                               name_filter=src_excl_filter,
