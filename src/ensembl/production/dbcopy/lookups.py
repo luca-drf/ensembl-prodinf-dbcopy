@@ -53,39 +53,18 @@ class TgtHostLookup(autocomplete.Select2ListView):
     paginate_by = 10
 
     def get_list(self):
-        search = self.q or ''
         result = []
-        if self.q:
-            try:
-                name_filter = search.replace('%', '.*').replace('_', '.')
-                logger.info("Filter set to %s", name_filter)
-                hosts = Host.objects.qs_tgt_host_for_user(self.q or None, self.request.user)
-                result = [(str(host), str(host)) for host in hosts]
-                logger.debug("Results %s", result)
-            except (ValueError, ObjectDoesNotExist) as e:
-                # TODO manage proper error
-                logger.error("Db Lookup query error: ", str(e))
-                pass
-            except DBAPIError as e:
-                logger.error("Db Lookup query error: ", str(e.orig))
+        try:
+            hosts = Host.objects.qs_tgt_host_for_user(self.q or '', self.request.user)
+            result = [(str(host), str(host)) for host in hosts]
+            logger.debug("Results %s", result)
+        except (ValueError, ObjectDoesNotExist) as e:
+            # TODO manage proper error
+            logger.error("Db Lookup query error: ", str(e))
+            pass
+        except DBAPIError as e:
+            logger.error("Db Lookup query error: ", str(e.orig))
         return result
-
-    def get_queryset(self):
-        return Host.objects.qs_tgt_host_for_user(self.q or None, self.request.user)
-
-    def results(self, results):
-        return super().results(results)
-
-
-#    def get_selected_result_label(self, result):
-#        return '%s:%s' % (result.name, result.port)
-#
-#    def get_result_value(self, result):
-#        return '%s:%s' % (result.name, result.port)
-#
-#    def get_results(self, context):
-#        return super().get_results(context)
-
 
 
 class DbLookup(autocomplete.Select2ListView):

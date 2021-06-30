@@ -212,11 +212,13 @@ class LookupsTest(APITestCase):
 
         self.client.login(username='testusergroup2', password='testgroup1234')
         response = self.client.get(reverse('ensembl_dbcopy:tgt-host-autocomplete'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         # retrieve all
         data = json.loads(response.content)
-        self.assertEqual(len(data['results']), 10)
+        self.assertEqual(len(data['results']), 40)
         # filter query permission should not allow sta as target
         response = self.client.get(reverse('ensembl_dbcopy:tgt-host-autocomplete') + '?q=sta-3')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = json.loads(response.content)
         self.assertEqual(len(data['results']), 0)
 
