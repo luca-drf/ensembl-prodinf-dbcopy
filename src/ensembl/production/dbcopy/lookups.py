@@ -39,7 +39,7 @@ class SrcHostLookup(autocomplete.Select2QuerySetView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Host.objects.qs_src_host(self.q or None)
+        return Host.objects.qs_src_host(self.q or None, active=True)
 
     def get_selected_result_label(self, result):
         return '%s:%s' % (result.name, result.port)
@@ -48,18 +48,44 @@ class SrcHostLookup(autocomplete.Select2QuerySetView):
         return '%s:%s' % (result.name, result.port)
 
 
-class TgtHostLookup(autocomplete.Select2QuerySetView):
+class TgtHostLookup(autocomplete.Select2ListView):
     model = Host
     paginate_by = 10
+
+    def get_list(self):
+        search = self.q or ''
+        result = []
+        if self.q:
+            try:
+                name_filter = search.replace('%', '.*').replace('_', '.')
+                logger.info("Filter set to %s", name_filter)
+                hosts = Host.objects.qs_tgt_host_for_user(self.q or None, self.request.user)
+                result = [(str(host), str(host)) for host in hosts]
+                logger.debug("Results %s", result)
+            except (ValueError, ObjectDoesNotExist) as e:
+                # TODO manage proper error
+                logger.error("Db Lookup query error: ", str(e))
+                pass
+            except DBAPIError as e:
+                logger.error("Db Lookup query error: ", str(e.orig))
+        return result
 
     def get_queryset(self):
         return Host.objects.qs_tgt_host_for_user(self.q or None, self.request.user)
 
-    def get_selected_result_label(self, result):
-        return '%s:%s' % (result.name, result.port)
+    def results(self, results):
+        return super().results(results)
 
-    def get_result_value(self, result):
-        return '%s:%s' % (result.name, result.port)
+
+#    def get_selected_result_label(self, result):
+#        return '%s:%s' % (result.name, result.port)
+#
+#    def get_result_value(self, result):
+#        return '%s:%s' % (result.name, result.port)
+#
+#    def get_results(self, context):
+#        return super().get_results(context)
+
 
 
 class DbLookup(autocomplete.Select2ListView):
@@ -74,8 +100,10 @@ class DbLookup(autocomplete.Select2ListView):
                 host = self.forwarded.get('db_host').split(':')[0]
                 port = self.forwarded.get('db_host').split(':')[1]
                 name_filter = search.replace('%', '.*').replace('_', '.')
+                logger.info("Filter set to %s", name_filter)
                 result = get_database_set(host, port, name_filter=name_filter,
                                           excluded_schemas=get_excluded_schemas())
+
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Lookup query error: ", str(e))
@@ -90,7 +118,7 @@ class TableLookup(autocomplete.Select2ListView):
         result = []
         included_dbs = self.forwarded.get('src_incl_db', [])
         if len(included_dbs) > 1 or any('%' in incl_db for incl_db in included_dbs):
-            return ['Cannot filter on table name on multiple/patterned dbs!!']
+            return ['', 'Cannot filter on table name on multiple/patterned dbs!!']
         if len(included_dbs) > 0 and self.q and len(self.q) >= 2:
             try:
                 host = self.forwarded.get('db_host').split(':')[0]
@@ -106,3 +134,4 @@ class TableLookup(autocomplete.Select2ListView):
             except DBAPIError as e:
                 logger.error("TableLookup query error: %s ", str(e.orig))
         return result
+

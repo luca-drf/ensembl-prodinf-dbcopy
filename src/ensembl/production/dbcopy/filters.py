@@ -40,9 +40,7 @@ class DBCopyUserFilter(SimpleListFilter):
         human-readable name for the option that will appear
         in the right sidebar.
         """
-        print(model_admin)
         query = model_admin.model.objects.filter(username__isnull=False).distinct()
-        print("Query ", query.query)
         list_of_users = model_admin.model.objects.filter(username__isnull=False).distinct(). \
             order_by('username').values_list('username', 'username')
         return list_of_users

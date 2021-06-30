@@ -15,12 +15,28 @@ import logging
 from dal import autocomplete, forward
 from django import forms
 from django.contrib.auth.models import Group as UsersGroup
+from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from ensembl.production.djcore.forms import TrimmedCharField
 
 from ensembl.production.dbcopy.models import RequestJob, HostGroup, Host, TargetHostGroup
 
 logger = logging.getLogger(__name__)
+
+
+class TrimmedCharSelectField(forms.MultipleChoiceField):
+    def to_python(self, value):
+        if not value:
+            return []
+        elif not isinstance(value, (list, tuple)):
+            raise ValidationError(self.error_messages['invalid_list'], code='invalid_list')
+        return ",".join(value)
+
+    def validate(self, value):
+        """Validate that the input is a list or tuple."""
+        if self.required and not value:
+            raise ValidationError(self.error_messages['required'], code='required')
+
 
 
 class RequestJobForm(forms.ModelForm):
@@ -38,16 +54,18 @@ class RequestJobForm(forms.ModelForm):
         help_text="host:port",
         required=True,
         widget=autocomplete.ListSelect2(url='ensembl_dbcopy:src-host-autocomplete',
-                                        attrs={'data-placeholder': 'Source host'})
+
+                                        attrs={'data-placeholder': 'Source host',
+                                               'data-minimum-input-length': 2})
     )
 
-    tgt_host = TrimmedCharField(
+    tgt_host = TrimmedCharSelectField(
         label="Target Hosts",
         help_text="List of target hosts",
         required=True,
-        widget=autocomplete.TagSelect2(url='ensembl_dbcopy:tgt-host-autocomplete',
-                                       attrs={'data-placeholder': 'Target(s)',
-                                              'data-result-html': True})
+        widget=autocomplete.Select2Multiple(url='ensembl_dbcopy:tgt-host-autocomplete',
+                                            attrs={'data-placeholder': 'Target(s)',
+                                                   'data-result-html': True})
     )
 
     src_incl_db = TrimmedCharField(
@@ -56,7 +74,8 @@ class RequestJobForm(forms.ModelForm):
         max_length=2048,
         required=False,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-autocomplete',
-                                       forward=[forward.Field('src_host', 'db_host')])
+                                       forward=[forward.Field('src_host', 'db_host')],
+                                       attrs={'data-placeholder': 'Included Db(s)'})
     )
 
     src_skip_db = TrimmedCharField(
@@ -65,7 +84,8 @@ class RequestJobForm(forms.ModelForm):
         max_length=2048,
         required=False,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-autocomplete',
-                                       forward=[forward.Field('src_host', 'db_host')])
+                                       forward=[forward.Field('src_host', 'db_host')],
+                                       attrs={'data-placeholder': 'Skip table(s)'})
     )
 
     src_incl_tables = TrimmedCharField(
@@ -76,7 +96,7 @@ class RequestJobForm(forms.ModelForm):
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-table-autocomplete',
                                        forward=[forward.Field('src_host', 'db_host'),
                                                 forward.Field('src_incl_db')],
-                                       )
+                                       attrs={'data-placeholder': 'Include table(s)'})
     )
 
     src_skip_tables = TrimmedCharField(
@@ -86,7 +106,8 @@ class RequestJobForm(forms.ModelForm):
         required=False,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-table-autocomplete',
                                        forward=[forward.Field('src_host', 'db_host'),
-                                                forward.Field('src_incl_db')])
+                                                forward.Field('src_incl_db')],
+                                       attrs={'data-placeholder': 'Exclude table(s)'})
     )
 
     tgt_db_name = TrimmedCharField(

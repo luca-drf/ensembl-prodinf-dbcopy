@@ -76,8 +76,9 @@ class RequestJob(models.Model):
     src_skip_tables = NullTextField("Skipped Table(s)", max_length=2048, blank=True, null=True)
     tgt_host = models.TextField("Target Host(s)", max_length=2048,
                                 validators=[ListFieldRegexValidator(regex="^[\w-]+:[0-9]{4}",
-                                                                    message="Target Hosts should be formatted like this"
-                                                                            " host:port or host1:port1,host2:port2")])
+                                                                    message="Target Hosts should be formatted like"
+                                                                            " this host:port or "
+                                                                            "host1:port1,host2:port2")])
     tgt_db_name = NullTextField("Target DbName(s)", max_length=2048, blank=True, null=True)
     tgt_directory = NullTextField(max_length=2048, blank=True, null=True)
     skip_optimize = models.BooleanField("Optimize on target", default=False)
@@ -263,7 +264,7 @@ class RequestJob(models.Model):
         tgt_db_names = _text_field_as_set(self.tgt_db_name)
         new_db_names = _text_field_as_set(self.tgt_db_name) if self.tgt_db_name else incl_db
         if (self.wipe_target is False) and (not self.src_incl_tables) and new_db_names:
-            for tgt_host in self.tgt_host:
+            for tgt_host in self.tgt_host.split(','):
                 hostname, port = tgt_host.split(':')
                 try:
                     db_engine = get_engine(hostname, port)
@@ -305,7 +306,8 @@ class RequestJob(models.Model):
         :raise: ValidationError
         :return: None
         """
-        targets = self.tgt_host.split(',')
+        targets = self.tgt_host
+        print(targets)
         src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
         tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
         one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
