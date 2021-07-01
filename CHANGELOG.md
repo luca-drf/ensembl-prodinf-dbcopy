@@ -1,6 +1,14 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
 
+v1.2
+----
+- Fix whole server copy check issue preventing submission
+- Updated Controls to remove annoying initial messages
+- Updates TargetHost Lookup not to offer current typed chars 
+- Added Create and Start Date time to edit view
+- Corrected Style
+
 v1.1
 ----
 - moved RequestJob validation at model level. (Initiall in Admin form)
