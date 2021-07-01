@@ -176,6 +176,12 @@ class RequestJobAdmin(admin.ModelAdmin):
         if 'completion' not in self.fields:
             index = 1 if 'overall_status' in self.fields else 0
             self.fields.insert(index, 'completion')
+        if 'request_date' not in self.fields:
+            self.fields.append('request_date')
+        if 'start_date' not in self.fields:
+            self.fields.append('start_date')
+        if 'end_date' not in self.fields:
+            self.fields.append('end_date')
         if not request.user.is_superuser:
             extra_context['readonly'] = True
         extra_context['show_save_as_new'] = False
