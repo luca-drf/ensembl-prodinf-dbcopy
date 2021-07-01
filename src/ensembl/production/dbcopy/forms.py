@@ -129,9 +129,9 @@ class RequestJobForm(forms.ModelForm):
             self.fields['src_host'].initial = querydict.get('src_host')
             self.fields['src_host'].widget.choices = [(querydict.get('src_host'), querydict.get('src_host'))]
         if querydict.get('tgt_host', None) is not None:
-            tgt_hosts = querydict.get('tgt_host').split(',')
+            tgt_hosts = querydict.get('tgt_host')
             self.fields['tgt_host'].initial = tgt_hosts
-            self.fields['tgt_host'].widget.choices = [(val, val) for val in tgt_hosts]
+            self.fields['tgt_host'].choices = [(val, val) for val in tgt_hosts]
         target_host_group_list = TargetHostGroup.objects.target_host_group_for_user(self.user)
         if len(target_host_group_list) >= 1:
             tgt_group_host = forms.TypedChoiceField(required=False,

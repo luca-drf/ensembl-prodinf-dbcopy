@@ -58,7 +58,7 @@ def requestjob_checks_warning(request):
         request_job = RequestJob(**posted)
         try:
             exclude = 'tgt_host' if not tgt_hosts else None
-            request_job.full_clean(validate_unique=False)
+            request_job.full_clean(exclude=exclude, validate_unique=False)
         except ValidationError as e:
             ajax_vars['dberrors'].update(e)
             return HttpResponse(json.dumps(ajax_vars),
@@ -76,7 +76,14 @@ def requestjob_checks_warning(request):
             src_db_set_match = get_database_set(hostname=hostname, port=port,
                                                 name_matches=src_name_match,
                                                 excluded_schemas=get_excluded_schemas()) if src_name_match else set()
-            src_db_set = src_db_set_filter.union(src_db_set_match)
+            logger.info('src filter %s', src_db_set_filter)
+            logger.info('src match %s', src_db_set_match)
+            # if no "filter" (any %) but only matches -> reduce to only matches
+            if not src_name_filter and src_db_set_match:
+                src_db_set = src_db_set_match
+            else:
+                # if any filter (or no filter == all dbs on src) or no match -> union both
+                src_db_set = src_db_set_filter.union(src_db_set_match)
             logger.info("initial src_db_set %s", src_db_set)
             excl_db_set_filter = get_database_set(hostname=hostname, port=port,
                                                   name_filter=src_excl_filter,

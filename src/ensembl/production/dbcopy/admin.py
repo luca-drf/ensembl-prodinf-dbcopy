@@ -137,7 +137,7 @@ class RequestJobAdmin(admin.ModelAdmin):
         if 'from_request_job' in request.GET:
             obj = RequestJob.objects.get(pk=request.GET['from_request_job'])
             initial['src_host'] = obj.src_host
-            initial['tgt_host'] = obj.tgt_host
+            initial['tgt_host'] = obj.tgt_host.split(',')
             initial['src_incl_db'] = obj.src_incl_db
             initial['src_skip_db'] = obj.src_skip_db
             initial['src_incl_tables'] = obj.src_incl_tables
