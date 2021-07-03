@@ -283,7 +283,7 @@ class RequestJob(models.Model):
         :return: None
         :raise: ValidationError
         """
-        for tgt_host in self.tgt_host:
+        for tgt_host in self.tgt_host.split(','):
             hostname = tgt_host.split(':')[0]
             hosts = Host.objects.filter(name=hostname)
             if not hosts:
@@ -306,8 +306,8 @@ class RequestJob(models.Model):
         :raise: ValidationError
         :return: None
         """
-        targets = self.tgt_host
-        print(targets)
+        targets = self.tgt_host.split(',')
+        # print(self.tgt_host, targets)
         src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
         tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
         one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
