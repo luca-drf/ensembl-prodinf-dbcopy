@@ -76,12 +76,11 @@ class DbLookup(autocomplete.Select2ListView):
         result = []
         if self.q:
             try:
-                host = self.forwarded.get('db_host').split(':')[0]
-                port = self.forwarded.get('db_host').split(':')[1]
-                name_filter = search.replace('%', '.*').replace('_', '.')
-                logger.info("Filter set to %s", name_filter)
-                result = get_database_set(host, port, name_filter=name_filter,
-                                          excluded_schemas=get_excluded_schemas())
+                host, port = self.forwarded.get('db_host').split(':')
+                name_filters = [search.replace('%', '.*')]
+                logger.info("Filter set to %s", name_filters)
+                result = get_database_set(host, port, incl_filters=name_filters,
+                                          skip_filters=get_excluded_schemas())
 
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
@@ -100,12 +99,12 @@ class TableLookup(autocomplete.Select2ListView):
             return ['', 'Cannot filter on table name on multiple/patterned dbs!!']
         if len(included_dbs) > 0 and self.q and len(self.q) >= 2:
             try:
-                host = self.forwarded.get('db_host').split(':')[0]
-                port = self.forwarded.get('db_host').split(':')[1]
+                host, port = self.forwarded.get('db_host').split(':')
                 database = self.forwarded.get('src_incl_db')[0]
                 # TODO See if we could managed a set of default excluded tables
                 logger.debug("Inspecting %s:%s/%s w/ %s", host, port, database, self.q)
-                result = get_table_set(host, port, database, name_filter='.*' + self.q.replace('%', '.*') + '.*')
+                filters = ['.*' + self.q.replace('%', '.*') + '.*']
+                result = get_table_set(host, port, database, incl_filters=filters)
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Table Lookup query error: %s ", str(e))
