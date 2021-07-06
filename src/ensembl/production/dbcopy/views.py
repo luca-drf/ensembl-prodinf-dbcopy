@@ -16,13 +16,14 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 import logging
 
-from django.contrib.auth.decorators import login_required
+# from django.contrib.auth.decorators import login_required
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
-from ensembl.production.dbcopy.filters import get_filter_match
 from ensembl.production.dbcopy.lookups import get_excluded_schemas
 from ensembl.production.dbcopy.models import RequestJob
+from ensembl.production.dbcopy.utils import get_filters
 from django.views.decorators.http import require_http_methods
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +51,7 @@ def requestjob_checks_warning(request):
     tgt_hosts = request.POST.getlist('tgt_host', [])
     logger.debug("All Post data %s", request.POST)
     if src_host and tgt_hosts:
-        src = src_host.split(':')
-        hostname = src[0]
-        port = src[1]
+        hostname, port = src_host.split(':')
         posted = request.POST.dict()
         posted.pop('csrfmiddlewaretoken')
         request_job = RequestJob(**posted)
@@ -61,104 +60,57 @@ def requestjob_checks_warning(request):
             request_job.full_clean(exclude=exclude, validate_unique=False)
         except ValidationError as e:
             ajax_vars['dberrors'].update(e)
-            return HttpResponse(json.dumps(ajax_vars),
-                                status=400,
-                                content_type='application/json')
+            return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
         # 1. Retrieve on src_host
         #   All dbnames which match src_incl_db and retire all matching src_skip_dbs
-        src_name_filter, src_name_match = get_filter_match(request.POST.getlist('src_incl_db', []))
-        src_excl_filter, src_excl_match = get_filter_match(request.POST.getlist('src_skip_db', []))
+        src_incl_filters = get_filters(request.POST.getlist('src_incl_db', []))
+        src_skip_filters = get_filters(request.POST.getlist('src_skip_db', []))
+        excluded_schemas = get_excluded_schemas()
+        src_skip_db_set = excluded_schemas.union(src_skip_filters)
         try:
-            src_db_set_filter = get_database_set(hostname=hostname, port=port,
-                                                 name_filter=src_name_filter,
-                                                 excluded_schemas=get_excluded_schemas())
-
-            src_db_set_match = get_database_set(hostname=hostname, port=port,
-                                                name_matches=src_name_match,
-                                                excluded_schemas=get_excluded_schemas()) if src_name_match else set()
-            logger.info('src filter %s', src_db_set_filter)
-            logger.info('src match %s', src_db_set_match)
-            # if no "filter" (any %) but only matches -> reduce to only matches
-            if not src_name_filter and src_db_set_match:
-                src_db_set = src_db_set_match
-            else:
-                # if any filter (or no filter == all dbs on src) or no match -> union both
-                src_db_set = src_db_set_filter.union(src_db_set_match)
-            logger.info("initial src_db_set %s", src_db_set)
-            excl_db_set_filter = get_database_set(hostname=hostname, port=port,
-                                                  name_filter=src_excl_filter,
-                                                  excluded_schemas=get_excluded_schemas()) if src_excl_filter else set()
-            excl_db_set_match = get_database_set(hostname=hostname, port=port,
-                                                 name_matches=src_excl_match,
-                                                 excluded_schemas=get_excluded_schemas()) if src_excl_match else set()
-            excl_db_set = excl_db_set_filter.union(excl_db_set_match)
-            src_db_set = src_db_set.difference(excl_db_set)
-            logger.info("exc_db_set %s", excl_db_set)
+            src_db_set = get_database_set(hostname=hostname, port=port,
+                                          incl_filters=src_incl_filters,
+                                          skip_filters=src_skip_db_set)
             logger.info("result_db_set %s", src_db_set)
-            if len(src_db_set) == 0 and any(
-                    fil for fil in (src_name_match, src_name_filter, excl_db_set_match, excl_db_set_filter)):
+            if (not src_db_set) and (src_incl_filters or src_skip_filters):
                 # only raise error if no match, but only if any filter specified
-                raise ValueError("No db matching incl. [%s %s] / excl. [%s %s] " % (src_name_filter, src_name_match,
-                                                                                    src_excl_filter, src_excl_match))
+                raise ValueError("No db matching incl. %s / excl. %s " % (src_incl_filters, src_skip_filters))
         except ValueError as e:
             ajax_vars.update({'dberrors': {hostname: [str(e)]}})
-            return HttpResponse(json.dumps(ajax_vars),
-                                status=400,
-                                content_type='application/json')
+            return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
 
         # 2. For each target:
         #   Retrieve all dbnames which match tgt_db_name
         #   Diff with src_dbames
-        tgt_name_filter, target_name_match = get_filter_match(request.POST.getlist('tgt_db_name', []))
-        logger.debug("src_db_set %s", src_db_set)
-        logger.debug("target_db_set_match %s", target_name_match)
-        tgt_db_set_match = src_db_set
-        # TODO manage tgt_name_filter
-        if target_name_match:
-            tgt_db_set_match = set(target_name_match)
-            logger.debug("Updated src_db_set with renamed targets %s", target_name_match)
+        tgt_db_names = set(request.POST.getlist('tgt_db_name', [])) or src_db_set
         for tgt_host in tgt_hosts:
-            host = tgt_host.split(':')[0]
-            port = tgt_host.split(':')[1]
+            host, port = tgt_host.split(':')
             try:
-                logger.debug("tgt db set %s %s", host, src_db_set)
+                logger.debug("tgt db names %s %s", host, tgt_db_names)
                 tgt_db_set = get_database_set(hostname=host, port=port,
-                                              name_matches=tgt_db_set_match,
-                                              excluded_schemas=get_excluded_schemas()) if tgt_db_set_match else set()
+                                              incl_filters=tgt_db_names,
+                                              skip_filters=excluded_schemas)
                 logger.debug("Found on target %s", tgt_db_set)
                 if len(tgt_db_set) > 0:
                     ajax_vars['dbwarnings'].update({host: list(sorted(tgt_db_set))})
                     if len(src_db_set) == 1:
                         # found a target db on target and source == 1
-                        # Now just warning for table override
-                        # 3. For each dbnames on src_incl_db
-                        #   fetch all tables from src_incl_tables filtered by src_skip_tables
-                        # 4. For each intersect dbnames
-                        databases = tgt_name_filter or src_db_set
-                        src_incl_table_filter, src_incl_table_match = get_filter_match(
-                            request.POST.getlist('src_incl_tables', ''))
-                        logger.debug('tgt_name_filter %s src_db_set %s', tgt_name_filter, src_db_set)
-                        for database in databases:
-                            try:
-                                logger.debug('srcdbSet 1: %s,%s,%s,%s,%s', host, port, database, src_incl_table_filter,
-                                             src_incl_table_match)
-                                tgt_table_name_filter = get_table_set(hostname=host, port=port,
-                                                                      database=database,
-                                                                      name_filter=src_incl_table_filter) \
-                                    if src_incl_table_filter else set()
-                                tgt_table_name_match = get_table_set(hostname=host, port=port,
-                                                                     database=database,
-                                                                     name_matches=src_incl_table_match) \
-                                    if src_incl_table_match else set()
-                                tgt_table_name_set = tgt_table_name_filter.union(tgt_table_name_match)
-                                logger.debug("table_name_matches %s", tgt_table_name_set)
-                                if len(tgt_table_name_set) > 0:
-                                    ajax_vars['tablewarnings'].update({database: sorted(tgt_table_name_set)})
-                            except ValueError as e:
-                                # Error most likely raised when target db doesn't exists, this is no error!
-                                # TODO check the above statement twice!
-                                # ajax_vars['tableerrors'].update({host: [str(e)]})
-                                pass
+                        database = src_db_set.pop()
+                        incl_table_filter = get_filters(request.POST.getlist('src_incl_tables', []))
+                        logger.debug('incl_table_filter %s src_db_set %s', incl_table_filter, src_db_set)
+                        try:
+                            logger.debug('srcdbSet 1: %s:%s/%s, %s', host, port, database, incl_table_filter)
+                            tgt_table_names = get_table_set(hostname=host, port=port,
+                                                            database=database,
+                                                            incl_filters=incl_table_filter)
+                            logger.debug("tgt_table_names %s", tgt_table_names)
+                            if len(tgt_table_names) > 0:
+                                ajax_vars['tablewarnings'].update({database: sorted(tgt_table_names)})
+                        except ValueError as e:
+                            # Error most likely raised when target db doesn't exists, this is no error!
+                            # TODO check the above statement twice!
+                            # ajax_vars['tableerrors'].update({host: [str(e)]})
+                            pass
             except ValueError as e:
                 logger.error("Inspect error %s", str(e))
                 ajax_vars['dberrors'].update({host: [str(e)]})
