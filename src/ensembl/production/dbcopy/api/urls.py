@@ -46,6 +46,7 @@ router.register(prefix=r'tgthost',
 
 urlpatterns = [
     path(f'', include(router.urls)),
+    re_path(f'transfers/(?P<job_id>[^/.]+)$', viewsets.TransferLogView.as_view(), name='transfers-list'),
     re_path(r'databases/(?P<host>[\w-]+)/(?P<port>\d+)', ListDatabases.as_view(), name='databaselist'),
     re_path(r'tables/(?P<host>[\w-]+)/(?P<port>\d+)/(?P<database>\w+)', ListTables.as_view(), name='tablelist'),
     re_path(r'swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
