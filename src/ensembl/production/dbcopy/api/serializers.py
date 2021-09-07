@@ -14,13 +14,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from rest_framework import status
 from rest_framework.exceptions import APIException
+from rest_framework.reverse import reverse
 
 from ensembl.production.dbcopy.models import TransferLog, RequestJob, Host
 
 User = get_user_model()
 
 
-class BaseUserTimestampSerializer(serializers.ModelSerializer):
+class BaseUserTimestampSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, source='user')
 
     def validate(self, data):
@@ -40,7 +41,6 @@ class TransferLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransferLog
         fields = (
-            'job_id',
             'tgt_host',
             'table_schema',
             'table_name',
@@ -54,7 +54,8 @@ class TransferLogSerializer(serializers.ModelSerializer):
             'table_status')
 
 
-class RequestJobListSerializer(serializers.HyperlinkedModelSerializer):
+class RequestJobSerializer(serializers.HyperlinkedModelSerializer,
+                           BaseUserTimestampSerializer):
     class Meta:
         model = RequestJob
         fields = (
@@ -74,42 +75,20 @@ class RequestJobListSerializer(serializers.HyperlinkedModelSerializer):
             'start_date',
             'end_date',
             'user',
+            'transfer_logs',
             'overall_status')
-        read_only_fields = ['job_id']
+        read_only_fields = ['job_id', 'url', 'transfers']
         extra_kwargs = {
-            'url': {'view_name': 'dbcopy_api:requestjob-detail', 'lookup_field': 'job_id'},
+            'url': {'view_name': 'dbcopy_api:requestjob-detail', 'lookup_field': 'job_id'}
         }
 
     user = serializers.CharField(required=True, source='username')
+    transfer_logs = serializers.SerializerMethodField(read_only=True)
 
-
-class RequestJobDetailSerializer(BaseUserTimestampSerializer):
-    class Meta:
-        model = RequestJob
-        fields = (
-            'job_id',
-            'transfer_log',
-            'src_host',
-            'src_incl_db',
-            'src_skip_db',
-            'src_incl_tables',
-            'src_skip_tables',
-            'tgt_host',
-            'tgt_db_name',
-            'tgt_directory',
-            'skip_optimize',
-            'wipe_target',
-            'convert_innodb',
-            'email_list',
-            'start_date',
-            'end_date',
-            'user',
-            'overall_status',
-            'detailed_status')
-        read_only_fields = ['job_id']
-
-    transfer_log = TransferLogSerializer(many=True, source='transfer_logs', read_only=True)
-    user = serializers.CharField(required=True, source='username')
+    def get_transfer_logs(self, obj):
+        return reverse(viewname='dbcopy_api:transfers-list',
+                       request=self.context['request'],
+                       kwargs={'job_id': obj.job_id})
 
 
 class HostSerializer(serializers.ModelSerializer):

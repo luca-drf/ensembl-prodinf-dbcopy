@@ -9,10 +9,10 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from rest_framework import viewsets, mixins, response, status
+from rest_framework import viewsets, mixins, response, status, generics
 
-from ensembl.production.dbcopy.api.serializers import RequestJobDetailSerializer, RequestJobListSerializer, HostSerializer
-from ensembl.production.dbcopy.models import RequestJob, Host, HostGroup
+from ensembl.production.dbcopy.api.serializers import RequestJobSerializer, HostSerializer, TransferLogSerializer
+from ensembl.production.dbcopy.models import RequestJob, Host, TransferLog
 
 
 class RequestJobViewSet(mixins.CreateModelMixin,
@@ -20,16 +20,10 @@ class RequestJobViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
                         mixins.DestroyModelMixin,
                         viewsets.GenericViewSet):
-    serializer_class = RequestJobListSerializer
+    serializer_class = RequestJobSerializer
     queryset = RequestJob.objects.all()
     pagination_class = None
     lookup_field = 'job_id'
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return RequestJobListSerializer
-        else:
-            return RequestJobDetailSerializer
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -67,3 +61,11 @@ class TargetHostViewSet(viewsets.ReadOnlyModelViewSet):
         return Host.objects.qs_tgt_host_for_user(self.request.GET.get('name', self.kwargs.get('name', None)),
                                                  self.request.user,
                                                  active=False)
+
+
+class TransferLogView(generics.ListAPIView):
+    serializer_class = TransferLogSerializer
+    lookup_field = 'job_id'
+
+    def get_queryset(self):
+        return TransferLog.objects.filter(job_id=self.kwargs.get('job_id'))

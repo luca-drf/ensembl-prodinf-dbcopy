@@ -83,7 +83,7 @@ class RequestJobTest(APITestCase):
         response = self.client.get(
             reverse('dbcopy_api:requestjob-detail', kwargs={'job_id': 'ddbdc15a-07af-11ea-bdcd-9801a79243a5'}))
         response_dict = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(len(response_dict['transfer_log']), 2)
+        self.assertIn('transfer_logs', response_dict)
 
     def testPutRequestJob(self):
         # Test put
