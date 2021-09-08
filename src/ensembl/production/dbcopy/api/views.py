@@ -32,12 +32,13 @@ class ListDatabases(APIView):
         """
         hostname = kwargs.get('host')
         port = kwargs.get('port')
-        name_filter = set([request.query_params.get('search', '').replace('%', '.*')])
+        name_filter = {request.query_params.get('search', '').replace('%', '.*')}
         name_matches = request.query_params.getlist('matches[]')
         filters = name_filter.union(name_matches).difference({''})
+        filters_regexes = [f".*{name}.*" for name in filters]
         try:
             result = get_database_set(hostname=hostname, port=port,
-                                      incl_filters=filters,
+                                      incl_filters=filters_regexes,
                                       skip_filters=get_excluded_schemas())
         except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
@@ -62,13 +63,14 @@ class ListTables(APIView):
         hostname = kwargs.get('host')
         port = kwargs.get('port')
         database = kwargs.get('database')
-        name_filter = set([request.query_params.get('search', '')])
+        name_filter = {request.query_params.get('search', '')}
         name_matches = request.query_params.getlist('matches[]')
         filters = name_filter.union(name_matches).difference({''})
+        filters_regexes = [f".*{name}.*" for name in filters]
         try:
             result = get_table_set(hostname=hostname, port=port,
                                    database=database,
-                                   incl_filters=filters)
+                                   incl_filters=filters_regexes)
         except ValueError as e:
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
