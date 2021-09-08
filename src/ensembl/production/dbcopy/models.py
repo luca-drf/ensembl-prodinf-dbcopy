@@ -179,9 +179,10 @@ class RequestJob(models.Model):
     def _clean_db_set_for_filters(self, from_host, field):
         host, port = from_host.split(':')
         name_filters = get_filters(getattr(self, field))
+        filters_regexes = [f".*{name}.*" for name in name_filters]
         try:
             src_db_set = get_database_set(hostname=host, port=port,
-                                          incl_filters=name_filters,
+                                          incl_filters=filters_regexes,
                                           skip_filters=Dbs2Exclude.objects.values_list('table_schema', flat=True))
             if len(src_db_set) == 0:
                 raise ValidationError({'src_incl_db': 'No db matching incl. %s' % (name_filters,)})
