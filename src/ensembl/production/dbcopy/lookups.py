@@ -77,9 +77,9 @@ class DbLookup(autocomplete.Select2ListView):
         if self.q:
             try:
                 host, port = self.forwarded.get('db_host').split(':')
-                name_filters = [search.replace('%', '.*')]
-                logger.info("Filter set to %s", name_filters)
-                result = get_database_set(host, port, incl_filters=name_filters,
+                name_filter = f".*{search.replace('%', '.*')}.*"
+                logger.debug("Filter set to %s", name_filter)
+                result = get_database_set(host, port, incl_filters=[name_filter],
                                           skip_filters=get_excluded_schemas())
 
             except (ValueError, ObjectDoesNotExist) as e:
@@ -103,8 +103,8 @@ class TableLookup(autocomplete.Select2ListView):
                 database = self.forwarded.get('src_incl_db')[0]
                 # TODO See if we could managed a set of default excluded tables
                 logger.debug("Inspecting %s:%s/%s w/ %s", host, port, database, self.q)
-                filters = ['.*' + self.q.replace('%', '.*') + '.*']
-                result = get_table_set(host, port, database, incl_filters=filters)
+                table_filter = f".*{self.q.replace('%', '.*')}.*"
+                result = get_table_set(host, port, database, incl_filters=[table_filter])
             except (ValueError, ObjectDoesNotExist) as e:
                 # TODO manage proper error
                 logger.error("Db Table Lookup query error: %s ", str(e))
