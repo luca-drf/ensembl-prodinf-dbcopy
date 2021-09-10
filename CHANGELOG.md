@@ -1,5 +1,9 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
+v1.3.1
+------
+- Reintroduce job_id in Request job REST response
+
 v1.3
 ----
 - Fix long standing request when transfer_logs list is huge, causing time out on REST requests. https://github.com/Ensembl/ensembl-prodinf-dbcopy/pull/19
