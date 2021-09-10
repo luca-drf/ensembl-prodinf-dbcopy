@@ -60,6 +60,7 @@ class RequestJobSerializer(serializers.HyperlinkedModelSerializer,
         model = RequestJob
         fields = (
             'url',
+            'job_id',
             'src_host',
             'src_incl_db',
             'src_skip_db',
