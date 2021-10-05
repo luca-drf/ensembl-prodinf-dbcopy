@@ -25,7 +25,7 @@ from ensembl.production.core.db_introspects import get_database_set
 from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
 from ensembl.production.djcore.models import NullTextField
 
-from ensembl.production.dbcopy.filters import get_filter_match
+from ensembl.production.dbcopy.utils import get_filters
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -177,16 +177,15 @@ class RequestJob(models.Model):
     #        return nbr_tables
 
     def _clean_db_set_for_filters(self, from_host, field):
-        host = from_host.split(':')[0]
-        port = from_host.split(':')[1]
-        name_filter, name_matches = get_filter_match(getattr(self, field))
+        host, port = from_host.split(':')
+        name_filters = get_filters(getattr(self, field))
+        filters_regexes = [f".*{name}.*" for name in name_filters]
         try:
             src_db_set = get_database_set(hostname=host, port=port,
-                                          name_filter=name_filter,
-                                          name_matches=name_matches,
-                                          excluded_schemas=Dbs2Exclude.objects.values_list('table_schema', flat=True))
+                                          incl_filters=filters_regexes,
+                                          skip_filters=Dbs2Exclude.objects.values_list('table_schema', flat=True))
             if len(src_db_set) == 0:
-                raise ValidationError({'src_incl_db': 'No db matching incl. [%s %s] ' % (name_filter, name_matches)})
+                raise ValidationError({'src_incl_db': 'No db matching incl. %s' % (name_filters,)})
         except ValueError as e:
             raise ValidationError({field: str(e)})
 
@@ -215,7 +214,7 @@ class RequestJob(models.Model):
             hostname, port = self.src_host.split(':')
             try:
                 present_dbs = get_database_set(hostname, port,
-                                               excluded_schemas=Dbs2Exclude.objects.values_list('table_schema',
+                                               skip_filters=Dbs2Exclude.objects.values_list('table_schema',
                                                                                                 flat=True))
             except ValueError as e:
                 raise ValidationError({'src_host': 'Invalid source hostname or port'},
@@ -495,7 +494,7 @@ class HostGroup(models.Model):
 def _apply_db_names_filter(db_names, all_db_names):
     if len(db_names) == 1:
         db_name = db_names.pop()
-        filter_re = re.compile(db_name.replace('%', '.*').replace('_', '.'))
+        filter_re = re.compile(db_name.replace('%', '.*'))
         return set(filter(filter_re.search, all_db_names))
     return db_names
 

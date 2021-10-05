@@ -98,16 +98,3 @@ class OverallStatusFilter(SimpleListFilter):
         elif self.value() == 'Submitted':
             qs = queryset.filter(end_date__isnull=True, status__isnull=True)
             return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)
-
-
-def get_filter_match(values):
-    exact_match = []
-    named_filters = []
-    for v in values:
-        if v != '':
-            named_filters.append(v.replace('%', '.*')) if '%' in v else exact_match.append(v)
-
-    logger.debug("from [%s]", values)
-    logger.debug("filter %s", named_filters)
-    logger.debug("exact %s", exact_match)
-    return "|".join(named_filters), exact_match
