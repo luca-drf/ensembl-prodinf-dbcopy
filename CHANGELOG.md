@@ -1,5 +1,11 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
+
+1.4.0
+-----
+- Fix/simplify database and table ajax alerts
+- Use ensembl-prodinf-core 2.0.0
+
 v1.3.1
 ------
 - Reintroduce job_id in Request job REST response

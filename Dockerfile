@@ -1,6 +1,6 @@
 # The first instruction is what image we want to base our container on
 # We Use an official Python runtime as a parent image
-FROM python:3.5-alpine
+FROM python:3.7-alpine
 
 # set environment varibles
 ENV PYTHONDONTWRITEBYTECODE 1
