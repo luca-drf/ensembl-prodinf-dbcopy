@@ -11,9 +11,11 @@
 #   limitations under the License.
 from django.contrib import admin, messages
 from django.contrib.admin.utils import model_ngettext
-from django.db.models import F, Q
+from django.core.exceptions import ValidationError
+from django.db.models import F, Q, Count
 from django.db.models.query import QuerySet
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 from ensembl.production.djcore.admin import SuperUserAdmin
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
@@ -80,6 +82,32 @@ class TransferLogInline(TabularInlinePaginated):
         return False
 
 
+@admin.register(TransferLog)
+class TransferLogAdmin(admin.ModelAdmin):
+    model = TransferLog
+    list_display = ('job_id', 'tgt_host', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'message')
+    list_filter = ('job_id',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        if not request.GET.get('job_id__job_id__exact'):
+            messages.warning(request, "Please Filter per request job first.")
+            return TransferLog.objects.none()
+        else:
+            return super().get_queryset(request)
+
+    def get_changelist(self, request, **kwargs):
+        return super().get_changelist(request, **kwargs)
+
+    def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
+        return super().get_paginator(request, queryset, per_page, orphans, allow_empty_first_page)
+
+
 @admin.register(RequestJob)
 class RequestJobAdmin(admin.ModelAdmin):
     class Media:
@@ -87,18 +115,18 @@ class RequestJobAdmin(admin.ModelAdmin):
         css = {'all': ('dbcopy/css/db_copy.css',)}
 
     actions = ['resubmit_jobs', ]
-    inlines = (TransferLogInline,)
+    # inlines = (TransferLogInline,)
     form = RequestJobForm
     list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'username',
-                    'request_date', 'completion', 'overall_status')
+                    'request_date', 'end_date', 'status')  # , 'running_transfers', 'done_transfers', 'nb_transfers')
     list_per_page = 15
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host')  # , 'username', 'request_date')
-    list_filter = (DBCopyUserFilter, OverallStatusFilter)
+    list_filter = (DBCopyUserFilter,)
     ordering = ('-request_date', '-start_date')
-    fields = ['overall_status', 'src_host', 'tgt_host', 'email_list', 'username',
-              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name']
+    fields = ['status', 'src_host', 'tgt_host', 'email_list', 'username',
+              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name', 'link_out_transfers_logs']
     # TODO re-add when available 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
-    readonly_fields = ('overall_status', 'request_date', 'start_date', 'end_date', 'completion')
+    readonly_fields = ('request_date', 'start_date', 'end_date', 'status', 'link_out_transfers_logs')
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_staff
@@ -115,20 +143,20 @@ class RequestJobAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Allow delete only for superusers and obj owners when status avail deletion.
         return request.user.is_superuser or (
-                    obj is not None and self._is_deletable(obj) and request.user.username == obj.username)
+                obj is not None and self._is_deletable(obj) and request.user.username == obj.username)
 
     def get_fields(self, request, obj=None):
-        if (obj is None or obj.pk is None) and 'overall_status' in self.fields:
-            self.fields.remove('overall_status')
+        if obj is None or obj.pk is None:
+            if 'overall_status' in self.fields:
+                self.fields.remove('overall_status')
+            if 'link_out_transfers_logs' in self.fields:
+                self.fields.remove('link_out_transfers_logs')
         return super().get_fields(request, obj)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)
         form.user = request.user
         return form
-
-    def response_add(self, request, obj, post_url_continue=None):
-        return super().response_add(request, obj, post_url_continue)
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
@@ -144,6 +172,11 @@ class RequestJobAdmin(admin.ModelAdmin):
             initial['src_skip_tables'] = obj.src_skip_tables
             initial['tgt_db_name'] = obj.tgt_db_name
         return initial
+
+    def link_out_transfers_logs(self, obj):
+        return mark_safe("<a href='%s'>Link</a>" % obj.get_transfer_url())
+
+    link_out_transfers_logs.short_description = "See transfer logs"
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None:
@@ -170,6 +203,28 @@ class RequestJobAdmin(admin.ModelAdmin):
             messages.add_message(request, messages.SUCCESS, message, extra_tags='', fail_silently=False)
 
     resubmit_jobs.short_description = 'Resubmit Jobs'
+
+    def get_object(self, request, object_id, from_field=None):
+        print('in get object')
+        queryset = self.get_queryset(request)
+        model = queryset.model
+        try:
+            obj = queryset.annotate(
+                nb_transfers=Count('transfer_logs'),
+                running_transfers=Count('transfer_logs',
+                                        filter=Q(end_date__isnull=True))).get(**{'job_id': object_id})
+            print(obj.running_transfers, obj.nb_transfers)
+            return obj
+        except (model.DoesNotExist, ValidationError, ValueError):
+            return None
+
+    def get_queryset(self, request):
+        base_queryset = super().get_queryset(request)
+        print(base_queryset.query)
+        return base_queryset
+
+    def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
+        return super().get_paginator(request, queryset, per_page, orphans, allow_empty_first_page)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -223,19 +278,12 @@ class RequestJobAdmin(admin.ModelAdmin):
         if self._is_deletable(obj):
             super().log_deletion(request, obj, obj_display)
 
-    def overall_status(self, obj):
+    def status(self, obj):
         return format_html(
             '<div class="overall_status {}">{}</div>',
-            obj.overall_status,
-            obj.overall_status
+            obj.status,
+            obj.status
         )
-
-    def get_inlines(self, request, obj):
-        """Hook for specifying custom inlines."""
-        if obj:
-            return super().get_inlines(request, obj)
-        else:
-            return []
 
     def changelist_view(self, request, extra_context=None):
         if 'user' not in request.GET:

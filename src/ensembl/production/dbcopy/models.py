@@ -15,11 +15,13 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Count, Q
+from django.urls import reverse
 from django.utils.html import format_html
 from ensembl.production.core.db_introspects import get_database_set
 from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
@@ -54,8 +56,7 @@ class DebugLog(models.Model):
 class RequestJobManager(models.Manager):
 
     def get_queryset(self):
-        return super().get_queryset().annotate(nb_transfers=Count('transfer_logs')).annotate(
-            running_transfers=Count('transfer_logs', filter=Q(end_date__isnull=True)))
+        return super().get_queryset()
 
 
 class RequestJob(models.Model):
@@ -70,7 +71,7 @@ class RequestJob(models.Model):
     src_host = models.TextField("Source Host", max_length=2048,
                                 validators=[RegexValidator(regex="^[\w-]+:[0-9]{4}",
                                                            message="Source Host should be: host:port")])
-    src_incl_db = NullTextField("Included Db(s)", max_length=2048, blank=True, null=True)
+    src_incl_db = NullTextField("Included Db(s)", max_length=2048, blank=True, null=False, default="%")
     src_skip_db = NullTextField("Skipped Db(s)", max_length=2048, blank=True, null=True)
     src_incl_tables = NullTextField("Included Table(s)", max_length=2048, blank=True, null=True)
     src_skip_tables = NullTextField("Skipped Table(s)", max_length=2048, blank=True, null=True)
@@ -97,7 +98,7 @@ class RequestJob(models.Model):
 
     objects = RequestJobManager()
 
-    running_transfers = 0
+    running_transfers = 150
     nb_transfers = 0
 
     def __str__(self):
@@ -152,7 +153,6 @@ class RequestJob(models.Model):
     @property
     def detailed_status(self):
         total_tables = self.nb_transfers
-        # .count()
         # table_copied = self.table_copied
         status_msg = 'Submitted'
         if self.status == 'Processing Requests' or self.status == 'Creating Requests':
@@ -171,11 +171,6 @@ class RequestJob(models.Model):
                 'total_tables': total_tables,
                 'progress': self.progress}
 
-    #    @property
-    #    def table_copied(self):
-    #        nbr_tables = sum(map(lambda log: 1 if log.end_date else 0, self.transfer_logs.all()))
-    #        return nbr_tables
-
     def _clean_db_set_for_filters(self, from_host, field):
         host, port = from_host.split(':')
         name_filters = get_filters(getattr(self, field))
@@ -192,6 +187,10 @@ class RequestJob(models.Model):
     def clean_src_incl_db(self):
         if self.src_host and self.src_incl_db:
             self._clean_db_set_for_filters(self.src_host, 'src_incl_db')
+        if self.src_host == "%" and self.tgt_db_name is not None:
+            raise ValidationError("tgt_db_name",
+                                  "You can't copy a whole server onto a single database.\n"
+                                  "Consider clearing this field.")
 
     def clean_src_skip_db(self):
         if self.src_skip_db and self.tgt_db_name:
@@ -215,7 +214,7 @@ class RequestJob(models.Model):
             try:
                 present_dbs = get_database_set(hostname, port,
                                                skip_filters=Dbs2Exclude.objects.values_list('table_schema',
-                                                                                                flat=True))
+                                                                                            flat=True))
             except ValueError as e:
                 raise ValidationError({'src_host': 'Invalid source hostname or port'},
                                       'invalid')
@@ -337,6 +336,18 @@ class RequestJob(models.Model):
             self.progress
         )
 
+    def get_transfer_url(self):
+        from django.http import QueryDict
+
+        query_dictionary = QueryDict('', mutable=True)
+        query_dictionary.update({'job_id__job_id__exact': self.job_id})
+        content_type = ContentType.objects.get_for_model(TransferLog)
+        url = '{base_url}?{querystring}'.format(
+            base_url=reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)),
+            querystring=query_dictionary.urlencode())
+        print("url", url)
+        return url
+
 
 class TransferLog(models.Model):
     class Meta:
@@ -346,7 +357,7 @@ class TransferLog(models.Model):
         verbose_name = 'TransferLog'
 
     auto_id = models.BigAutoField(primary_key=True)
-    job_id = models.ForeignKey(RequestJob, db_column='job_id', on_delete=models.CASCADE, related_name='transfer_logs')
+    job_id = models.ForeignKey("RequestJob", db_column='job_id', on_delete=models.CASCADE, related_name='transfer_logs')
     tgt_host = models.CharField(max_length=512, editable=False)
     table_schema = models.CharField(db_column='TABLE_SCHEMA', max_length=64,
                                     editable=False)  # Field name made lowercase.

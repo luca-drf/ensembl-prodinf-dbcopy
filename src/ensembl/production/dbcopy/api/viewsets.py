@@ -13,7 +13,7 @@ from rest_framework import viewsets, mixins, response, status, generics
 
 from ensembl.production.dbcopy.api.serializers import RequestJobSerializer, HostSerializer, TransferLogSerializer
 from ensembl.production.dbcopy.models import RequestJob, Host, TransferLog
-
+from rest_framework.permissions import AllowAny
 
 class RequestJobViewSet(mixins.CreateModelMixin,
                         mixins.RetrieveModelMixin,
@@ -21,6 +21,8 @@ class RequestJobViewSet(mixins.CreateModelMixin,
                         mixins.DestroyModelMixin,
                         viewsets.GenericViewSet):
     serializer_class = RequestJobSerializer
+    permission_classes = [AllowAny]
+
     queryset = RequestJob.objects.all()
     pagination_class = None
     lookup_field = 'job_id'
