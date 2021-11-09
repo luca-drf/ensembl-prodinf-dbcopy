@@ -79,7 +79,7 @@ class RequestJob(models.Model):
     status = models.CharField("Status", max_length=20, blank=True, null=True, editable=False)
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
 
-    running_transfers = 150
+    running_transfers = 0
     nb_transfers = 0
 
     def __str__(self):
@@ -109,13 +109,14 @@ class RequestJob(models.Model):
 
     @property
     def overall_status(self):
+        running_transfers = self.transfer_logs.count(filter=Q(end_date__isnull=True))
         if self.status:
             if (self.end_date and self.status == 'Transfer Ended') or 'Try:' in self.status:
-                if self.running_transfers > 0:
+                if running_transfers > 0:
                     return 'Failed'
                 else:
                     return 'Complete'
-            elif self.running_transfers > 0 and self.status == 'Processing Requests':
+            elif running_transfers > 0 and self.status == 'Processing Requests':
                 return 'Running'
             elif self.status == 'Processing Requests' or self.status == 'Creating Requests':
                 return 'Scheduled'
@@ -134,7 +135,6 @@ class RequestJob(models.Model):
     @property
     def detailed_status(self):
         total_tables = self.nb_transfers
-        # table_copied = self.table_copied
         status_msg = 'Submitted'
         if self.status == 'Processing Requests' or self.status == 'Creating Requests':
             status_msg = 'Scheduled'
@@ -147,7 +147,6 @@ class RequestJob(models.Model):
                 elif self.status == 'Processing Requests':
                     status_msg = 'Running'
         return {'status_msg': status_msg,
-                # 'table_copied': table_copied,
                 'table_copied': self.done_transfers,
                 'total_tables': total_tables,
                 'progress': self.progress}
@@ -286,7 +285,6 @@ class RequestJob(models.Model):
         :return: None
         """
         targets = self.tgt_host.split(',')
-        # print(self.tgt_host, targets)
         src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
         tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
         one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
@@ -326,7 +324,6 @@ class RequestJob(models.Model):
         url = '{base_url}?{querystring}'.format(
             base_url=reverse("admin:%s_%s_changelist" % (content_type.app_label, content_type.model)),
             querystring=query_dictionary.urlencode())
-        print("url", url)
         return url
 
 

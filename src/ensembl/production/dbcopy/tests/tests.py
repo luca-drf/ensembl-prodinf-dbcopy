@@ -178,7 +178,7 @@ class RequestJobTest(APITestCase):
                                       username='testuser')
         with self.assertRaises(ValidationError):
             # test target host contains src host and all db selected
-            RequestJob.objects.create(tgt_dn_name="new_db_name",
+            RequestJob.objects.create(tgt_db_name="new_db_name",
                                       tgt_host="host2:3306,host1:3306",
                                       username='testuser')
         # Test a normal job would pass.
