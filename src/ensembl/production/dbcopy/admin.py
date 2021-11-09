@@ -85,8 +85,22 @@ class TransferLogInline(TabularInlinePaginated):
 @admin.register(TransferLog)
 class TransferLogAdmin(admin.ModelAdmin):
     model = TransferLog
-    list_display = ('job_id', 'tgt_host', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'message')
+    list_display = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'table_status')
     list_filter = ('job_id',)
+    fields = (
+        'job_id',
+        'tgt_host',
+        'table_schema',
+        'table_name',
+        'renamed_table_schema',
+        'target_directory',
+        'start_date',
+        'end_date',
+        'size',
+        'retries',
+        'message',
+    )
+    object_id = None
 
     def has_add_permission(self, request):
         return False
@@ -94,18 +108,19 @@ class TransferLogAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        self.object_id = object_id
+        return super().change_view(request, object_id, form_url, extra_context)
+
     def get_queryset(self, request):
-        if not request.GET.get('job_id__job_id__exact'):
+        if not (request.GET.get('job_id__job_id__exact') or self.object_id):
             messages.warning(request, "Please Filter per request job first.")
             return TransferLog.objects.none()
         else:
             return super().get_queryset(request)
-
-    def get_changelist(self, request, **kwargs):
-        return super().get_changelist(request, **kwargs)
-
-    def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
-        return super().get_paginator(request, queryset, per_page, orphans, allow_empty_first_page)
 
 
 @admin.register(RequestJob)
@@ -142,16 +157,8 @@ class RequestJobAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         # Allow delete only for superusers and obj owners when status avail deletion.
-        return request.user.is_superuser or (
-                obj is not None and self._is_deletable(obj) and request.user.username == obj.username)
-
-    def get_fields(self, request, obj=None):
-        if obj is None or obj.pk is None:
-            if 'overall_status' in self.fields:
-                self.fields.remove('overall_status')
-            if 'link_out_transfers_logs' in self.fields:
-                self.fields.remove('link_out_transfers_logs')
-        return super().get_fields(request, obj)
+        return request.user.is_superuser or (obj is not None and self._is_deletable(obj)
+                                             and request.user.username == obj.username)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)
@@ -205,26 +212,16 @@ class RequestJobAdmin(admin.ModelAdmin):
     resubmit_jobs.short_description = 'Resubmit Jobs'
 
     def get_object(self, request, object_id, from_field=None):
-        print('in get object')
         queryset = self.get_queryset(request)
-        model = queryset.model
         try:
+            # only annotate query when retrieving a single object.
             obj = queryset.annotate(
                 nb_transfers=Count('transfer_logs'),
                 running_transfers=Count('transfer_logs',
                                         filter=Q(end_date__isnull=True))).get(**{'job_id': object_id})
-            print(obj.running_transfers, obj.nb_transfers)
             return obj
-        except (model.DoesNotExist, ValidationError, ValueError):
+        except (queryset.model.DoesNotExist, ValidationError, ValueError):
             return None
-
-    def get_queryset(self, request):
-        base_queryset = super().get_queryset(request)
-        print(base_queryset.query)
-        return base_queryset
-
-    def get_paginator(self, request, queryset, per_page, orphans=0, allow_empty_first_page=True):
-        return super().get_paginator(request, queryset, per_page, orphans, allow_empty_first_page)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -249,7 +246,20 @@ class RequestJobAdmin(admin.ModelAdmin):
     def add_view(self, request, form_url='', extra_context=None):
         if 'completion' in self.fields:
             self.fields.remove('completion')
+        if 'overall_status' in self.fields:
+            self.fields.remove('overall_status')
+        if 'link_out_transfers_logs' in self.fields:
+            self.fields.remove('link_out_transfers_logs')
         return super().add_view(request, form_url, extra_context)
+
+    def changelist_view(self, request, extra_context=None):
+        if 'user' not in request.GET:
+            # set default filter to the request user
+            q = request.GET.copy()
+            q['user'] = request.user
+            request.GET = q
+            request.META['QUERY_STRING'] = request.GET.urlencode()
+        return super().changelist_view(request, extra_context)
 
     def _is_deletable(self, obj):
         return obj.status not in ('Creating Requests', 'Processing Requests')
@@ -271,9 +281,6 @@ class RequestJobAdmin(admin.ModelAdmin):
         }
         messages.add_message(request, messages.SUCCESS, message, extra_tags='', fail_silently=False)
 
-    def message_user(self, *args, **kwargs):
-        pass
-
     def log_deletion(self, request, obj, obj_display):
         if self._is_deletable(obj):
             super().log_deletion(request, obj, obj_display)
@@ -285,11 +292,3 @@ class RequestJobAdmin(admin.ModelAdmin):
             obj.status
         )
 
-    def changelist_view(self, request, extra_context=None):
-        if 'user' not in request.GET:
-            # set default filter to the request user
-            q = request.GET.copy()
-            q['user'] = request.user
-            request.GET = q
-            request.META['QUERY_STRING'] = request.GET.urlencode()
-        return super().changelist_view(request, extra_context)

@@ -42,23 +42,6 @@ class Dbs2Exclude(models.Model):
         app_label = 'ensembl_dbcopy'
 
 
-class DebugLog(models.Model):
-    job_id = models.CharField(max_length=128, blank=True, null=True)
-    sequence = models.IntegerField(blank=True, null=True)
-    function = models.CharField(max_length=128, blank=True, null=True)
-    value = models.TextField(max_length=8192, blank=True, null=True)
-
-    class Meta:
-        db_table = 'debug_log'
-        app_label = 'ensembl_dbcopy'
-
-
-class RequestJobManager(models.Manager):
-
-    def get_queryset(self):
-        return super().get_queryset()
-
-
 class RequestJob(models.Model):
     class Meta:
         db_table = 'request_job'
@@ -95,8 +78,6 @@ class RequestJob(models.Model):
     username = models.CharField("Submitter", max_length=64, blank=False, null=True, db_column='user')
     status = models.CharField("Status", max_length=20, blank=True, null=True, editable=False)
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
-
-    objects = RequestJobManager()
 
     running_transfers = 150
     nb_transfers = 0
