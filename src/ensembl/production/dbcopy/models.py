@@ -109,16 +109,16 @@ class RequestJob(models.Model):
 
     @property
     def overall_status(self):
-        running_transfers = self.transfer_logs.count(filter=Q(end_date__isnull=True))
         if self.status:
             if (self.end_date and self.status == 'Transfer Ended') or 'Try:' in self.status:
+                running_transfers = self.transfer_logs.filter(end_date__isnull=True).count()
                 if running_transfers > 0:
                     return 'Failed'
                 else:
                     return 'Complete'
-            elif running_transfers > 0 and self.status == 'Processing Requests':
+            elif self.status == 'Processing Requests':
                 return 'Running'
-            elif self.status == 'Processing Requests' or self.status == 'Creating Requests':
+            elif self.status == 'Creating Requests':
                 return 'Scheduled'
         return 'Submitted'
 

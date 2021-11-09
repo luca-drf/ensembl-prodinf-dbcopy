@@ -133,7 +133,7 @@ class RequestJobAdmin(admin.ModelAdmin):
     # inlines = (TransferLogInline,)
     form = RequestJobForm
     list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'username',
-                    'request_date', 'end_date', 'status')  # , 'running_transfers', 'done_transfers', 'nb_transfers')
+                    'request_date', 'end_date', 'list_status')  # , 'running_transfers', 'done_transfers', 'nb_transfers')
     list_per_page = 15
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host')  # , 'username', 'request_date')
     list_filter = (DBCopyUserFilter,)
@@ -141,7 +141,7 @@ class RequestJobAdmin(admin.ModelAdmin):
     fields = ['status', 'src_host', 'tgt_host', 'email_list', 'username',
               'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name', 'link_out_transfers_logs']
     # TODO re-add when available 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
-    readonly_fields = ('request_date', 'start_date', 'end_date', 'status', 'link_out_transfers_logs')
+    readonly_fields = ('request_date', 'start_date', 'end_date', 'status', 'link_out_transfers_logs', 'list_status')
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_staff
@@ -285,10 +285,10 @@ class RequestJobAdmin(admin.ModelAdmin):
         if self._is_deletable(obj):
             super().log_deletion(request, obj, obj_display)
 
-    def status(self, obj):
+    def list_status(self, obj):
         return format_html(
             '<div class="overall_status {}">{}</div>',
-            obj.status,
-            obj.status
+            obj.overall_status,
+            obj.overall_status
         )
 
