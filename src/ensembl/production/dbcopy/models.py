@@ -79,8 +79,8 @@ class RequestJob(models.Model):
     status = models.CharField("Status", max_length=20, blank=True, null=True, editable=False)
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
 
-    running_transfers = 0
-    nb_transfers = 0
+    __running_transfers = None
+    __nb_transfers = None
 
     def __str__(self):
         return "[%s]:%s" % (self.job_id, self.src_host)
@@ -108,11 +108,24 @@ class RequestJob(models.Model):
         self.username = user.username
 
     @property
+    def running_transfers(self):
+        if self.__running_transfers is None:
+            self.__running_transfers = self.transfer_logs.filter(end_date__isnull=True).count()
+        return self.__running_transfers
+
+    @property
+    def nb_transfers(self):
+        if self.__nb_transfers is None:
+            self.__nb_transfers = self.transfer_logs.count()
+        return self.__nb_transfers
+
+
+    @property
     def overall_status(self):
         if self.status:
             if (self.end_date and self.status == 'Transfer Ended') or 'Try:' in self.status:
-                running_transfers = self.transfer_logs.filter(end_date__isnull=True).count()
-                if running_transfers > 0:
+                # running_transfers = self.transfer_logs.filter(end_date__isnull=True).count()
+                if self.running_transfers > 0:
                     return 'Failed'
                 else:
                     return 'Complete'
