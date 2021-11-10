@@ -119,9 +119,8 @@ class RequestJob(models.Model):
             self.__nb_transfers = self.transfer_logs.count()
         return self.__nb_transfers
 
-
     @property
-    def overall_status(self):
+    def global_status(self):
         if self.status:
             if (self.end_date and self.status == 'Transfer Ended') or 'Try:' in self.status:
                 # running_transfers = self.transfer_logs.filter(end_date__isnull=True).count()

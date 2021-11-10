@@ -36,7 +36,7 @@ class RequestJobViewSet(mixins.CreateModelMixin,
         :return:
         """
         instance = self.get_object()
-        if instance.overall_status == 'Submitted':
+        if instance.global_status == 'Submitted':
             self.perform_destroy(instance)
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         else:

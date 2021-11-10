@@ -77,7 +77,7 @@ class RequestJobSerializer(serializers.HyperlinkedModelSerializer,
             'end_date',
             'user',
             'transfer_logs',
-            'overall_status')
+            'global_status')
         read_only_fields = ['job_id', 'url', 'transfers']
         extra_kwargs = {
             'url': {'view_name': 'dbcopy_api:requestjob-detail', 'lookup_field': 'job_id'}

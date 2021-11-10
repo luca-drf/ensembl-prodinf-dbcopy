@@ -133,7 +133,7 @@ class RequestJobAdmin(admin.ModelAdmin):
     inlines = (TransferLogInline,)
     form = RequestJobForm
     list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'username',
-                    'request_date', 'end_date', 'completion', 'list_status')  # , 'running_transfers', 'done_transfers', 'nb_transfers')
+                    'request_date', 'end_date', 'list_status')  # , 'running_transfers', 'done_transfers', 'nb_transfers')
     list_per_page = 15
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host')  # , 'username', 'request_date')
     list_filter = (DBCopyUserFilter, OverallStatusFilter)
@@ -231,7 +231,7 @@ class RequestJobAdmin(admin.ModelAdmin):
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
         if 'completion' not in self.fields:
-            index = 1 if 'overall_status' in self.fields else 0
+            index = 1 if 'global_status' in self.fields else 0
             self.fields.insert(index, 'completion')
         if 'request_date' not in self.fields:
             self.fields.append('request_date')
@@ -251,8 +251,8 @@ class RequestJobAdmin(admin.ModelAdmin):
     def add_view(self, request, form_url='', extra_context=None):
         if 'completion' in self.fields:
             self.fields.remove('completion')
-        if 'overall_status' in self.fields:
-            self.fields.remove('overall_status')
+        if 'global_status' in self.fields:
+            self.fields.remove('global_status')
         if 'link_out_transfers_logs' in self.fields:
             self.fields.remove('link_out_transfers_logs')
         return super().add_view(request, form_url, extra_context)
@@ -292,8 +292,8 @@ class RequestJobAdmin(admin.ModelAdmin):
 
     def list_status(self, obj):
         return format_html(
-            '<div class="overall_status {}">{}</div>',
-            obj.overall_status,
-            obj.overall_status
+            '<div class="global_status {}">{}</div>',
+            obj.global_status,
+            obj.global_status
         )
 
