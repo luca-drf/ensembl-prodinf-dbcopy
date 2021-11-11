@@ -132,21 +132,20 @@ class RequestJobAdmin(admin.ModelAdmin):
     actions = ['resubmit_jobs', ]
     inlines = (TransferLogInline,)
     form = RequestJobForm
-    list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'username',
-                    'request_date', 'end_date', 'list_status')  # , 'running_transfers', 'done_transfers', 'nb_transfers')
+    list_display = ['job_id', 'src_host', 'src_incl_db', 'src_skip_db',
+                    'tgt_host', 'username',
+                    'request_date', 'end_date', 'global_status']
     list_per_page = 15
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host')  # , 'username', 'request_date')
     list_filter = (DBCopyUserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
     fields = ['status', 'src_host', 'tgt_host', 'email_list', 'username',
-              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name', 'link_out_transfers_logs']
+              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
+              'link_out_transfers_logs']
     # TODO re-add when available 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
-    readonly_fields = ('request_date', 'start_date', 'end_date', 'status', 'link_out_transfers_logs',  'completion', 'list_status')
-
-    def get_list_display(self, request):
-        if request.GET.get('user', '') != 'All':
-            self.list_display
-        return super().get_list_display(request)
+    readonly_fields = ('request_date', 'start_date', 'end_date',
+                       'status', 'link_out_transfers_logs', 'completion',
+                       'global_status')
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_staff
@@ -223,7 +222,7 @@ class RequestJobAdmin(admin.ModelAdmin):
             obj = queryset.annotate(
                 __nb_transfers=Count('transfer_logs'),
                 __running_transfers=Count('transfer_logs',
-                                        filter=Q(end_date__isnull=True))).get(**{'job_id': object_id})
+                                          filter=Q(end_date__isnull=True))).get(**{'job_id': object_id})
             return obj
         except (queryset.model.DoesNotExist, ValidationError, ValueError):
             return None
@@ -290,10 +289,11 @@ class RequestJobAdmin(admin.ModelAdmin):
         if self._is_deletable(obj):
             super().log_deletion(request, obj, obj_display)
 
-    def list_status(self, obj):
-        return format_html(
-            '<div class="global_status {}">{}</div>',
-            obj.global_status,
-            obj.global_status
-        )
-
+    @staticmethod
+    def global_status(obj):
+        if obj:
+            return format_html(
+                '<div class="global_status {}">{}</div>',
+                obj.global_status,
+                obj.global_status)
+        return ''

@@ -76,7 +76,11 @@ class RequestJob(models.Model):
     start_date = models.DateTimeField("Started on", blank=True, null=True, editable=False)
     end_date = models.DateTimeField("Ended on", blank=True, null=True, editable=False)
     username = models.CharField("Submitter", max_length=64, blank=False, null=True, db_column='user')
-    status = models.CharField("Status", max_length=20, blank=True, null=True, editable=False)
+    status = models.CharField("Status", max_length=40, blank=True, null=True, editable=False)
+    overall_status = models.CharField("Overall Status", max_length=48, blank=True, null=True, editable=False)
+    expected = models.IntegerField("Expected to transfer", blank=True, null=True, editable=False)
+    completed = models.IntegerField("Transfers completed", blank=True, null=True, editable=False)
+
     request_date = models.DateTimeField("Submitted on", editable=False, auto_now_add=True)
 
     __running_transfers = None
