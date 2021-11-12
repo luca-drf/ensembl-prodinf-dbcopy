@@ -11,9 +11,11 @@
 #   limitations under the License.
 from django.contrib import admin, messages
 from django.contrib.admin.utils import model_ngettext
-from django.db.models import F, Q
+from django.core.exceptions import ValidationError
+from django.db.models import F, Q, Count
 from django.db.models.query import QuerySet
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 from ensembl.production.djcore.admin import SuperUserAdmin
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
@@ -80,6 +82,47 @@ class TransferLogInline(TabularInlinePaginated):
         return False
 
 
+@admin.register(TransferLog)
+class TransferLogAdmin(admin.ModelAdmin):
+    model = TransferLog
+    list_display = ('table_schema', 'table_name', 'renamed_table_schema', 'start_date', 'end_date', 'table_status')
+    list_filter = ('job_id',)
+    fields = (
+        'job_id',
+        'tgt_host',
+        'table_schema',
+        'table_name',
+        'renamed_table_schema',
+        'target_directory',
+        'start_date',
+        'end_date',
+        'size',
+        'retries',
+        'message',
+    )
+    object_id = None
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        self.object_id = object_id
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def get_queryset(self, request):
+        if not (request.GET.get('job_id__job_id__exact') or self.object_id):
+            messages.warning(request, "Please Filter per request job first.")
+            return TransferLog.objects.none()
+        else:
+            return super().get_queryset(request)
+
+
 @admin.register(RequestJob)
 class RequestJobAdmin(admin.ModelAdmin):
     class Media:
@@ -89,16 +132,20 @@ class RequestJobAdmin(admin.ModelAdmin):
     actions = ['resubmit_jobs', ]
     inlines = (TransferLogInline,)
     form = RequestJobForm
-    list_display = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host', 'username',
-                    'request_date', 'completion', 'overall_status')
+    list_display = ['job_id', 'src_host', 'src_incl_db', 'src_skip_db',
+                    'tgt_host', 'username',
+                    'request_date', 'end_date', 'global_status']
     list_per_page = 15
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host')  # , 'username', 'request_date')
     list_filter = (DBCopyUserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
-    fields = ['overall_status', 'src_host', 'tgt_host', 'email_list', 'username',
-              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name']
+    fields = ['status', 'src_host', 'tgt_host', 'email_list', 'username',
+              'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
+              'link_out_transfers_logs']
     # TODO re-add when available 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
-    readonly_fields = ('overall_status', 'request_date', 'start_date', 'end_date', 'completion')
+    readonly_fields = ('request_date', 'start_date', 'end_date',
+                       'status', 'link_out_transfers_logs', 'completion',
+                       'global_status')
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_staff
@@ -114,21 +161,13 @@ class RequestJobAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         # Allow delete only for superusers and obj owners when status avail deletion.
-        return request.user.is_superuser or (
-                    obj is not None and self._is_deletable(obj) and request.user.username == obj.username)
-
-    def get_fields(self, request, obj=None):
-        if (obj is None or obj.pk is None) and 'overall_status' in self.fields:
-            self.fields.remove('overall_status')
-        return super().get_fields(request, obj)
+        return request.user.is_superuser or (obj is not None and self._is_deletable(obj)
+                                             and request.user.username == obj.username)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)
         form.user = request.user
         return form
-
-    def response_add(self, request, obj, post_url_continue=None):
-        return super().response_add(request, obj, post_url_continue)
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
@@ -144,6 +183,11 @@ class RequestJobAdmin(admin.ModelAdmin):
             initial['src_skip_tables'] = obj.src_skip_tables
             initial['tgt_db_name'] = obj.tgt_db_name
         return initial
+
+    def link_out_transfers_logs(self, obj):
+        return mark_safe("<a href='%s'>Link</a>" % obj.get_transfer_url())
+
+    link_out_transfers_logs.short_description = "See transfer logs"
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None:
@@ -171,10 +215,22 @@ class RequestJobAdmin(admin.ModelAdmin):
 
     resubmit_jobs.short_description = 'Resubmit Jobs'
 
+    def get_object(self, request, object_id, from_field=None):
+        queryset = self.get_queryset(request)
+        try:
+            # only annotate query when retrieving a single object.
+            obj = queryset.annotate(
+                __nb_transfers=Count('transfer_logs'),
+                __running_transfers=Count('transfer_logs',
+                                          filter=Q(end_date__isnull=True))).get(**{'job_id': object_id})
+            return obj
+        except (queryset.model.DoesNotExist, ValidationError, ValueError):
+            return None
+
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
         if 'completion' not in self.fields:
-            index = 1 if 'overall_status' in self.fields else 0
+            index = 1 if 'global_status' in self.fields else 0
             self.fields.insert(index, 'completion')
         if 'request_date' not in self.fields:
             self.fields.append('request_date')
@@ -194,7 +250,20 @@ class RequestJobAdmin(admin.ModelAdmin):
     def add_view(self, request, form_url='', extra_context=None):
         if 'completion' in self.fields:
             self.fields.remove('completion')
+        if 'global_status' in self.fields:
+            self.fields.remove('global_status')
+        if 'link_out_transfers_logs' in self.fields:
+            self.fields.remove('link_out_transfers_logs')
         return super().add_view(request, form_url, extra_context)
+
+    def changelist_view(self, request, extra_context=None):
+        if 'user' not in request.GET:
+            # set default filter to the request user
+            q = request.GET.copy()
+            q['user'] = request.user
+            request.GET = q
+            request.META['QUERY_STRING'] = request.GET.urlencode()
+        return super().changelist_view(request, extra_context)
 
     def _is_deletable(self, obj):
         return obj.status not in ('Creating Requests', 'Processing Requests')
@@ -216,32 +285,15 @@ class RequestJobAdmin(admin.ModelAdmin):
         }
         messages.add_message(request, messages.SUCCESS, message, extra_tags='', fail_silently=False)
 
-    def message_user(self, *args, **kwargs):
-        pass
-
     def log_deletion(self, request, obj, obj_display):
         if self._is_deletable(obj):
             super().log_deletion(request, obj, obj_display)
 
-    def overall_status(self, obj):
-        return format_html(
-            '<div class="overall_status {}">{}</div>',
-            obj.overall_status,
-            obj.overall_status
-        )
-
-    def get_inlines(self, request, obj):
-        """Hook for specifying custom inlines."""
+    @staticmethod
+    def global_status(obj):
         if obj:
-            return super().get_inlines(request, obj)
-        else:
-            return []
-
-    def changelist_view(self, request, extra_context=None):
-        if 'user' not in request.GET:
-            # set default filter to the request user
-            q = request.GET.copy()
-            q['user'] = request.user
-            request.GET = q
-            request.META['QUERY_STRING'] = request.GET.urlencode()
-        return super().changelist_view(request, extra_context)
+            return format_html(
+                '<div class="global_status {}">{}</div>',
+                obj.global_status,
+                obj.global_status)
+        return ''

@@ -11,7 +11,7 @@
 #   limitations under the License.
 import logging
 from django.contrib.admin import SimpleListFilter
-from django.db.models import Count
+from django.db.models import Count, Q
 
 logger = logging.getLogger(__name__)
 
@@ -77,24 +77,27 @@ class DBCopyUserFilter(SimpleListFilter):
 
 
 class OverallStatusFilter(SimpleListFilter):
-    title = 'status'  # or use _('country') for translated title
+    title = 'Status'  # or use _('country') for translated title
     parameter_name = 'status'
 
     def lookups(self, request, model_admin):
-        status = set([s.overall_status for s in model_admin.model.objects.all()])
-        return [(s, s) for s in status]
+        return [
+            ("Complete", "Completed"),
+            ("Failed", "Failed"),
+            ("Running", "Running"),
+            ("Submitted", "Submitted"),
+        ]
 
     def queryset(self, request, queryset):
         if self.value() == 'Failed':
             qs = queryset.filter(end_date__isnull=False, status__isnull=False)
-            return qs.filter(transfer_logs__end_date__isnull=True).annotate(
-                count_transfer=Count('transfer_logs')).filter(count_transfer__gt=0)
+            return qs.annotate(count_transfer=Count('transfer_logs', filter=Q(end_date__isnull=False)))
         elif self.value() == 'Complete':
             qs = queryset.filter(end_date__isnull=False, status__isnull=False)
             return qs.exclude(transfer_logs__end_date__isnull=True)
         elif self.value() == 'Running':
             qs = queryset.filter(end_date__isnull=True, status__isnull=True)
-            return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer__gt=0)
+            return qs.annotate(count_transfer=Count('transfer_logs'), filter=Q(end_date__isnull=True))
         elif self.value() == 'Submitted':
             qs = queryset.filter(end_date__isnull=True, status__isnull=True)
             return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)

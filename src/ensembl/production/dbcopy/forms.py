@@ -42,10 +42,10 @@ class TrimmedCharSelectField(forms.MultipleChoiceField):
 class RequestJobForm(forms.ModelForm):
     class Meta:
         model = RequestJob
-        exclude = ('job_id', 'tgt_directory', 'overall_status')
+        exclude = ('job_id', 'tgt_directory', 'global_status')
         fields = ('src_host', 'tgt_host', 'email_list', 'username',
                   'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
-                  'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run', 'overall_status')
+                  'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run', 'global_status')
 
     username = forms.CharField(widget=forms.HiddenInput)
 

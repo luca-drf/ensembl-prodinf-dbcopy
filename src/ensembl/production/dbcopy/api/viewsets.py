@@ -13,7 +13,7 @@ from rest_framework import viewsets, mixins, response, status, generics
 
 from ensembl.production.dbcopy.api.serializers import RequestJobSerializer, HostSerializer, TransferLogSerializer
 from ensembl.production.dbcopy.models import RequestJob, Host, TransferLog
-
+from rest_framework.permissions import AllowAny
 
 class RequestJobViewSet(mixins.CreateModelMixin,
                         mixins.RetrieveModelMixin,
@@ -21,6 +21,8 @@ class RequestJobViewSet(mixins.CreateModelMixin,
                         mixins.DestroyModelMixin,
                         viewsets.GenericViewSet):
     serializer_class = RequestJobSerializer
+    permission_classes = [AllowAny]
+
     queryset = RequestJob.objects.all()
     pagination_class = None
     lookup_field = 'job_id'
@@ -34,7 +36,7 @@ class RequestJobViewSet(mixins.CreateModelMixin,
         :return:
         """
         instance = self.get_object()
-        if instance.overall_status == 'Submitted':
+        if instance.global_status == 'Submitted':
             self.perform_destroy(instance)
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         else:
