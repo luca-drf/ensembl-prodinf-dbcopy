@@ -1,6 +1,13 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
 
+1.5.0
+-----
+- Optimized querie to reduce list retrieval latencies
+- Added expected field for better status follow up
+- Updated JS / CSS 
+- Added detailed link to inlines (transfer_logs) for more details
+
 1.4.0
 -----
 - Fix/simplify database and table ajax alerts
