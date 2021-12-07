@@ -19,7 +19,7 @@ from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from ensembl.production.djcore.forms import TrimmedCharField
 
-from ensembl.production.dbcopy.models import RequestJob, HostGroup, Host, TargetHostGroup
+from ensembl.production.dbcopy.models import RequestJob, HostGroup, TargetHostGroup
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,6 @@ class TrimmedCharSelectField(forms.MultipleChoiceField):
         """Validate that the input is a list or tuple."""
         if self.required and not value:
             raise ValidationError(self.error_messages['required'], code='required')
-
 
 
 class RequestJobForm(forms.ModelForm):
