@@ -185,6 +185,25 @@ class RequestJob(models.Model):
         except ValueError as e:
             raise ValidationError({field: str(e)})
 
+    @staticmethod
+    def equivalent_running_jobs(**filters):
+        """Yield jobs that match filters and haven't terminated"""
+        params = {
+            "src_host": "src_host__iexact",
+            "src_incl_db": "src_incl_db__iexact",
+            "src_skip_db": "src_skip_db__iexact",
+            "src_incl_tables": "src_incl_tables__iexact",
+            "src_skip_tables": "src_skip_tables__iexact",
+            "tgt_host": "tgt_host__iexact",
+            "tgt_db_name": "tgt_db_name__iexact",
+        }
+        filters_exact = {params[k]: filters.get(k) for k in params.keys()}
+        jobs = RequestJob.objects.filter(**filters_exact)
+        for job in jobs:
+            status = job.global_status
+            if status not in ("Failed", "Complete"):
+                yield job
+
     def clean_src_incl_db(self):
         if self.src_host and self.src_incl_db:
             self._clean_db_set_for_filters(self.src_host, 'src_incl_db')
