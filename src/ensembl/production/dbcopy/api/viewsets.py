@@ -9,7 +9,10 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import django.core.exceptions
+
 from rest_framework import viewsets, mixins, response, status, generics
+import rest_framework.exceptions
 
 from ensembl.production.dbcopy.api.serializers import RequestJobSerializer, HostSerializer, TransferLogSerializer
 from ensembl.production.dbcopy.models import RequestJob, Host, TransferLog
@@ -26,6 +29,30 @@ class RequestJobViewSet(mixins.CreateModelMixin,
     queryset = RequestJob.objects.all()
     pagination_class = None
     lookup_field = 'job_id'
+
+    def create(self, request, *args, **kwargs):
+        params = {
+            "src_host",
+            "src_incl_db",
+            "src_skip_db",
+            "src_incl_tables",
+            "src_skip_tables",
+            "tgt_host",
+            "tgt_db_name",
+        }
+        filters = {k: v for k, v in request.data.items() if k in params and v}
+        for job in RequestJob.equivalent_running_jobs(**filters):
+            raise rest_framework.exceptions.ValidationError(
+                {"error": "A job with the same parameters is already in the system.", "job_id": job.job_id}
+            )
+        try:
+            return super().create(request, *args, **kwargs)
+        except django.core.exceptions.ValidationError as err:
+            try:
+                errors = err.message_dict
+            except AttributeError:
+                errors = err.messages
+            raise rest_framework.exceptions.ValidationError(errors) from err
 
     def destroy(self, request, *args, **kwargs):
         """
