@@ -126,16 +126,32 @@ class RequestJob(models.Model):
     @property
     def global_status(self):
         if self.status:
-            if (self.end_date and self.status == 'Transfer Ended') or 'Try:' in self.status:
-                # running_transfers = self.transfer_logs.filter(end_date__isnull=True).count()
-                if self.running_transfers > 0:
-                    return 'Failed'
-                else:
-                    return 'Complete'
+            if self.status == 'Transfer Ended':
+                return "Complete"
+            elif self.status.strip().startswith("Try:"):
+                m = re.match(
+                    r"^Try:(?P<tries>\d+)/(?P<total_tries>\d+). (?P<copied>\d+)/(?P<total_copies>\d+) Transferred$",
+                    self.status.strip()
+                )
+                if m:
+                    tries = int(m.group("tries"))
+                    total_tries = int(m.group("total_tries"))
+                    copied = int(m.group("copied"))
+                    total_copies = int(m.group("total_copies"))
+                    if copied == total_copies:
+                        return "Complete"
+                    if (tries == total_tries) and (copied < total_copies):
+                        return "Failed"
+                    if tries < total_tries:
+                        if self.running_transfers == 0:
+                            return "Failed"
+                        return "Running"
             elif self.status == 'Processing Requests':
                 return 'Running'
             elif self.status == 'Creating Requests':
                 return 'Scheduled'
+            elif self.status.strip().startswith("Error:"):
+                return "Failed"
         return 'Submitted'
 
     @property
@@ -150,21 +166,10 @@ class RequestJob(models.Model):
 
     @property
     def detailed_status(self):
-        total_tables = self.nb_transfers
-        status_msg = 'Submitted'
-        if self.status == 'Processing Requests' or self.status == 'Creating Requests':
-            status_msg = 'Scheduled'
-        if self.progress == 100.0 and self.status == 'Transfer Ended':
-            status_msg = 'Complete'
-        elif total_tables > 0:
-            if self.status:
-                if (self.end_date and self.status == 'Transfer Ended') or ('Try:' in self.status):
-                    status_msg = 'Failed'
-                elif self.status == 'Processing Requests':
-                    status_msg = 'Running'
-        return {'status_msg': status_msg,
+        return {'status_msg': self.global_status,
+                'status': self.status,
                 'table_copied': self.done_transfers,
-                'total_tables': total_tables,
+                'total_tables': self.nb_transfers,
                 'progress': self.progress}
 
     def _clean_db_set_for_filters(self, from_host, field):
