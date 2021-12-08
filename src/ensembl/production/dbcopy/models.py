@@ -198,7 +198,7 @@ class RequestJob(models.Model):
             "tgt_db_name": "tgt_db_name__iexact",
         }
         filters_exact = {params[k]: filters.get(k) for k in params.keys()}
-        jobs = RequestJob.objects.filter(**filters_exact)
+        jobs = RequestJob.objects.filter(**filters_exact).order_by("-request_date")
         for job in jobs:
             status = job.global_status
             if status not in ("Failed", "Complete"):
