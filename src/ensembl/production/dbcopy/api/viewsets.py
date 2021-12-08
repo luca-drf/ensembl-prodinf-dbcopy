@@ -41,10 +41,11 @@ class RequestJobViewSet(mixins.CreateModelMixin,
             "tgt_db_name",
         }
         filters = {k: v for k, v in request.data.items() if k in params and v}
-        for job in RequestJob.equivalent_running_jobs(**filters):
-            raise rest_framework.exceptions.ValidationError(
-                {"error": "A job with the same parameters is already in the system.", "job_id": job.job_id}
-            )
+        for job in RequestJob.objects.equivalent_jobs(**filters):
+            if job.is_active:
+                raise rest_framework.exceptions.ValidationError(
+                    {"error": "A job with the same parameters is already in the system.", "job_id": job.job_id}
+                )
         try:
             return super().create(request, *args, **kwargs)
         except django.core.exceptions.ValidationError as err:

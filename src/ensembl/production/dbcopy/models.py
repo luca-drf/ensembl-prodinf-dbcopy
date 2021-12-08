@@ -33,6 +33,23 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+class RequestJobManager(models.Manager):
+    _EQ_PARAMS = {
+        "src_host": "src_host__iexact",
+        "src_incl_db": "src_incl_db__iexact",
+        "src_skip_db": "src_skip_db__iexact",
+        "src_incl_tables": "src_incl_tables__iexact",
+        "src_skip_tables": "src_skip_tables__iexact",
+        "tgt_host": "tgt_host__iexact",
+        "tgt_db_name": "tgt_db_name__iexact",
+    }
+
+    def equivalent_jobs(self, **filters):
+        filters_exact = {self._EQ_PARAMS[k]: filters.get(k) for k in self._EQ_PARAMS.keys()}
+        queryset = self.get_queryset()
+        return queryset.filter(**filters_exact).order_by("-request_date")
+
+
 class Dbs2Exclude(models.Model):
     table_schema = models.CharField(primary_key=True, db_column='TABLE_SCHEMA',
                                     max_length=64)  # Field name made lowercase.
@@ -49,6 +66,8 @@ class RequestJob(models.Model):
         verbose_name = "Copy job"
         verbose_name_plural = "Copy jobs"
         ordering = ('-request_date',)
+
+    objects = RequestJobManager()
 
     job_id = models.CharField(primary_key=True, max_length=128, default=uuid.uuid1, editable=False)
     src_host = models.TextField("Source Host", max_length=2048,
@@ -165,6 +184,10 @@ class RequestJob(models.Model):
         return 0.0
 
     @property
+    def is_active(self):
+        return not (self.global_status in ("Complete", "Failed"))
+
+    @property
     def detailed_status(self):
         return {'status_msg': self.global_status,
                 'status': self.status,
@@ -184,25 +207,6 @@ class RequestJob(models.Model):
                 raise ValidationError({'src_incl_db': 'No db matching incl. %s' % (name_filters,)})
         except ValueError as e:
             raise ValidationError({field: str(e)})
-
-    @staticmethod
-    def equivalent_running_jobs(**filters):
-        """Yield jobs that match filters and haven't terminated"""
-        params = {
-            "src_host": "src_host__iexact",
-            "src_incl_db": "src_incl_db__iexact",
-            "src_skip_db": "src_skip_db__iexact",
-            "src_incl_tables": "src_incl_tables__iexact",
-            "src_skip_tables": "src_skip_tables__iexact",
-            "tgt_host": "tgt_host__iexact",
-            "tgt_db_name": "tgt_db_name__iexact",
-        }
-        filters_exact = {params[k]: filters.get(k) for k in params.keys()}
-        jobs = RequestJob.objects.filter(**filters_exact).order_by("-request_date")
-        for job in jobs:
-            status = job.global_status
-            if status not in ("Failed", "Complete"):
-                yield job
 
     def clean_src_incl_db(self):
         if self.src_host and self.src_incl_db:

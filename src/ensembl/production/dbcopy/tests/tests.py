@@ -64,7 +64,8 @@ class RequestJobTest(APITestCase):
             "tgt_host": job.tgt_host,
             "tgt_db_name": job.tgt_db_name,
         }
-        self.assertEqual(len(list(RequestJob.equivalent_running_jobs(**params))), 1)
+        active_equivalent_jobs = list(filter(lambda x: x.is_active, RequestJob.objects.equivalent_jobs(**params)))
+        self.assertEqual(len(active_equivalent_jobs), 1)
         response = self.client.post(reverse('dbcopy_api:requestjob-list'), params)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         error = response.json()["error"]
@@ -82,7 +83,8 @@ class RequestJobTest(APITestCase):
             "tgt_host": job.tgt_host,
             "tgt_db_name": job.tgt_db_name,
         }
-        self.assertEqual(len(list(RequestJob.equivalent_running_jobs(**params))), 0)
+        active_equivalent_jobs = list(filter(lambda x: x.is_active, RequestJob.objects.equivalent_jobs(**params)))
+        self.assertEqual(len(active_equivalent_jobs), 0)
         response = self.client.post(reverse('dbcopy_api:requestjob-list'),
                                     {**params, "user": "testuser"})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -96,7 +98,8 @@ class RequestJobTest(APITestCase):
             "src_incl_db": job.src_incl_db,
             "tgt_host": job.tgt_host,
         }
-        self.assertEqual(len(list(RequestJob.equivalent_running_jobs(**params))), 0)
+        active_equivalent_jobs = list(filter(lambda x: x.is_active, RequestJob.objects.equivalent_jobs(**params)))
+        self.assertEqual(len(active_equivalent_jobs), 0)
         response = self.client.post(reverse('dbcopy_api:requestjob-list'),
                                     {**params, "user": "testuser"})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
