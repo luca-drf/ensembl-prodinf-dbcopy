@@ -20,7 +20,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils.html import format_html
 from ensembl.production.core.db_introspects import get_database_set
@@ -347,6 +346,13 @@ class RequestJob(models.Model):
             self.email_list = ','.join(
                 [user.email for user in User.objects.filter(username__in=self.username.split(','))])
         self.full_clean()
+        if self._state.adding:
+            for job in self.equivalent_jobs:
+                if job.is_active:
+                    raise ValidationError(
+                        {"error": "A job with the same parameters is already in the system.", "job_id": job.job_id},
+                        'fobidden'
+                    )
         super().save(force_insert, force_update, using, update_fields)
 
     @property
@@ -358,6 +364,11 @@ class RequestJob(models.Model):
             ''',
             self.progress
         )
+
+    @property
+    def equivalent_jobs(self):
+        params = {k: getattr(self, k) for k in self.__class__.objects._EQ_PARAMS.keys()}
+        return self.__class__.objects.equivalent_jobs(**params)
 
     def get_transfer_url(self):
         from django.http import QueryDict

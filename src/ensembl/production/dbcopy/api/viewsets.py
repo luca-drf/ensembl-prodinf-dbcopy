@@ -31,21 +31,6 @@ class RequestJobViewSet(mixins.CreateModelMixin,
     lookup_field = 'job_id'
 
     def create(self, request, *args, **kwargs):
-        params = {
-            "src_host",
-            "src_incl_db",
-            "src_skip_db",
-            "src_incl_tables",
-            "src_skip_tables",
-            "tgt_host",
-            "tgt_db_name",
-        }
-        filters = {k: v for k, v in request.data.items() if k in params and v}
-        for job in RequestJob.objects.equivalent_jobs(**filters):
-            if job.is_active:
-                raise rest_framework.exceptions.ValidationError(
-                    {"error": "A job with the same parameters is already in the system.", "job_id": job.job_id}
-                )
         try:
             return super().create(request, *args, **kwargs)
         except django.core.exceptions.ValidationError as err:

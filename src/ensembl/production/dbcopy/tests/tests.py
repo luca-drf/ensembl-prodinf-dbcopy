@@ -66,10 +66,11 @@ class RequestJobTest(APITestCase):
         }
         active_equivalent_jobs = list(filter(lambda x: x.is_active, RequestJob.objects.equivalent_jobs(**params)))
         self.assertEqual(len(active_equivalent_jobs), 1)
-        response = self.client.post(reverse('dbcopy_api:requestjob-list'), params)
+        response = self.client.post(reverse('dbcopy_api:requestjob-list'),
+                                    {**params, "user": "testuser"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        error = response.json()["error"]
-        job_id = response.json()["job_id"]
+        error = response.json()["error"][0]
+        job_id = response.json()["job_id"][0]
         self.assertRegex(error, r"^A job with the same parameters")
         self.assertEqual(job_id, job.job_id)
 
