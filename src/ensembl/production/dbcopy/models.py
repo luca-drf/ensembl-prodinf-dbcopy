@@ -347,11 +347,11 @@ class RequestJob(models.Model):
                 [user.email for user in User.objects.filter(username__in=self.username.split(','))])
         self.full_clean()
         if self._state.adding:
-            for job in self.equivalent_jobs:
+            for job in self.get_equivalent_jobs():
                 if job.is_active:
                     raise ValidationError(
                         {"error": "A job with the same parameters is already in the system.", "job_id": job.job_id},
-                        'fobidden'
+                        'invalid'
                     )
         super().save(force_insert, force_update, using, update_fields)
 
@@ -365,10 +365,9 @@ class RequestJob(models.Model):
             self.progress
         )
 
-    @property
-    def equivalent_jobs(self):
+    def get_equivalent_jobs(self):
         params = {k: getattr(self, k) for k in self.__class__.objects._EQ_PARAMS.keys()}
-        return self.__class__.objects.equivalent_jobs(**params)
+        return self.__class__.objects.equivalent_jobs(**params).exclude(job_id=self.job_id)
 
     def get_transfer_url(self):
         from django.http import QueryDict
