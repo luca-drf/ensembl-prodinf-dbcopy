@@ -14,6 +14,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.core.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -53,6 +54,31 @@ class RequestJobTest(APITestCase):
         self.assertIn('user', response.data)
         self.assertEqual('blank', response.data['src_host'][0].code)
         self.assertEqual('required', response.data['user'][0].code)
+
+    def testSaveRequestJobEquivalentAdding(self):
+        job = RequestJob.objects.get(job_id='ddbdc15a-07af-11ea-bdcd-9801a79243a5')
+        job.status = 'Processing Requests'
+        job.save()
+        eq_job = RequestJob()
+        eq_job.src_host = job.src_host
+        eq_job.src_incl_db = job.src_incl_db
+        eq_job.tgt_host = job.tgt_host
+        eq_job.tgt_db_name = job.tgt_db_name
+        eq_job.username = job.username
+        with self.assertRaises(ValidationError):
+            eq_job.save()
+
+    def testSaveRequestJobEquivalentFromDB(self):
+        job = RequestJob.objects.get(job_id='ddbdc15a-07af-11ea-bdcd-9801a79243a5')
+        job.status = 'Processing Requests'
+        job.save()
+        eq_job = RequestJob.objects.get(job_id="8f084180-07ae-11ea-ace0-9801a79243a5")
+        eq_job.src_host = job.src_host
+        eq_job.src_incl_db = job.src_incl_db
+        eq_job.tgt_host = job.tgt_host
+        eq_job.tgt_db_name = job.tgt_db_name
+        eq_job.username = job.username
+        eq_job.save()
 
     def testCreateRequestJobBadRequestEquivalentRunning(self):
         job = RequestJob.objects.get(job_id='ddbdc15a-07af-11ea-bdcd-9801a79243a5')
@@ -221,7 +247,6 @@ class RequestJobTest(APITestCase):
         self.assertEqual(len(response.data), 2)
 
     def testRequestModelCleanRaises(self):
-        from django.core.exceptions import ValidationError
         with self.assertRaises(ValidationError):
             # test db_name repeated on same target
             RequestJob.objects.create(src_host="host1:3306",
