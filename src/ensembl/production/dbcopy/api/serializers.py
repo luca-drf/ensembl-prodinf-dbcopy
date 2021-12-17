@@ -80,10 +80,10 @@ class RequestJobSerializer(serializers.HyperlinkedModelSerializer,
             'global_status')
         read_only_fields = ['job_id', 'url', 'transfers']
         extra_kwargs = {
-            'url': {'view_name': 'dbcopy_api:requestjob-detail', 'lookup_field': 'job_id'}
+            'url': {'view_name': 'dbcopy_api:requestjob-detail', 'lookup_field': 'job_id'},
+            "user": {"required": True, "source": "username"},
         }
 
-    user = serializers.CharField(required=True, source='username')
     transfer_logs = serializers.SerializerMethodField(read_only=True)
 
     def get_transfer_logs(self, obj):

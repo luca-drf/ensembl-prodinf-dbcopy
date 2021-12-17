@@ -9,7 +9,10 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import django.core.exceptions
+
 from rest_framework import viewsets, mixins, response, status, generics
+import rest_framework.exceptions
 
 from ensembl.production.dbcopy.api.serializers import RequestJobSerializer, HostSerializer, TransferLogSerializer
 from ensembl.production.dbcopy.models import RequestJob, Host, TransferLog
@@ -26,6 +29,16 @@ class RequestJobViewSet(mixins.CreateModelMixin,
     queryset = RequestJob.objects.all()
     pagination_class = None
     lookup_field = 'job_id'
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except django.core.exceptions.ValidationError as err:
+            try:
+                errors = err.message_dict
+            except AttributeError:
+                errors = err.messages
+            raise rest_framework.exceptions.ValidationError(errors) from err
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -51,7 +64,7 @@ class SourceHostViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Return a list of hosts according to a keyword
         """
-        return Host.objects.qs_src_host(self.request.GET.get('name', self.kwargs.get('name', None)), active=False)
+        return Host.objects.qs_src_host(self.request.query_params.get('name', self.kwargs.get('name')), active=False)
 
 
 class TargetHostViewSet(viewsets.ReadOnlyModelViewSet):
@@ -59,8 +72,8 @@ class TargetHostViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'name'
 
     def get_queryset(self):
-        # WARNING request now need a user to perform the listing. But no use case found outside of Django admin so far.
-        return Host.objects.qs_tgt_host_for_user(self.request.GET.get('name', self.kwargs.get('name', None)),
+        # WARNING request now need a user to perform the listing. This breaks dbcopy-client tool validation.
+        return Host.objects.qs_tgt_host_for_user(self.request.query_params.get('name', self.kwargs.get('name')),
                                                  self.request.user,
                                                  active=False)
 

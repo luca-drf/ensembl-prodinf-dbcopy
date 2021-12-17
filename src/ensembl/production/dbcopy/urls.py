@@ -9,7 +9,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django.urls import path, include
+from django.urls import path
 
 from .views import reset_failed_jobs, requestjob_checks_warning, group_choice
 from .lookups import SrcHostLookup, TgtHostLookup, DbLookup, TableLookup

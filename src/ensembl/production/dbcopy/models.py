@@ -20,7 +20,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils.html import format_html
 from ensembl.production.core.db_introspects import get_database_set
@@ -31,6 +30,23 @@ from ensembl.production.dbcopy.utils import get_filters
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+class RequestJobManager(models.Manager):
+    _EQ_PARAMS = {
+        "src_host": "src_host__iexact",
+        "src_incl_db": "src_incl_db__iexact",
+        "src_skip_db": "src_skip_db__iexact",
+        "src_incl_tables": "src_incl_tables__iexact",
+        "src_skip_tables": "src_skip_tables__iexact",
+        "tgt_host": "tgt_host__iexact",
+        "tgt_db_name": "tgt_db_name__iexact",
+    }
+
+    def equivalent_jobs(self, **filters):
+        filters_exact = {self._EQ_PARAMS[k]: filters.get(k) for k in self._EQ_PARAMS.keys()}
+        queryset = self.get_queryset()
+        return queryset.filter(**filters_exact).order_by("-request_date")
 
 
 class Dbs2Exclude(models.Model):
@@ -49,6 +65,8 @@ class RequestJob(models.Model):
         verbose_name = "Copy job"
         verbose_name_plural = "Copy jobs"
         ordering = ('-request_date',)
+
+    objects = RequestJobManager()
 
     job_id = models.CharField(primary_key=True, max_length=128, default=uuid.uuid1, editable=False)
     src_host = models.TextField("Source Host", max_length=2048,
@@ -126,16 +144,32 @@ class RequestJob(models.Model):
     @property
     def global_status(self):
         if self.status:
-            if (self.end_date and self.status == 'Transfer Ended') or 'Try:' in self.status:
-                # running_transfers = self.transfer_logs.filter(end_date__isnull=True).count()
-                if self.running_transfers > 0:
-                    return 'Failed'
-                else:
-                    return 'Complete'
+            if self.status == 'Transfer Ended':
+                return "Complete"
+            elif self.status.strip().startswith("Try:"):
+                m = re.match(
+                    r"^Try:(?P<tries>\d+)/(?P<total_tries>\d+). (?P<copied>\d+)/(?P<total_copies>\d+) Transferred$",
+                    self.status.strip()
+                )
+                if m:
+                    tries = int(m.group("tries"))
+                    total_tries = int(m.group("total_tries"))
+                    copied = int(m.group("copied"))
+                    total_copies = int(m.group("total_copies"))
+                    if copied == total_copies:
+                        return "Complete"
+                    if (tries == total_tries) and (copied < total_copies):
+                        return "Failed"
+                    if tries < total_tries:
+                        if self.running_transfers == 0:
+                            return "Failed"
+                        return "Running"
             elif self.status == 'Processing Requests':
                 return 'Running'
             elif self.status == 'Creating Requests':
                 return 'Scheduled'
+            elif self.status.strip().startswith("Error:"):
+                return "Failed"
         return 'Submitted'
 
     @property
@@ -149,22 +183,15 @@ class RequestJob(models.Model):
         return 0.0
 
     @property
+    def is_active(self):
+        return not (self.global_status in ("Complete", "Failed"))
+
+    @property
     def detailed_status(self):
-        total_tables = self.nb_transfers
-        status_msg = 'Submitted'
-        if self.status == 'Processing Requests' or self.status == 'Creating Requests':
-            status_msg = 'Scheduled'
-        if self.progress == 100.0 and self.status == 'Transfer Ended':
-            status_msg = 'Complete'
-        elif total_tables > 0:
-            if self.status:
-                if (self.end_date and self.status == 'Transfer Ended') or ('Try:' in self.status):
-                    status_msg = 'Failed'
-                elif self.status == 'Processing Requests':
-                    status_msg = 'Running'
-        return {'status_msg': status_msg,
+        return {'status_msg': self.global_status,
+                'status': self.status,
                 'table_copied': self.done_transfers,
-                'total_tables': total_tables,
+                'total_tables': self.nb_transfers,
                 'progress': self.progress}
 
     def _clean_db_set_for_filters(self, from_host, field):
@@ -319,6 +346,13 @@ class RequestJob(models.Model):
             self.email_list = ','.join(
                 [user.email for user in User.objects.filter(username__in=self.username.split(','))])
         self.full_clean()
+        if self._state.adding:
+            for job in self.get_equivalent_jobs():
+                if job.is_active:
+                    raise ValidationError(
+                        {"error": "A job with the same parameters is already in the system.", "job_id": job.job_id},
+                        'invalid'
+                    )
         super().save(force_insert, force_update, using, update_fields)
 
     @property
@@ -330,6 +364,10 @@ class RequestJob(models.Model):
             ''',
             self.progress
         )
+
+    def get_equivalent_jobs(self):
+        params = {k: getattr(self, k) for k in self.__class__.objects._EQ_PARAMS.keys()}
+        return self.__class__.objects.equivalent_jobs(**params).exclude(job_id=self.job_id)
 
     def get_transfer_url(self):
         from django.http import QueryDict

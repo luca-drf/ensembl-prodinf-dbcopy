@@ -19,7 +19,7 @@ from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from ensembl.production.djcore.forms import TrimmedCharField
 
-from ensembl.production.dbcopy.models import RequestJob, HostGroup, Host, TargetHostGroup
+from ensembl.production.dbcopy.models import RequestJob, HostGroup, TargetHostGroup
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,6 @@ class TrimmedCharSelectField(forms.MultipleChoiceField):
             raise ValidationError(self.error_messages['required'], code='required')
 
 
-
 class RequestJobForm(forms.ModelForm):
     class Meta:
         model = RequestJob
@@ -54,11 +53,9 @@ class RequestJobForm(forms.ModelForm):
         help_text="host:port",
         required=True,
         widget=autocomplete.ListSelect2(url='ensembl_dbcopy:src-host-autocomplete',
-
                                         attrs={'data-placeholder': 'Source host',
                                                'data-minimum-input-length': 2})
     )
-
     tgt_host = TrimmedCharSelectField(
         label="Target Hosts",
         help_text="List of target hosts",
@@ -67,7 +64,6 @@ class RequestJobForm(forms.ModelForm):
                                             attrs={'data-placeholder': 'Target(s)',
                                                    'data-result-html': True})
     )
-
     src_incl_db = TrimmedCharField(
         label="Databases to copy",
         help_text='db1,db2,.. or %variation_99% ',
@@ -77,7 +73,6 @@ class RequestJobForm(forms.ModelForm):
                                        forward=[forward.Field('src_host', 'db_host')],
                                        attrs={'data-placeholder': 'Included Db(s)'})
     )
-
     src_skip_db = TrimmedCharField(
         label="Databases to exclude",
         help_text='db1,db2 or %mart%',
@@ -87,7 +82,6 @@ class RequestJobForm(forms.ModelForm):
                                        forward=[forward.Field('src_host', 'db_host')],
                                        attrs={'data-placeholder': 'Skip table(s)'})
     )
-
     src_incl_tables = TrimmedCharField(
         label="Only Copy these tables",
         help_text='table1,table2,..',
@@ -98,7 +92,6 @@ class RequestJobForm(forms.ModelForm):
                                                 forward.Field('src_incl_db')],
                                        attrs={'data-placeholder': 'Include table(s)'})
     )
-
     src_skip_tables = TrimmedCharField(
         label="Skip these tables",
         help_text='table1,table2,..',
@@ -109,7 +102,6 @@ class RequestJobForm(forms.ModelForm):
                                                 forward.Field('src_incl_db')],
                                        attrs={'data-placeholder': 'Exclude table(s)'})
     )
-
     tgt_db_name = TrimmedCharField(
         label="Rename DB(s)on target(s)",
         help_text='db1,db2,..',
