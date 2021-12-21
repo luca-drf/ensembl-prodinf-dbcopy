@@ -1,6 +1,11 @@
 CHANGELOG - Ensembl Prodinf Database copy
 =========================================
 
+1.5.1
+-----
+- Added feature to prevent duplicated request_job insertion through GUI or API calls
+  To prevent multiple same job (considered same job is currently the exact same parameters)
+
 1.5.0
 -----
 - Optimized querie to reduce list retrieval latencies
