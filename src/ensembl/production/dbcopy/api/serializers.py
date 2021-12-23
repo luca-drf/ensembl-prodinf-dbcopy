@@ -84,7 +84,7 @@ class RequestJobSerializer(serializers.HyperlinkedModelSerializer,
         }
 
     transfer_logs = serializers.SerializerMethodField(read_only=True)
-    overall_status = serializers.CharField(source='global_status')
+    overall_status = serializers.CharField(source='global_status', read_only=True, required=False)
 
     def get_transfer_logs(self, obj):
         return reverse(viewname='dbcopy_api:transfers-list',
