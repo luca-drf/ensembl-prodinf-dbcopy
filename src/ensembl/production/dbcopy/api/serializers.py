@@ -11,12 +11,11 @@
 #   limitations under the License.
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from ensembl.production.dbcopy.models import TransferLog, RequestJob, Host
 from rest_framework import serializers
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from rest_framework.reverse import reverse
-
-from ensembl.production.dbcopy.models import TransferLog, RequestJob, Host
 
 User = get_user_model()
 
@@ -77,19 +76,51 @@ class RequestJobSerializer(serializers.HyperlinkedModelSerializer,
             'end_date',
             'user',
             'transfer_logs',
-            'global_status')
-        read_only_fields = ['job_id', 'url', 'transfers']
+            'overall_status')
+        read_only_fields = ['job_id', 'url', 'transfers', 'overall_status']
         extra_kwargs = {
             'url': {'view_name': 'dbcopy_api:requestjob-detail', 'lookup_field': 'job_id'},
             "user": {"required": True, "source": "username"},
         }
 
     transfer_logs = serializers.SerializerMethodField(read_only=True)
+    overall_status = serializers.CharField(source='global_status')
 
     def get_transfer_logs(self, obj):
         return reverse(viewname='dbcopy_api:transfers-list',
                        request=self.context['request'],
                        kwargs={'job_id': obj.job_id})
+
+
+class RequestJobDetailSerializer(RequestJobSerializer):
+    class Meta:
+        model = RequestJob
+        fields = (
+            'url',
+            'job_id',
+            'src_host',
+            'src_incl_db',
+            'src_skip_db',
+            'src_incl_tables',
+            'src_skip_tables',
+            'tgt_host',
+            'tgt_db_name',
+            'tgt_directory',
+            'skip_optimize',
+            'wipe_target',
+            'convert_innodb',
+            'email_list',
+            'start_date',
+            'end_date',
+            'user',
+            'transfer_logs',
+            'overall_status',
+            'detailed_status')
+        read_only_fields = ['job_id', 'url', 'transfers', 'overall_status']
+        extra_kwargs = {
+            'url': {'view_name': 'dbcopy_api:requestjob-detail', 'lookup_field': 'job_id'},
+            "user": {"required": True, "source": "username"},
+        }
 
 
 class HostSerializer(serializers.ModelSerializer):
