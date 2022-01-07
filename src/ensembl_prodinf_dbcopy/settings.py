@@ -72,11 +72,11 @@ WSGI_APPLICATION = 'ensembl_prodinf_dbcopy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ensembl_dbcopy',
-        'USER': 'ensprod',
-        'PASSWORD': 's3cr3t',
-        'HOST': 'mysql-ens-meta-prod-1',
-        'PORT': 4483,
+        'NAME': 'db_copy',
+        'USER': 'ensembl',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': 3306,
     }
 }
 
