@@ -168,7 +168,7 @@ class RequestJob(models.Model):
                 return 'Running'
             elif self.status == 'Creating Requests':
                 return 'Scheduled'
-            elif self.status.strip().startswith("Error:"):
+            elif self.status.strip().lower().startswith("error"):
                 return "Failed"
         return 'Submitted'
 
