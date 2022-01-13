@@ -90,14 +90,17 @@ class OverallStatusFilter(SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'Failed':
-            qs = queryset.filter(end_date__isnull=False, status__isnull=False)
-            return qs.annotate(count_transfer=Count('transfer_logs', filter=Q(end_date__isnull=False)))
+            qs = queryset.filter(end_date__isnull=False)
+            qs = qs.annotate(failed_transfers=Count('transfer_logs', filter=Q(transfer_logs__size__isnull=True)))
+            qs = qs.annotate(all_transfers=Count('transfer_logs'))
+            return qs.filter(Q(failed_transfers__gt=0) | Q(all_transfers=0))
         elif self.value() == 'Complete':
-            qs = queryset.filter(end_date__isnull=False, status__isnull=False)
-            return qs.exclude(transfer_logs__end_date__isnull=True)
+            qs = queryset.filter(end_date__isnull=False, status="Transfer Ended")
+            return qs
         elif self.value() == 'Running':
-            qs = queryset.filter(end_date__isnull=True, status__isnull=True)
-            return qs.annotate(count_transfer=Count('transfer_logs'), filter=Q(end_date__isnull=True))
+            qs = queryset.filter(start_date__isnull=False, end_date__isnull=True)
+            return qs
         elif self.value() == 'Submitted':
-            qs = queryset.filter(end_date__isnull=True, status__isnull=True)
-            return qs.annotate(count_transfer=Count('transfer_logs')).filter(count_transfer=0)
+            qs = queryset.filter(start_date__isnull=True, end_date__isnull=True)
+            return qs
+
