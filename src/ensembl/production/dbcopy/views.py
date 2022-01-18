@@ -9,20 +9,19 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.core.exceptions import ValidationError
 import logging
 
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import ValidationError
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
 from ensembl.production.dbcopy.lookups import get_excluded_schemas
 from ensembl.production.dbcopy.models import RequestJob
 from ensembl.production.dbcopy.utils import get_filters
-from django.views.decorators.http import require_http_methods
-
 
 logger = logging.getLogger(__name__)
 
@@ -46,16 +45,16 @@ def requestjob_checks_warning(request):
     import json
     from django.http import HttpResponse
     ajax_vars = {'dberrors': {}, 'dbwarnings': {}, 'tablewarnings': {}, 'tableerrors': {}}
-    src_host = request.POST.get('src_host', 'None')
+    src_host = request.POST.get('src_host', None)
     tgt_hosts = request.POST.getlist('tgt_host', [])
     logger.debug("All Post data %s", request.POST)
     if src_host and tgt_hosts:
         src_hostname, src_port = src_host.split(':')
-        posted = request.POST.dict()
+        posted = {k: v for k, v in request.POST.items() if 'FORMS' not in k}
         posted.pop('csrfmiddlewaretoken')
         request_job = RequestJob(**posted)
         try:
-            exclude = 'tgt_host' if not tgt_hosts else None
+            exclude = ['tgt_host', 'src_incl_db']
             request_job.full_clean(exclude=exclude, validate_unique=False)
         except ValidationError as e:
             ajax_vars['dberrors'].update(e)
@@ -116,13 +115,13 @@ def requestjob_checks_warning(request):
                                                             incl_filters=src_table_names,
                                                             skip_filters=skip_table_filter)
                             logger.debug("tgt_table_names %s", tgt_table_names)
+                            if len(tgt_table_names) > 0:
+                                ajax_vars['tablewarnings'].update({tgt_database: sorted(tgt_table_names)})
                         except ValueError as e:
                             # Error most likely raised when target db doesn't exists, this is no error!
                             # TODO check the above statement twice!
                             # ajax_vars['tableerrors'].update({host: [str(e)]})
                             logger.error("Unable to fetch tables: %s", e)
-                        if len(tgt_table_names) > 0:
-                            ajax_vars['tablewarnings'].update({tgt_database: sorted(tgt_table_names)})
             except ValueError as e:
                 logger.error("Inspect error %s", str(e))
                 ajax_vars['dberrors'].update({tgt_hostname: [str(e)]})

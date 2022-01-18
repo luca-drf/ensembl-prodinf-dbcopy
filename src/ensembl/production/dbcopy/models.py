@@ -23,10 +23,10 @@ from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html
 from ensembl.production.core.db_introspects import get_database_set
-from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
-from ensembl.production.djcore.models import NullTextField
 
 from ensembl.production.dbcopy.utils import get_filters
+from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
+from ensembl.production.djcore.models import NullTextField
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -72,7 +72,8 @@ class RequestJob(models.Model):
     src_host = models.TextField("Source Host", max_length=2048,
                                 validators=[RegexValidator(regex="^[\w-]+:[0-9]{4}",
                                                            message="Source Host should be: host:port")])
-    src_incl_db = NullTextField("Included Db(s)", max_length=2048, blank=True, null=False, default="%")
+    src_incl_db = models.TextField("Included Db(s)", max_length=2048, blank=False, null=False,
+                                   help_text="Put '%' to copy all the server content (use with caution!)")
     src_skip_db = NullTextField("Skipped Db(s)", max_length=2048, blank=True, null=True)
     src_incl_tables = NullTextField("Included Table(s)", max_length=2048, blank=True, null=True)
     src_skip_tables = NullTextField("Skipped Table(s)", max_length=2048, blank=True, null=True)
@@ -328,13 +329,14 @@ class RequestJob(models.Model):
         :return: None
         """
         targets = self.tgt_host.split(',')
-        src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
-        tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
-        one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
-        if self.src_host in targets and one_src_db_targets:
-            raise ValidationError({'tgt_host': "You can't set a copy with identical source/target host/db pair.\n"
-                                               "Please rename target(s) or change target host"},
-                                  'forbidden')
+        if self.src_incl_db:
+            src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
+            tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
+            one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
+            if self.src_host in targets and one_src_db_targets:
+                raise ValidationError({'tgt_host': "You can't set a copy with identical source/target host/db pair.\n"
+                                                   "Please rename target(s) or change target host"},
+                                      'forbidden')
         super().clean()
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
