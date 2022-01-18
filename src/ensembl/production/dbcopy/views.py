@@ -48,6 +48,7 @@ def requestjob_checks_warning(request):
     src_host = request.POST.get('src_host', None)
     tgt_hosts = request.POST.getlist('tgt_host', [])
     logger.debug("All Post data %s", request.POST)
+
     if src_host and tgt_hosts:
         src_hostname, src_port = src_host.split(':')
         posted = {k: v for k, v in request.POST.items() if 'FORMS' not in k}
@@ -77,7 +78,7 @@ def requestjob_checks_warning(request):
                 # only raise error if no match, but only if any filter specified
                 # TODO: better error reporting
                 raise ValueError("No db matching incl. %s / excl. %s " % (src_incl_filters, src_skip_filters))
-        except ValueError as e:
+        except Exception as e:
             ajax_vars.update({'dberrors': {src_hostname: [str(e)]}})
             return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
 
@@ -117,14 +118,15 @@ def requestjob_checks_warning(request):
                             logger.debug("tgt_table_names %s", tgt_table_names)
                             if len(tgt_table_names) > 0:
                                 ajax_vars['tablewarnings'].update({tgt_database: sorted(tgt_table_names)})
-                        except ValueError as e:
+                        except Exception as e:
                             # Error most likely raised when target db doesn't exists, this is no error!
                             # TODO check the above statement twice!
                             # ajax_vars['tableerrors'].update({host: [str(e)]})
                             logger.error("Unable to fetch tables: %s", e)
-            except ValueError as e:
+            except Exception as e:
                 logger.error("Inspect error %s", str(e))
                 ajax_vars['dberrors'].update({tgt_hostname: [str(e)]})
+            return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
 
     if len(ajax_vars['dberrors']) > 0 or len(ajax_vars['tableerrors']) > 0:
         status_code = 400
