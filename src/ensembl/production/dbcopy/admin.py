@@ -17,11 +17,11 @@ from django.db.models.query import QuerySet
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django_admin_inline_paginator.admin import TabularInlinePaginated
-from ensembl.production.djcore.admin import SuperUserAdmin
-from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
 
+from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
 from ensembl.production.dbcopy.forms import RequestJobForm, GroupInlineForm
 from ensembl.production.dbcopy.models import Host, RequestJob, HostGroup, TargetHostGroup, TransferLog
+from ensembl.production.djcore.admin import SuperUserAdmin
 
 
 class GroupInline(admin.TabularInline):
@@ -139,13 +139,11 @@ class RequestJobAdmin(admin.ModelAdmin):
     search_fields = ('job_id', 'src_host', 'src_incl_db', 'src_skip_db', 'tgt_host')  # , 'username', 'request_date')
     list_filter = (DBCopyUserFilter, OverallStatusFilter)
     ordering = ('-request_date', '-start_date')
-    fields = ['status', 'src_host', 'tgt_host', 'email_list', 'username',
+    fields = ['global_status', 'src_host', 'tgt_host', 'email_list', 'username',
               'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
-              'link_out_transfers_logs']
-    # TODO re-add when available 'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
-    readonly_fields = ('request_date', 'start_date', 'end_date',
-                       'status', 'link_out_transfers_logs', 'completion',
-                       'global_status')
+              'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
+    readonly_fields = ('request_date', 'start_date', 'end_date', 'completion', 'global_status',
+                       'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_staff
@@ -183,11 +181,6 @@ class RequestJobAdmin(admin.ModelAdmin):
             initial['src_skip_tables'] = obj.src_skip_tables
             initial['tgt_db_name'] = obj.tgt_db_name
         return initial
-
-    def link_out_transfers_logs(self, obj):
-        return mark_safe("<a href='%s'>Link</a>" % obj.get_transfer_url())
-
-    link_out_transfers_logs.short_description = "See transfer logs"
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None:
@@ -229,17 +222,13 @@ class RequestJobAdmin(admin.ModelAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
-        if 'completion' not in self.fields:
-            index = 1 if 'global_status' in self.fields else 0
-            self.fields.insert(index, 'completion')
-        if 'request_date' not in self.fields:
-            self.fields.append('request_date')
-        if 'start_date' not in self.fields:
-            self.fields.append('start_date')
-        if 'end_date' not in self.fields:
-            self.fields.append('end_date')
-        if not request.user.is_superuser:
-            extra_context['readonly'] = True
+        for field in self.readonly_fields:
+            if field not in self.fields:
+                if field != 'completion':
+                    self.fields.append(field)
+                else:
+                    index = 1 if 'global_status' in self.fields else 0
+                    self.fields.insert(index, 'completion')
         extra_context['show_save_as_new'] = False
         extra_context['show_delete_link'] = request.user.is_superuser
         extra_context['show_save'] = False
@@ -248,12 +237,12 @@ class RequestJobAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
-        if 'completion' in self.fields:
-            self.fields.remove('completion')
-        if 'global_status' in self.fields:
-            self.fields.remove('global_status')
-        if 'link_out_transfers_logs' in self.fields:
-            self.fields.remove('link_out_transfers_logs')
+        for field in self.readonly_fields:
+            if field in self.fields:
+                self.fields.remove(field)
+        extra_context = extra_context or {}
+        extra_context['show_save_and_add_another'] = False
+        extra_context['show_save_and_continue'] = False
         return super().add_view(request, form_url, extra_context)
 
     def changelist_view(self, request, extra_context=None):

@@ -84,6 +84,15 @@ td.Complete, td.Incomplete, td.Running, td.Submitted, td.Scheduled. td.Failed {
     display: none;
 }
 
+#requestjob_form .global_status{
+    height: 30px;
+    text-align: center;
+    padding: 5px;
+    font-weight: bold;
+    color: #0a0b0d;
+}
+
+
 .closelink {
 }
 
@@ -91,7 +100,7 @@ td.Complete, td.Incomplete, td.Running, td.Submitted, td.Scheduled. td.Failed {
 progress[value] {
     -webkit-appearance: none;
     appearance: none;
-    height: 20px;
+    height: 25px;
 }
 /* Lists */
 table#result_list progress[value] {
@@ -106,13 +115,21 @@ progress::-webkit-progress-value {
     background: cornflowerblue;
 }
 
+.progress_value {
+    top: -28px;
+    position: relative;
+    left: 5px;
+    color: black;
+}
+
+
 progress {
     background: lightgrey;
     color: cornflowerblue;
 }
 /* Details */
 #requestjob_form progress[value] {
-    width: 90%;
+    width: 100%;
 }
 
 #requestjob_form div.field-overall_status div.overall_status {

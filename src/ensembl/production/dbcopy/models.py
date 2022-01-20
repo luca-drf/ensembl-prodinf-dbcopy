@@ -72,8 +72,7 @@ class RequestJob(models.Model):
     src_host = models.TextField("Source Host", max_length=2048,
                                 validators=[RegexValidator(regex="^[\w-]+:[0-9]{4}",
                                                            message="Source Host should be: host:port")])
-    src_incl_db = models.TextField("Included Db(s)", max_length=2048, blank=False, null=False,
-                                   help_text="Put '%' to copy all the server content (use with caution!)")
+    src_incl_db = models.TextField("Included Db(s)", max_length=2048, blank=False, null=False)
     src_skip_db = NullTextField("Skipped Db(s)", max_length=2048, blank=True, null=True)
     src_incl_tables = NullTextField("Included Table(s)", max_length=2048, blank=True, null=True)
     src_skip_tables = NullTextField("Skipped Table(s)", max_length=2048, blank=True, null=True)
@@ -84,7 +83,7 @@ class RequestJob(models.Model):
                                                                             "host1:port1,host2:port2")])
     tgt_db_name = NullTextField("Target DbName(s)", max_length=2048, blank=True, null=True)
     tgt_directory = NullTextField(max_length=2048, blank=True, null=True)
-    skip_optimize = models.BooleanField("Optimize on target", default=False)
+    skip_optimize = models.BooleanField("Skip Target Optimize", default=False)
     wipe_target = models.BooleanField("Wipe target", default=False)
     convert_innodb = models.BooleanField("Convert Innodb=>MyISAM", default=False)
     dry_run = models.BooleanField("Dry Run", default=False)
@@ -362,7 +361,7 @@ class RequestJob(models.Model):
         return format_html(
             '''
             <progress value="{0}" max="100"></progress>
-            <span style="font-weight:bold">{0}%</span>
+            <div><span class="progress_value" style="font-weight:bold">{0}%</span></div>
             ''',
             self.progress
         )

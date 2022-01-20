@@ -41,12 +41,8 @@ class RequestJobForm(forms.ModelForm):
     class Meta:
         model = RequestJob
         exclude = ('job_id', 'tgt_directory', 'global_status')
-        fields = ('src_host', 'tgt_host', 'email_list', 'username',
-                  'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
-                  'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run', 'global_status')
 
     username = forms.CharField(widget=forms.HiddenInput)
-
     src_host = forms.CharField(
         label="Source Host ",
         help_text="host:port",
@@ -55,13 +51,13 @@ class RequestJobForm(forms.ModelForm):
                                         attrs={'data-placeholder': 'Source host',
                                                'data-minimum-input-length': 2})
     )
-    tgt_host = TrimmedCharSelectField(
+    tgt_host = TrimmedCharField(
         label="Target Hosts",
         help_text="List of target hosts",
         required=True,
-        widget=autocomplete.Select2Multiple(url='ensembl_dbcopy:tgt-host-autocomplete',
-                                            attrs={'data-placeholder': 'Target(s)',
-                                                   'data-result-html': True})
+        widget=autocomplete.TagSelect2(url='ensembl_dbcopy:tgt-host-autocomplete',
+                                       attrs={'data-placeholder': 'Target(s)',
+                                              'data-result-html': True})
     )
     src_incl_db = TrimmedCharField(
         label="Databases to copy",
@@ -115,9 +111,11 @@ class RequestJobForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(RequestJobForm, self).__init__(*args, **kwargs)
-        if self.data.get('src_host', None) is not None:
-            self.fields['src_host'].initial = self.data.get('src_host')
-            self.fields['src_host'].widget.choices = [(self.data.get('src_host'), self.data.get('src_host'))]
+        if self.data.get('src_host', None) is not None or self.initial.get('src_host', None) is not None:
+            src_host = self.data.get('src_host') if self.data.get('src_host') is not None else self.initial.get(
+                'src_host')
+            self.fields['src_host'].initial = src_host
+            self.fields['src_host'].widget.choices = [(src_host, src_host)]
         if self.data.get('tgt_host', None) is not None:
             tgt_hosts = self.data.get('tgt_host')
             self.fields['tgt_host'].initial = tgt_hosts
