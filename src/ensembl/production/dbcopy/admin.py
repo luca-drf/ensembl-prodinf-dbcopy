@@ -192,7 +192,6 @@ class RequestJobAdmin(admin.ModelAdmin):
         """
         Bulk resubmit jobs as they were initially.
         :return: None
-        # TODO add current user email to the list if not already present.#
         """
         for query in queryset:
             new_job = RequestJob.objects.get(pk=query.pk)
@@ -201,6 +200,8 @@ class RequestJobAdmin(admin.ModelAdmin):
             new_job.start_date = None
             new_job.end_date = None
             new_job.username = request.user.username
+            if not new_job.email_list:
+                new_job.email_list = request.user.email
             new_job.status = None
             new_job.save()
             message = 'Job {} resubmitted [new job_id {}]'.format(query.pk, new_job.pk)
