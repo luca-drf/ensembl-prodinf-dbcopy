@@ -3,11 +3,6 @@
 (function ($) {
     "use strict";
 
-    let SrcHostDetails;
-    let TgtHostsDetails;
-    let DBNames = [];
-    let TableNames = [];
-
     $(document).ready(function () {
         $(".field-wipe_target").hide();
         $(".field-convert_innodb").hide();
@@ -26,6 +21,17 @@
         tds.has("div.Submitted").addClass('Submitted');
         tds.has("div.Scheduled").addClass('Scheduled');
         tds.has("div.Failed").addClass('Failed');
+
+        let transfer_trs = $("#transfer_logs-group tr");
+        transfer_trs.has("td.field-table_status div.Complete").addClass('Complete');
+        transfer_trs.has("td.field-table_status div.Failed").addClass('Failed');
+        transfer_trs.has("td.field-table_status div.Running").addClass('Running');
+        transfer_trs.has("td.field-table_status div.Submitted").addClass('Submitted');
+        let transfer_tds = $("#transfer_logs-group tr td.field-table_status");
+        transfer_tds.has("div.Complete").addClass('Complete');
+        transfer_tds.has("div.Running").addClass('Running');
+        transfer_tds.has("div.Submitted").addClass('Submitted');
+        transfer_tds.has("div.Failed").addClass('Failed');
 
         // $("#id_src_host").dispatchEvent(change);
         $("#requestjob_form").find(':input[type!=submit]').each(function () {

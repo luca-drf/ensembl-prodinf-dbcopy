@@ -81,6 +81,13 @@ class TransferLogInline(TabularInlinePaginated):
         # TODO add superuser capability to add / copy an existing line / reset timeline to tweak copy job
         return False
 
+    @staticmethod
+    def table_status(obj):
+        if obj:
+            return format_html('<div class="{}">{}</div>', obj.table_status, obj.table_status)
+        return ''
+
+
 
 @admin.register(TransferLog)
 class TransferLogAdmin(admin.ModelAdmin):
