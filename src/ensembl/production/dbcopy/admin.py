@@ -15,7 +15,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import F, Q, Count
 from django.db.models.query import QuerySet
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django_admin_inline_paginator.admin import TabularInlinePaginated
 
 from ensembl.production.dbcopy.filters import DBCopyUserFilter, OverallStatusFilter
@@ -88,7 +87,6 @@ class TransferLogInline(TabularInlinePaginated):
         return ''
 
 
-
 @admin.register(TransferLog)
 class TransferLogAdmin(admin.ModelAdmin):
     model = TransferLog
@@ -149,8 +147,8 @@ class RequestJobAdmin(admin.ModelAdmin):
     fields = ['global_status', 'src_host', 'tgt_host', 'email_list', 'username',
               'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
               'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
-    readonly_fields = ('request_date', 'start_date', 'end_date', 'completion', 'global_status',
-                       'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run')
+    readonly_fields = ['global_status', 'request_date', 'start_date', 'end_date', 'completion',
+                       'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run']
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_staff
@@ -232,11 +230,17 @@ class RequestJobAdmin(admin.ModelAdmin):
         extra_context = extra_context or {}
         for field in self.readonly_fields:
             if field not in self.fields:
-                if field != 'completion':
-                    self.fields.append(field)
-                else:
-                    index = 1 if 'global_status' in self.fields else 0
-                    self.fields.insert(index, 'completion')
+                self.fields.append(field)
+        if 'completion' in self.fields:
+            # reinsert in expected order
+            index = 1 if 'global_status' in self.fields else 0
+            self.fields.remove('completion')
+            self.fields.insert(index, 'completion')
+        if 'global_status' in self.fields:
+            # reinsert first
+            self.fields.remove('global_status')
+            self.fields.insert(0, 'global_status')
+
         extra_context['show_save_as_new'] = False
         extra_context['show_delete_link'] = request.user.is_superuser
         extra_context['show_save'] = False
