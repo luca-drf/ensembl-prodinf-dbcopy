@@ -19,5 +19,17 @@
     "fields": {
 
     }
+  },
+  {
+    "model": "ensembl_dbcopy.host",
+    "pk": 100,
+    "fields": {
+      "name": "localhost",
+      "port": 3306,
+      "mysql_user": "ensembl",
+      "virtual_machine": "mysql-hlvm-074.ebi.ac.uk",
+      "mysqld_file_owner": "mysql",
+      "active": true
+    }
   }
 ]
