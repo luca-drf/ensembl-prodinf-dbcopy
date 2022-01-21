@@ -20,7 +20,7 @@ from django.views.decorators.http import require_http_methods
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
 from ensembl.production.dbcopy.lookups import get_excluded_schemas
-from ensembl.production.dbcopy.models import RequestJob
+from ensembl.production.dbcopy.models import RequestJob, Host
 from ensembl.production.dbcopy.utils import get_filters
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,9 @@ def requestjob_checks_warning(request):
         logger.debug("src_skip_filters %s", src_skip_filters)
         logger.debug("src_skip_db_set %s", src_skip_db_set)
         try:
+            server_host = Host.objects.get(name=src_hostname, port=src_port)
             src_db_set = get_database_set(hostname=src_hostname, port=src_port,
+                                          user=server_host.mysql_user,
                                           incl_filters=src_incl_filters,
                                           skip_filters=src_skip_db_set)
             logger.debug("result_db_set %s", src_db_set)
@@ -90,7 +92,9 @@ def requestjob_checks_warning(request):
             tgt_hostname, tgt_port = tgt_host.split(':')
             try:
                 logger.debug("tgt db names %s %s", tgt_hostname, tgt_db_names)
+                server_host = Host.objects.get(name=tgt_hostname, port=tgt_port)
                 tgt_db_set = get_database_set(hostname=tgt_hostname, port=tgt_port,
+                                              user=server_host.mysql_user,
                                               incl_filters=tgt_db_names,
                                               skip_filters=excluded_schemas)
                 logger.debug("Found on target %s", tgt_db_set)

@@ -16,6 +16,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.views.decorators.csrf import csrf_exempt
 
+from ensembl.production.dbcopy.models import Host
+
 
 class ListDatabases(APIView):
     """
@@ -37,7 +39,9 @@ class ListDatabases(APIView):
         filters = name_filter.union(name_matches).difference({''})
         filters_regexes = [f".*{name}.*" for name in filters]
         try:
+            srv_host = Host.objects.get(name=hostname, port=port)
             result = get_database_set(hostname=hostname, port=port,
+                                      user=srv_host.mysql_user,
                                       incl_filters=filters_regexes,
                                       skip_filters=get_excluded_schemas())
         except ValueError as e:

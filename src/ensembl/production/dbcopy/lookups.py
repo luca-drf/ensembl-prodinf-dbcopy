@@ -79,7 +79,9 @@ class DbLookup(autocomplete.Select2ListView):
                 host, port = self.forwarded.get('db_host').split(':')
                 name_filter = f".*{search.replace('%', '.*')}.*"
                 logger.debug("Filter set to %s", name_filter)
-                result = get_database_set(host, port, incl_filters=[name_filter],
+                srv_host = Host.objects.get(name=host, port=port)
+                result = get_database_set(host, port, user=srv_host.mysql_user,
+                                          incl_filters=[name_filter],
                                           skip_filters=get_excluded_schemas())
 
             except (ValueError, ObjectDoesNotExist) as e:
