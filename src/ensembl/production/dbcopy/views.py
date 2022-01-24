@@ -9,20 +9,19 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.core.exceptions import ValidationError
 import logging
 
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import ValidationError
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 from ensembl.production.core.db_introspects import get_database_set, get_table_set
 
 from ensembl.production.dbcopy.lookups import get_excluded_schemas
-from ensembl.production.dbcopy.models import RequestJob
+from ensembl.production.dbcopy.models import RequestJob, Host
 from ensembl.production.dbcopy.utils import get_filters
-from django.views.decorators.http import require_http_methods
-
 
 logger = logging.getLogger(__name__)
 
@@ -46,16 +45,17 @@ def requestjob_checks_warning(request):
     import json
     from django.http import HttpResponse
     ajax_vars = {'dberrors': {}, 'dbwarnings': {}, 'tablewarnings': {}, 'tableerrors': {}}
-    src_host = request.POST.get('src_host', 'None')
+    src_host = request.POST.get('src_host', None)
     tgt_hosts = request.POST.getlist('tgt_host', [])
     logger.debug("All Post data %s", request.POST)
+
     if src_host and tgt_hosts:
         src_hostname, src_port = src_host.split(':')
-        posted = request.POST.dict()
+        posted = {k: v for k, v in request.POST.items() if 'FORMS' not in k}
         posted.pop('csrfmiddlewaretoken')
         request_job = RequestJob(**posted)
         try:
-            exclude = 'tgt_host' if not tgt_hosts else None
+            exclude = ['tgt_host', 'src_incl_db']
             request_job.full_clean(exclude=exclude, validate_unique=False)
         except ValidationError as e:
             ajax_vars['dberrors'].update(e)
@@ -70,7 +70,9 @@ def requestjob_checks_warning(request):
         logger.debug("src_skip_filters %s", src_skip_filters)
         logger.debug("src_skip_db_set %s", src_skip_db_set)
         try:
+            server_host = Host.objects.get(name=src_hostname, port=src_port)
             src_db_set = get_database_set(hostname=src_hostname, port=src_port,
+                                          user=server_host.mysql_user,
                                           incl_filters=src_incl_filters,
                                           skip_filters=src_skip_db_set)
             logger.debug("result_db_set %s", src_db_set)
@@ -78,7 +80,7 @@ def requestjob_checks_warning(request):
                 # only raise error if no match, but only if any filter specified
                 # TODO: better error reporting
                 raise ValueError("No db matching incl. %s / excl. %s " % (src_incl_filters, src_skip_filters))
-        except ValueError as e:
+        except Exception as e:
             ajax_vars.update({'dberrors': {src_hostname: [str(e)]}})
             return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
 
@@ -90,7 +92,9 @@ def requestjob_checks_warning(request):
             tgt_hostname, tgt_port = tgt_host.split(':')
             try:
                 logger.debug("tgt db names %s %s", tgt_hostname, tgt_db_names)
+                server_host = Host.objects.get(name=tgt_hostname, port=tgt_port)
                 tgt_db_set = get_database_set(hostname=tgt_hostname, port=tgt_port,
+                                              user=server_host.mysql_user,
                                               incl_filters=tgt_db_names,
                                               skip_filters=excluded_schemas)
                 logger.debug("Found on target %s", tgt_db_set)
@@ -116,16 +120,17 @@ def requestjob_checks_warning(request):
                                                             incl_filters=src_table_names,
                                                             skip_filters=skip_table_filter)
                             logger.debug("tgt_table_names %s", tgt_table_names)
-                        except ValueError as e:
+                            if len(tgt_table_names) > 0:
+                                ajax_vars['tablewarnings'].update({tgt_database: sorted(tgt_table_names)})
+                        except Exception as e:
                             # Error most likely raised when target db doesn't exists, this is no error!
                             # TODO check the above statement twice!
                             # ajax_vars['tableerrors'].update({host: [str(e)]})
                             logger.error("Unable to fetch tables: %s", e)
-                        if len(tgt_table_names) > 0:
-                            ajax_vars['tablewarnings'].update({tgt_database: sorted(tgt_table_names)})
-            except ValueError as e:
+            except Exception as e:
                 logger.error("Inspect error %s", str(e))
                 ajax_vars['dberrors'].update({tgt_hostname: [str(e)]})
+            return HttpResponse(json.dumps(ajax_vars), status=400, content_type='application/json')
 
     if len(ajax_vars['dberrors']) > 0 or len(ajax_vars['tableerrors']) > 0:
         status_code = 400

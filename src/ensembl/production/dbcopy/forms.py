@@ -16,10 +16,9 @@ from dal import autocomplete, forward
 from django import forms
 from django.contrib.auth.models import Group as UsersGroup
 from django.core.exceptions import ValidationError
-from django.http import QueryDict
-from ensembl.production.djcore.forms import TrimmedCharField
 
 from ensembl.production.dbcopy.models import RequestJob, HostGroup, TargetHostGroup
+from ensembl.production.djcore.forms import TrimmedCharField
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +41,8 @@ class RequestJobForm(forms.ModelForm):
     class Meta:
         model = RequestJob
         exclude = ('job_id', 'tgt_directory', 'global_status')
-        fields = ('src_host', 'tgt_host', 'email_list', 'username',
-                  'src_incl_db', 'src_skip_db', 'src_incl_tables', 'src_skip_tables', 'tgt_db_name',
-                  'skip_optimize', 'wipe_target', 'convert_innodb', 'dry_run', 'global_status')
 
     username = forms.CharField(widget=forms.HiddenInput)
-
     src_host = forms.CharField(
         label="Source Host ",
         help_text="host:port",
@@ -56,19 +51,19 @@ class RequestJobForm(forms.ModelForm):
                                         attrs={'data-placeholder': 'Source host',
                                                'data-minimum-input-length': 2})
     )
-    tgt_host = TrimmedCharSelectField(
+    tgt_host = TrimmedCharField(
         label="Target Hosts",
         help_text="List of target hosts",
         required=True,
-        widget=autocomplete.Select2Multiple(url='ensembl_dbcopy:tgt-host-autocomplete',
-                                            attrs={'data-placeholder': 'Target(s)',
-                                                   'data-result-html': True})
+        widget=autocomplete.TagSelect2(url='ensembl_dbcopy:tgt-host-autocomplete',
+                                       attrs={'data-placeholder': 'Target(s)',
+                                              'data-result-html': True})
     )
     src_incl_db = TrimmedCharField(
         label="Databases to copy",
-        help_text='db1,db2,.. or %variation_99% ',
+        help_text='db1,db2 or %variation_99% or % (use with caution)',
         max_length=2048,
-        required=False,
+        required=True,
         widget=autocomplete.TagSelect2(url='ensembl_dbcopy:host-db-autocomplete',
                                        forward=[forward.Field('src_host', 'db_host')],
                                        attrs={'data-placeholder': 'Included Db(s)'})
@@ -116,12 +111,13 @@ class RequestJobForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(RequestJobForm, self).__init__(*args, **kwargs)
-        querydict = args[0] if args else kwargs.get('initial', QueryDict())
-        if querydict.get('src_host', None) is not None:
-            self.fields['src_host'].initial = querydict.get('src_host')
-            self.fields['src_host'].widget.choices = [(querydict.get('src_host'), querydict.get('src_host'))]
-        if querydict.get('tgt_host', None) is not None:
-            tgt_hosts = querydict.get('tgt_host')
+        if self.data.get('src_host', None) is not None or self.initial.get('src_host', None) is not None:
+            src_host = self.data.get('src_host') if self.data.get('src_host') is not None else self.initial.get(
+                'src_host')
+            self.fields['src_host'].initial = src_host
+            self.fields['src_host'].widget.choices = [(src_host, src_host)]
+        if self.data.get('tgt_host', None) is not None:
+            tgt_hosts = self.data.get('tgt_host')
             self.fields['tgt_host'].initial = tgt_hosts
             self.fields['tgt_host'].choices = [(val, val) for val in tgt_hosts]
         target_host_group_list = TargetHostGroup.objects.target_host_group_for_user(self.user)

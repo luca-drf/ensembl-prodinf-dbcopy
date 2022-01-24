@@ -23,10 +23,10 @@ from django.db import models
 from django.urls import reverse
 from django.utils.html import format_html
 from ensembl.production.core.db_introspects import get_database_set
-from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
-from ensembl.production.djcore.models import NullTextField
 
 from ensembl.production.dbcopy.utils import get_filters
+from ensembl.production.djcore.forms import EmailListFieldValidator, ListFieldRegexValidator
+from ensembl.production.djcore.models import NullTextField
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -72,7 +72,7 @@ class RequestJob(models.Model):
     src_host = models.TextField("Source Host", max_length=2048,
                                 validators=[RegexValidator(regex="^[\w-]+:[0-9]{4}",
                                                            message="Source Host should be: host:port")])
-    src_incl_db = NullTextField("Included Db(s)", max_length=2048, blank=True, null=False, default="%")
+    src_incl_db = models.TextField("Included Db(s)", max_length=2048, blank=False, null=False)
     src_skip_db = NullTextField("Skipped Db(s)", max_length=2048, blank=True, null=True)
     src_incl_tables = NullTextField("Included Table(s)", max_length=2048, blank=True, null=True)
     src_skip_tables = NullTextField("Skipped Table(s)", max_length=2048, blank=True, null=True)
@@ -83,7 +83,7 @@ class RequestJob(models.Model):
                                                                             "host1:port1,host2:port2")])
     tgt_db_name = NullTextField("Target DbName(s)", max_length=2048, blank=True, null=True)
     tgt_directory = NullTextField(max_length=2048, blank=True, null=True)
-    skip_optimize = models.BooleanField("Optimize on target", default=False)
+    skip_optimize = models.BooleanField("Skip Target Optimize", default=False)
     wipe_target = models.BooleanField("Wipe target", default=False)
     convert_innodb = models.BooleanField("Convert Innodb=>MyISAM", default=False)
     dry_run = models.BooleanField("Dry Run", default=False)
@@ -199,7 +199,9 @@ class RequestJob(models.Model):
         name_filters = get_filters(getattr(self, field))
         filters_regexes = [f".*{name}.*" for name in name_filters]
         try:
+            srv_host = Host.objects.get(name=host, port=port)
             src_db_set = get_database_set(hostname=host, port=port,
+                                          user=srv_host.mysql_user,
                                           incl_filters=filters_regexes,
                                           skip_filters=Dbs2Exclude.objects.values_list('table_schema', flat=True))
             if len(src_db_set) == 0:
@@ -235,7 +237,9 @@ class RequestJob(models.Model):
 
             hostname, port = self.src_host.split(':')
             try:
+                srv_host = Host.objects.get(name=hostname, port=port)
                 present_dbs = get_database_set(hostname, port,
+                                               user=srv_host.mysql_user,
                                                skip_filters=Dbs2Exclude.objects.values_list('table_schema',
                                                                                             flat=True))
             except ValueError as e:
@@ -328,13 +332,14 @@ class RequestJob(models.Model):
         :return: None
         """
         targets = self.tgt_host.split(',')
-        src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
-        tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
-        one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
-        if self.src_host in targets and one_src_db_targets:
-            raise ValidationError({'tgt_host': "You can't set a copy with identical source/target host/db pair.\n"
-                                               "Please rename target(s) or change target host"},
-                                  'forbidden')
+        if self.src_incl_db:
+            src_dbs = self.src_incl_db.split(',') if self.src_incl_db else []
+            tgt_dbs = self.tgt_db_name.split(',') if self.tgt_db_name else []
+            one_src_db_targets = bool(set(src_dbs).intersection(tgt_dbs)) or len(tgt_dbs) == 0 or len(src_dbs) == 0
+            if self.src_host in targets and one_src_db_targets:
+                raise ValidationError({'tgt_host': "You can't set a copy with identical source/target host/db pair.\n"
+                                                   "Please rename target(s) or change target host"},
+                                      'forbidden')
         super().clean()
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
@@ -360,7 +365,7 @@ class RequestJob(models.Model):
         return format_html(
             '''
             <progress value="{0}" max="100"></progress>
-            <span style="font-weight:bold">{0}%</span>
+            <div><span class="progress_value" style="font-weight:bold">{0}%</span></div>
             ''',
             self.progress
         )
