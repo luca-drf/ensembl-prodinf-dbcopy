@@ -10,13 +10,17 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import django.core.exceptions
-
-from rest_framework import viewsets, mixins, response, status, generics
 import rest_framework.exceptions
-
-from ensembl.production.dbcopy.api.serializers import RequestJobSerializer, HostSerializer, TransferLogSerializer
+from ensembl.production.dbcopy.api.serializers import (
+    RequestJobSerializer,
+    RequestJobDetailSerializer,
+    HostSerializer,
+    TransferLogSerializer
+)
 from ensembl.production.dbcopy.models import RequestJob, Host, TransferLog
+from rest_framework import viewsets, mixins, response, status, generics
 from rest_framework.permissions import AllowAny
+
 
 class RequestJobViewSet(mixins.CreateModelMixin,
                         mixins.RetrieveModelMixin,
@@ -54,6 +58,11 @@ class RequestJobViewSet(mixins.CreateModelMixin,
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return response.Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return RequestJobDetailSerializer
+        return RequestJobSerializer
 
 
 class SourceHostViewSet(viewsets.ReadOnlyModelViewSet):
