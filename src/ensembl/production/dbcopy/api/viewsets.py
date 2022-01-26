@@ -11,8 +11,12 @@
 #   limitations under the License.
 import django.core.exceptions
 import rest_framework.exceptions
-from ensembl.production.dbcopy.api.serializers import RequestJobSerializer, RequestJobDetailSerializer, \
-    HostSerializer, TransferLogSerializer
+from ensembl.production.dbcopy.api.serializers import (
+    RequestJobSerializer,
+    RequestJobDetailSerializer,
+    HostSerializer,
+    TransferLogSerializer
+)
 from ensembl.production.dbcopy.models import RequestJob, Host, TransferLog
 from rest_framework import viewsets, mixins, response, status, generics
 from rest_framework.permissions import AllowAny
