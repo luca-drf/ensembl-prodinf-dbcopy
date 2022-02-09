@@ -90,17 +90,31 @@ class OverallStatusFilter(SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value() == 'Failed':
-            qs = queryset.filter(end_date__isnull=False)
-            qs = qs.annotate(failed_transfers=Count('transfer_logs', filter=Q(transfer_logs__size__isnull=True)))
+            qs = queryset.filter(
+                ~Q(status="Processing Requests"),
+                ~Q(status="Transfer Ended"),
+                end_date__isnull=False
+            )
+            qs = qs.annotate(
+                failed_transfers=Count(
+                    'transfer_logs',
+                    filter=Q(transfer_logs__size__isnull=True)
+                )
+            )
             qs = qs.annotate(all_transfers=Count('transfer_logs'))
             return qs.filter(Q(failed_transfers__gt=0) | Q(all_transfers=0))
         elif self.value() == 'Complete':
             qs = queryset.filter(end_date__isnull=False, status="Transfer Ended")
             return qs
         elif self.value() == 'Running':
-            qs = queryset.filter(start_date__isnull=False, end_date__isnull=True)
-            return qs
+            qs = queryset.filter(~Q(status="Transfer Ended"), start_date__isnull=False)
+            qs = qs.annotate(
+                in_progress=Count(
+                    'transfer_logs',
+                    filter=Q(transfer_logs__end_date__isnull=True)&Q(transfer_logs__message__isnull=True)
+                )
+            )
+            return qs.filter(in_progress__gt=0)
         elif self.value() == 'Submitted':
             qs = queryset.filter(start_date__isnull=True, end_date__isnull=True)
             return qs
-
